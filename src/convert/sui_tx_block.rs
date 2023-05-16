@@ -1,6 +1,6 @@
 use sui_json_rpc_types::{SuiTransactionBlock, SuiTransactionBlockData};
 use crate::pb::sui::checkpoint as pb;
-use super::sui_tx_block_kind::convert_sui_transaction_block_kind;
+use super::{sui_tx_block_kind::convert_sui_transaction_block_kind, sui_gas_data::convert_sui_gas_data};
 
 pub fn convert_sui_tx_block(source: &SuiTransactionBlock) -> Option<pb::SuiTransactionBlock> {
   let sui_transaction_block_data = match &source.data {
@@ -8,7 +8,7 @@ pub fn convert_sui_tx_block(source: &SuiTransactionBlock) -> Option<pb::SuiTrans
       pb::SuiTransactionBlockDataV1 {
         transaction: convert_sui_transaction_block_kind(&source.transaction),
         sender: source.sender.to_inner().to_vec(),
-        gas_data: convert_sui_gas_data(&source.gas_data),
+        gas_data: Some(convert_sui_gas_data(&source.gas_data)),
       }
     ),
   };
