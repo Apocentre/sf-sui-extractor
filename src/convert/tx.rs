@@ -4,14 +4,15 @@ use super::{
   sui_tx_block::convert_sui_tx_block,
 };
 
-
 pub fn convert_transaction(source: &CheckpointTransactionBlockResponse) -> pb::CheckpointTransactionBlockResponse {
-  let pb_tx = pb::CheckpointTransactionBlockResponse {
+  pb::CheckpointTransactionBlockResponse {
     digest: source.digest.into_inner().to_vec(),
     transaction: convert_sui_tx_block(&source.transaction),
-    ..Default::default()
-  };
-  
-  
-  pb_tx
+    raw_transaction: source.raw_transaction.clone(),
+    effects: Some(convert_sui_effects(&source.effects)),
+    events: todo!(),
+    timestamp_ms: todo!(),
+    confirmed_local_execution: todo!(),
+    checkpoint: todo!(),
+  }
 }

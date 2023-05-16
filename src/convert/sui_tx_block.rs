@@ -19,7 +19,6 @@ pub fn convert_sui_tx_block(source: &SuiTransactionBlock) -> Option<pb::SuiTrans
         sui_transaction_block_data: Some(sui_transaction_block_data),
       }
     ),
-    ..Default::default()
   };
 
   Some(pb_tx)

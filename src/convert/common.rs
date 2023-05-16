@@ -1,5 +1,5 @@
 use serde_json::Value;
-use sui_json_rpc_types::{SuiArgument, SuiObjectRef};
+use sui_json_rpc_types::{SuiArgument, SuiObjectRef, SuiExecutionStatus};
 use sui_types::{base_types::ObjectID, TypeTag};
 use crate::pb::sui::checkpoint::{self as pb};
 
@@ -76,5 +76,18 @@ pub fn convert_sui_object_ref(source: &SuiObjectRef) -> pb::SuiObjectRef {
     object_id: Some(convert_sui_object(&source.object_id)),
     version: source.version.value(),
     digest: source.digest.into_inner().to_vec(),
+  }
+}
+
+pub fn convert_sui_execution_status(source: &SuiExecutionStatus) -> pb::SuiExecutionStatus {
+  let sui_execution_status = match source {
+    SuiExecutionStatus::Success => pb::sui_execution_status::SuiExecutionStatus::Success(()),
+    SuiExecutionStatus::Failure {error} => pb::sui_execution_status::SuiExecutionStatus::Failure(pb::Failure {
+      error: error.clone(),
+    })
+  };
+  
+  pb::SuiExecutionStatus {
+    sui_execution_status: Some(sui_execution_status),
   }
 }
