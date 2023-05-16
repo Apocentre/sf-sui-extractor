@@ -274,8 +274,65 @@ message ListOfJsonValues {
 
 message SuiCommand {
   oneof sui_command {
+    // A call to either an entry or a public Move function
     SuiProgrammableMoveCall move_call = 1;
+
+    // `(Vec<forall T:key+store. T>, address)`
+    // It sends n-objects to the specified address. These objects must have store
+    // (public transfer) and either the previous owner must be an address or the object must
+    // be newly created.
+    TransferObjectsPair transfer_objects = 2;
+
+    // `(&mut Coin<T>, Vec<u64>)` -> `Vec<Coin<T>>`
+    // It splits off some amounts into a new coins with those amounts
+    SplitCoinsPair split_coins = 3;
+
+    // `(&mut Coin<T>, Vec<Coin<T>>)`
+    // It merges n-coins into the first coin
+    MergeCoinsPair merge_coints = 4;
+
+    // Publishes a Move package. It takes the package bytes and a list of the package's transitive
+    // dependencies to link against on-chain.
+    ListOfObjects publish = 5;
+
+    // Upgrades a Move package
+    SuiCommandUpgrade upgrade = 6;
+
+    // `forall T: Vec<T> -> vector<T>`
+    // Given n-values of the same type, it constructs a vector. For non objects or an empty vector,
+    // the type tag must be specified.
+    MakeMoveVecPair make_move_vec_pair = 7;
   }
+}
+
+message TransferObjectsPair {
+  repeated SuiArgument one = 1;
+  SuiArgument two = 2;
+}
+
+message SplitCoinsPair {
+  SuiArgument one = 1;
+  repeated SuiArgument two = 2;
+}
+
+message MergeCoinsPair {
+  SuiArgument one = 1;
+  repeated SuiArgument two = 2;
+}
+
+message ListOfObjects {
+  repeated ObjectID list = 1;
+}
+
+message MakeMoveVecPair {
+  optional string one = 1;
+  repeated SuiArgument two = 2;
+}
+
+message SuiCommandUpgrade {
+  ListOfObjects one = 1;
+  ObjectID two = 2;
+  SuiArgument three = 3;
 }
 
 message SuiProgrammableMoveCall {

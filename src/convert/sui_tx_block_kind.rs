@@ -42,7 +42,7 @@ pub fn convert_sui_command(source: &SuiCommand) -> pb::SuiCommand {
       type_arguments: source.type_arguments,
       arguments: source.arguments.iter().map(convert_sui_argument).collect(),
     },
-    SuiCommand::TransferObjects(_, _) => todo!(),
+    SuiCommand::TransferObjects(val1, val2) => pb::,
     SuiCommand::SplitCoins(_, _) => todo!(),
     SuiCommand::MergeCoins(_, _) => todo!(),
     SuiCommand::Publish(_) => todo!(),
