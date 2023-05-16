@@ -11,7 +11,6 @@ pub fn convert_sui_tx_block(source: &SuiTransactionBlock) -> Option<pb::SuiTrans
         gas_data: None,
       }
     ),
-    _ => panic!("unexpected transaction block data variant"),
   };
 
   let pb_tx = pb::SuiTransactionBlock {

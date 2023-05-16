@@ -234,7 +234,7 @@ message TypeTag {
     google.protobuf.Empty u128 = 4;
     google.protobuf.Empty address = 5;
     google.protobuf.Empty signer = 6;
-    ListOfTypeTags vector = 7;
+    TypeTag vector = 7;
     StructTag struct = 8;
     google.protobuf.Empty u16 = 9;
     google.protobuf.Empty u32 = 10;
@@ -254,12 +254,18 @@ message StructTag {
 }
 
 message SuiJsonValue {
-  google.protobuf.Empty null = 1;
-  bool bool = 2;
-  string number = 3;
-  string string = 4;
-  ListOfJsonValues array = 5;
-  map<string, SuiJsonValue> object = 6;
+  oneof value {
+    google.protobuf.Empty null = 1;
+    bool bool = 2;
+    string number = 3;
+    string string = 4;
+    ListOfJsonValues array = 5;
+    SuiJsonValueMap object = 6;
+  }
+}
+
+message SuiJsonValueMap {
+  map<string, SuiJsonValue> map = 6;
 }
 
 message ListOfJsonValues {

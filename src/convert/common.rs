@@ -1,0 +1,54 @@
+use serde_json::Value;
+use sui_json::SuiJsonValue;
+use sui_types::{base_types::ObjectID, TypeTag};
+use crate::pb::sui::checkpoint::{self as pb};
+
+pub fn convert_sui_object(obj_id: &ObjectID) -> pb::ObjectId {
+  pb::ObjectId {
+    account_address: obj_id.into_bytes().to_vec(),
+  }
+}
+
+pub fn convert_type_tag(source: &TypeTag) -> pb::TypeTag {
+  let type_tag = match source {
+    TypeTag::Bool => pb::type_tag::TypeTag::Bool(()),
+    TypeTag::U8 => pb::type_tag::TypeTag::U8(()),
+    TypeTag::U64 => pb::type_tag::TypeTag::U64(()),
+    TypeTag::U128 => pb::type_tag::TypeTag::U128(()),
+    TypeTag::Address => pb::type_tag::TypeTag::Address(()),
+    TypeTag::Signer => pb::type_tag::TypeTag::Signer(()),
+    TypeTag::Vector(type_tag) => pb::type_tag::TypeTag::Vector(Box::new(convert_type_tag(&*type_tag))),
+    TypeTag::Struct(source) => pb::type_tag::TypeTag::Struct(pb::StructTag {
+      address: source.address.into_bytes().to_vec(),
+      module: source.module.to_string(),
+      name: source.name.to_string(),
+      type_params: Some(pb::ListOfTypeTags {
+        list: source.type_params.iter().map(convert_type_tag).collect(),
+      }),
+    }),
+    TypeTag::U16 => pb::type_tag::TypeTag::U16(()),
+    TypeTag::U32 => pb::type_tag::TypeTag::U32(()),
+    TypeTag::U256 => pb::type_tag::TypeTag::U256(()),
+  };
+
+  pb::TypeTag {
+    type_tag: Some(type_tag),
+  }
+}
+
+pub fn convert_sui_json_value(source: &Value) -> pb::SuiJsonValue {
+  let json_value = match source {
+    Value::Null => pb::sui_json_value::Value::Null(()),
+    Value::Bool(val) => pb::sui_json_value::Value::Bool(*val),
+    Value::Number(val) => pb::sui_json_value::Value::Number(val.to_string()),
+    Value::String(val) => pb::sui_json_value::Value::String(val.clone()),
+    Value::Array(val) => pb::sui_json_value::Value::Array(pb::ListOfJsonValues {
+      list: val.iter().map(convert_sui_json_value).collect(),
+    }),
+    Value::Object(_) => pb::sui_json_value::Value::Null(()),
+  };
+
+  pb::SuiJsonValue {
+    value: Some(json_value),
+  }
+}

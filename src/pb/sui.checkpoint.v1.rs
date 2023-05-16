@@ -361,7 +361,7 @@ pub mod type_tag {
         #[prost(message, tag = "6")]
         Signer(()),
         #[prost(message, tag = "7")]
-        Vector(super::ListOfTypeTags),
+        Vector(::prost::alloc::boxed::Box<super::TypeTag>),
         #[prost(message, tag = "8")]
         Struct(super::StructTag),
         #[prost(message, tag = "9")]
@@ -393,21 +393,33 @@ pub struct StructTag {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SuiJsonValue {
-    #[prost(message, optional, tag = "1")]
-    pub null: ::core::option::Option<()>,
-    #[prost(bool, tag = "2")]
-    pub bool: bool,
-    #[prost(string, tag = "3")]
-    pub number: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub string: ::prost::alloc::string::String,
-    #[prost(message, optional, tag = "5")]
-    pub array: ::core::option::Option<ListOfJsonValues>,
+    #[prost(oneof = "sui_json_value::Value", tags = "1, 2, 3, 4, 5, 6")]
+    pub value: ::core::option::Option<sui_json_value::Value>,
+}
+/// Nested message and enum types in `SuiJsonValue`.
+pub mod sui_json_value {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Value {
+        #[prost(message, tag = "1")]
+        Null(()),
+        #[prost(bool, tag = "2")]
+        Bool(bool),
+        #[prost(string, tag = "3")]
+        Number(::prost::alloc::string::String),
+        #[prost(string, tag = "4")]
+        String(::prost::alloc::string::String),
+        #[prost(message, tag = "5")]
+        Array(super::ListOfJsonValues),
+        #[prost(message, tag = "6")]
+        Object(super::SuiJsonValueMap),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SuiJsonValueMap {
     #[prost(map = "string, message", tag = "6")]
-    pub object: ::std::collections::HashMap<
-        ::prost::alloc::string::String,
-        SuiJsonValue,
-    >,
+    pub map: ::std::collections::HashMap<::prost::alloc::string::String, SuiJsonValue>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
