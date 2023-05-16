@@ -1,6 +1,8 @@
 use sui_json_rpc_types::{SuiTransactionBlockKind, SuiCallArg, SuiCommand, SuiObjectArg};
 use crate::pb::sui::checkpoint as pb;
-use super::common::{convert_sui_object, convert_type_tag, convert_sui_json_value};
+use super::common::{
+  convert_sui_object, convert_type_tag, convert_sui_json_value, convert_sui_argument
+};
 
 pub fn convert_sui_call_arg(source: &SuiCallArg) -> pb::SuiCallArg {
   let sui_call_arg = match source {
@@ -33,7 +35,13 @@ pub fn convert_sui_call_arg(source: &SuiCallArg) -> pb::SuiCallArg {
 
 pub fn convert_sui_command(source: &SuiCommand) -> pb::SuiCommand {
   let sui_command = match source {
-    SuiCommand::MoveCall(_) => todo!(),
+    SuiCommand::MoveCall(source) => pb::SuiProgrammableMoveCall {
+      package: Some(convert_sui_object(&source.package)),
+      module: source.module.to_string(),
+      function: source.function.to_string(),
+      type_arguments: source.type_arguments,
+      arguments: source.arguments.iter().map(convert_sui_argument).collect(),
+    },
     SuiCommand::TransferObjects(_, _) => todo!(),
     SuiCommand::SplitCoins(_, _) => todo!(),
     SuiCommand::MergeCoins(_, _) => todo!(),

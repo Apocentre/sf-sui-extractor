@@ -1,5 +1,5 @@
 use serde_json::Value;
-use sui_json::SuiJsonValue;
+use sui_json_rpc_types::SuiArgument;
 use sui_types::{base_types::ObjectID, TypeTag};
 use crate::pb::sui::checkpoint::{self as pb};
 
@@ -50,5 +50,22 @@ pub fn convert_sui_json_value(source: &Value) -> pb::SuiJsonValue {
 
   pb::SuiJsonValue {
     value: Some(json_value),
+  }
+}
+
+
+pub fn convert_sui_argument(source: &SuiArgument) -> pb::SuiArgument {
+  let sui_arguments = match source {
+    SuiArgument::GasCoin => pb::sui_argument::SuiArguments::GasCoin(()),
+    SuiArgument::Input(val) => pb::sui_argument::SuiArguments::Input(*val as u32),
+    SuiArgument::Result(val) => pb::sui_argument::SuiArguments::Result(*val as u32),
+    SuiArgument::NestedResult(one, two) => pb::sui_argument::SuiArguments::NestedResult(pb::PairOfU32 {
+      one: one as u32,
+      two: two as u32,
+    }),
+  };
+
+  pb::SuiArgument {
+    sui_arguments: Some(sui_arguments),
   }
 }
