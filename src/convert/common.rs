@@ -1,5 +1,5 @@
 use serde_json::Value;
-use sui_json_rpc_types::SuiArgument;
+use sui_json_rpc_types::{SuiArgument, SuiObjectRef};
 use sui_types::{base_types::ObjectID, TypeTag};
 use crate::pb::sui::checkpoint::{self as pb};
 
@@ -67,5 +67,14 @@ pub fn convert_sui_argument(source: &SuiArgument) -> pb::SuiArgument {
 
   pb::SuiArgument {
     sui_arguments: Some(sui_arguments),
+  }
+}
+
+
+pub fn convert_sui_object_ref(source: &SuiObjectRef) -> pb::SuiObjectRef {
+  pb::SuiObjectRef {
+    object_id: Some(convert_sui_object(&source.object_id)),
+    version: source.version.value(),
+    digest: source.digest.into_inner().to_vec(),
   }
 }

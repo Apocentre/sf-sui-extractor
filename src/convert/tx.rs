@@ -6,7 +6,7 @@ use super::{
 
 
 pub fn convert_transaction(source: &CheckpointTransactionBlockResponse) -> pb::CheckpointTransactionBlockResponse {
-  let mut pb_tx = pb::CheckpointTransactionBlockResponse {
+  let pb_tx = pb::CheckpointTransactionBlockResponse {
     digest: source.digest.into_inner().to_vec(),
     transaction: convert_sui_tx_block(&source.transaction),
     ..Default::default()
