@@ -7,7 +7,7 @@ use log::{error, debug};
 use sui_json_rpc::{CLIENT_SDK_TYPE_HEADER};
 use tokio::time::{sleep};
 use crate::{
-  checkpoint_handler::CheckpointHandler, convert::convert_transaction,
+  checkpoint_handler::CheckpointHandler, convert::tx::convert_transaction,
   pb::sui::checkpoint as pb,
 };
 
