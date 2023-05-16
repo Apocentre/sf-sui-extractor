@@ -1,11 +1,14 @@
 use serde_json::Value;
-use sui_json_rpc_types::{SuiArgument, SuiObjectRef, SuiExecutionStatus, SuiTransactionBlockEffectsModifiedAtVersions, OwnedObjectRef};
-use sui_types::{base_types::ObjectID, TypeTag, gas::GasCostSummary, object::Owner};
+use sui_json_rpc_types::{
+  SuiArgument, SuiObjectRef, SuiExecutionStatus, SuiTransactionBlockEffectsModifiedAtVersions, OwnedObjectRef,
+  SuiTransactionBlockEvents
+};
+use sui_types::{base_types::ObjectID, TypeTag, gas::GasCostSummary, object::Owner, event::EventID};
 use crate::pb::sui::checkpoint::{self as pb};
 
-pub fn convert_sui_object(obj_id: &ObjectID) -> pb::ObjectId {
+pub fn convert_sui_object(source: &ObjectID) -> pb::ObjectId {
   pb::ObjectId {
-    account_address: obj_id.into_bytes().to_vec(),
+    account_address: source.to_canonical_string(),
   }
 }
 
@@ -19,7 +22,7 @@ pub fn convert_type_tag(source: &TypeTag) -> pb::TypeTag {
     TypeTag::Signer => pb::type_tag::TypeTag::Signer(()),
     TypeTag::Vector(type_tag) => pb::type_tag::TypeTag::Vector(Box::new(convert_type_tag(&*type_tag))),
     TypeTag::Struct(source) => pb::type_tag::TypeTag::Struct(pb::StructTag {
-      address: source.address.into_bytes().to_vec(),
+      address: source.address.to_canonical_string(),
       module: source.module.to_string(),
       name: source.name.to_string(),
       type_params: Some(pb::ListOfTypeTags {
@@ -123,10 +126,40 @@ pub fn convert_owned_object_ref(source: &OwnedObjectRef) -> pb::OwnedObjectRef {
 pub fn convert_tx_block_effects_modified_at_versions(
   source: &SuiTransactionBlockEffectsModifiedAtVersions
 ) -> pb::SuiTransactionBlockEffectsModifiedAtVersions {
-  // TODO: ake the fields public so we can access it here
-  // pb::SuiTransactionBlockEffectsModifiedAtVersions {
-  //   object_id: Some(convert_sui_object(&source.object_id)),
-  //   sequence_number: source.sequence_number.value(),
-  // }
-  todo!()
+  pb::SuiTransactionBlockEffectsModifiedAtVersions {
+    object_id: Some(convert_sui_object(&source.object_id())),
+    sequence_number: source.sequence_number().value(),
+  }
+}
+
+pub fn convert_event_id(source: &EventID) -> pb::EventId {
+  pb::EventId {
+    tx_digest: source.tx_digest.into_inner().to_vec(),
+    event_seq: source.event_seq,
+  }
+}
+
+pub fn convert_tx_block_events(source: &SuiTransactionBlockEvents) -> pb::SuiTransactionBlockEvents {
+  let data = source.data.iter().map(|e| pb::SuiEvent {
+    id: Some(convert_event_id(&e.id)),
+    package_id: Some(convert_sui_object(&e.package_id)),
+    transaction_module: e.transaction_module.clone().into_string(),
+    sender: hex::encode(e.sender),
+    r#type: Some(pb::StructTag {
+      address: e.type_.address.to_canonical_string(),
+      module: e.type_.module.to_string(),
+      name: e.type_.name.to_string(),
+      type_params: Some(pb::ListOfTypeTags {
+        list: e.type_.type_params.iter().map(convert_type_tag).collect(),
+      }),
+    }),
+    parsed_json: Some(convert_sui_json_value(&e.parsed_json)),
+    bcs: e.bcs.clone(),
+    timestamp_ms: e.timestamp_ms,
+  })
+  .collect();
+
+  pb::SuiTransactionBlockEvents {
+    data,
+  }
 }

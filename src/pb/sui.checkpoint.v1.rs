@@ -246,8 +246,8 @@ pub struct SuiGenesisTransaction {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ObjectId {
-    #[prost(bytes = "vec", tag = "1")]
-    pub account_address: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "1")]
+    pub account_address: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -381,8 +381,8 @@ pub struct ListOfTypeTags {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StructTag {
-    #[prost(bytes = "vec", tag = "1")]
-    pub address: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "1")]
+    pub address: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub module: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
@@ -745,8 +745,8 @@ pub struct SuiEvent {
     #[prost(string, tag = "3")]
     pub transaction_module: ::prost::alloc::string::String,
     /// Sender's Sui address.
-    #[prost(bytes = "vec", tag = "4")]
-    pub sender: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "4")]
+    pub sender: ::prost::alloc::string::String,
     /// Move event type.
     #[prost(message, optional, tag = "5")]
     pub r#type: ::core::option::Option<StructTag>,

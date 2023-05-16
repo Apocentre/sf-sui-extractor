@@ -170,7 +170,7 @@ message SuiGenesisTransaction {
 }
 
 message ObjectID {
-  bytes account_address = 1;
+  string account_address = 1;
 }
 
 message SuiConsensusCommitPrologue {
@@ -247,7 +247,7 @@ message ListOfTypeTags {
 }
 
 message StructTag {
-  bytes address = 1;
+  string address = 1;
   string module = 2;
   string name = 3;
   ListOfTypeTags type_params = 4;
@@ -497,7 +497,7 @@ message SuiEvent {
   string transaction_module = 3;
 
   // Sender's Sui address.
-  bytes sender = 4;
+  string sender = 4;
 
   // Move event type.
   StructTag type = 5;
