@@ -9,6 +9,9 @@ struct Args {
   #[arg(short = 'r', long)]
   rpc_client_url: String,
 
+  #[arg(short = 'c', long, default_value = "mainnet")]
+  chain_id: String,
+
   #[arg(short = 's', long, default_value_t = 0)]
   starting_checkpoint_seq: u64,
 }
@@ -24,8 +27,9 @@ async fn main() -> Result<()> {
   
   env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
-  let args = Args::parse();
-  let mut fireshose_streamer = FirehoseStreamer::new(args.starting_checkpoint_seq, args.rpc_client_url);
+  let Args {rpc_client_url, chain_id, starting_checkpoint_seq} = Args::parse();
+
+  let mut fireshose_streamer = FirehoseStreamer::new(starting_checkpoint_seq, rpc_client_url);
   
   fireshose_streamer.start().await?;
 
