@@ -1,6 +1,6 @@
 use serde_json::Value;
-use sui_json_rpc_types::{SuiArgument, SuiObjectRef, SuiExecutionStatus};
-use sui_types::{base_types::ObjectID, TypeTag, gas::GasCostSummary};
+use sui_json_rpc_types::{SuiArgument, SuiObjectRef, SuiExecutionStatus, SuiTransactionBlockEffectsModifiedAtVersions, OwnedObjectRef};
+use sui_types::{base_types::ObjectID, TypeTag, gas::GasCostSummary, object::Owner};
 use crate::pb::sui::checkpoint::{self as pb};
 
 pub fn convert_sui_object(obj_id: &ObjectID) -> pb::ObjectId {
@@ -100,4 +100,33 @@ pub fn convert_gas_cost_summary(source: &GasCostSummary) -> pb::GasCostSummary {
     storage_rebate: source.storage_rebate,
     non_refundable_storage_fee: source.non_refundable_storage_fee,
   }
+}
+
+pub fn convert_owned_object_ref(source: &OwnedObjectRef) -> pb::OwnedObjectRef {
+  let owner = match source.owner {
+    Owner::AddressOwner(val) => pb::owner::Owner::AddressOwner(val.to_vec()),
+    Owner::ObjectOwner(val) => pb::owner::Owner::ObjectOwner(val.to_vec()),
+    Owner::Shared {initial_shared_version} => pb::owner::Owner::Shared(pb::Shared {
+      initial_shared_version: initial_shared_version.value(),
+    }),
+    Owner::Immutable => pb::owner::Owner::Immutable(()),
+  };
+
+  pb::OwnedObjectRef {
+    owner: Some(pb::Owner{
+      owner: Some(owner)
+    }),
+    reference: Some(convert_sui_object_ref(&source.reference)),
+  }
+}
+
+pub fn convert_tx_block_effects_modified_at_versions(
+  source: &SuiTransactionBlockEffectsModifiedAtVersions
+) -> pb::SuiTransactionBlockEffectsModifiedAtVersions {
+  // TODO: ake the fields public so we can access it here
+  // pb::SuiTransactionBlockEffectsModifiedAtVersions {
+  //   object_id: Some(convert_sui_object(&source.object_id)),
+  //   sequence_number: source.sequence_number.value(),
+  // }
+  todo!()
 }
