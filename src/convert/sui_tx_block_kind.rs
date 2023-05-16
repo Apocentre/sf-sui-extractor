@@ -35,19 +35,39 @@ pub fn convert_sui_call_arg(source: &SuiCallArg) -> pb::SuiCallArg {
 
 pub fn convert_sui_command(source: &SuiCommand) -> pb::SuiCommand {
   let sui_command = match source {
-    SuiCommand::MoveCall(source) => pb::SuiProgrammableMoveCall {
+    SuiCommand::MoveCall(source) => pb::sui_command::SuiCommand::MoveCall(pb::SuiProgrammableMoveCall {
       package: Some(convert_sui_object(&source.package)),
       module: source.module.to_string(),
       function: source.function.to_string(),
-      type_arguments: source.type_arguments,
+      type_arguments: source.type_arguments.clone(),
       arguments: source.arguments.iter().map(convert_sui_argument).collect(),
-    },
-    SuiCommand::TransferObjects(val1, val2) => pb::,
-    SuiCommand::SplitCoins(_, _) => todo!(),
-    SuiCommand::MergeCoins(_, _) => todo!(),
-    SuiCommand::Publish(_) => todo!(),
-    SuiCommand::Upgrade(_, _, _) => todo!(),
-    SuiCommand::MakeMoveVec(_, _) => todo!(),
+    }),
+    SuiCommand::TransferObjects(val1, val2) => pb::sui_command::SuiCommand::TransferObjects(pb::TransferObjectsPair {
+      one: val1.iter().map(convert_sui_argument).collect(),
+      two: Some(convert_sui_argument(val2)),
+    }),
+    SuiCommand::SplitCoins(val1, val2) => pb::sui_command::SuiCommand::SplitCoins(pb::SplitCoinsPair {
+      one: Some(convert_sui_argument(val1)),
+      two: val2.iter().map(convert_sui_argument).collect(),
+    }),
+    SuiCommand::MergeCoins(val1, val2) => pb::sui_command::SuiCommand::MergeCoins(pb::MergeCoinsPair {
+      one: Some(convert_sui_argument(val1)),
+      two: val2.iter().map(convert_sui_argument).collect(),
+    }),
+    SuiCommand::Publish(val) => pb::sui_command::SuiCommand::Publish(pb::ListOfObjects {
+      list: val.iter().map(convert_sui_object).collect(),
+    }),
+    SuiCommand::Upgrade(val1, val2, val3) => pb::sui_command::SuiCommand::Upgrade(pb::SuiCommandUpgrade {
+      one: Some(pb::ListOfObjects{
+        list: val1.iter().map(convert_sui_object).collect(),
+      }),
+      two: Some(convert_sui_object(val2)),
+      three: Some(convert_sui_argument(val3)),
+    }),
+    SuiCommand::MakeMoveVec(val1, val2) => pb::sui_command::SuiCommand::MakeMoveVec(pb::MakeMoveVecPair {
+      one: val1.clone(),
+      two: val2.iter().map(convert_sui_argument).collect(),
+    }),
   };
 
   pb::SuiCommand {

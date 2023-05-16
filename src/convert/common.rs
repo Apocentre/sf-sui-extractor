@@ -60,8 +60,8 @@ pub fn convert_sui_argument(source: &SuiArgument) -> pb::SuiArgument {
     SuiArgument::Input(val) => pb::sui_argument::SuiArguments::Input(*val as u32),
     SuiArgument::Result(val) => pb::sui_argument::SuiArguments::Result(*val as u32),
     SuiArgument::NestedResult(one, two) => pb::sui_argument::SuiArguments::NestedResult(pb::PairOfU32 {
-      one: one as u32,
-      two: two as u32,
+      one: *one as u32,
+      two: *two as u32,
     }),
   };
 

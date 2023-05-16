@@ -430,7 +430,7 @@ pub struct ListOfJsonValues {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SuiCommand {
-    #[prost(oneof = "sui_command::SuiCommand", tags = "1")]
+    #[prost(oneof = "sui_command::SuiCommand", tags = "1, 2, 3, 4, 5, 6, 7")]
     pub sui_command: ::core::option::Option<sui_command::SuiCommand>,
 }
 /// Nested message and enum types in `SuiCommand`.
@@ -438,9 +438,84 @@ pub mod sui_command {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum SuiCommand {
+        /// A call to either an entry or a public Move function
         #[prost(message, tag = "1")]
         MoveCall(super::SuiProgrammableMoveCall),
+        /// `(Vec<forall T:key+store. T>, address)`
+        /// It sends n-objects to the specified address. These objects must have store
+        /// (public transfer) and either the previous owner must be an address or the object must
+        /// be newly created.
+        #[prost(message, tag = "2")]
+        TransferObjects(super::TransferObjectsPair),
+        /// `(&mut Coin<T>, Vec<u64>)` -> `Vec<Coin<T>>`
+        /// It splits off some amounts into a new coins with those amounts
+        #[prost(message, tag = "3")]
+        SplitCoins(super::SplitCoinsPair),
+        /// `(&mut Coin<T>, Vec<Coin<T>>)`
+        /// It merges n-coins into the first coin
+        #[prost(message, tag = "4")]
+        MergeCoins(super::MergeCoinsPair),
+        /// Publishes a Move package. It takes the package bytes and a list of the package's transitive
+        /// dependencies to link against on-chain.
+        #[prost(message, tag = "5")]
+        Publish(super::ListOfObjects),
+        /// Upgrades a Move package
+        #[prost(message, tag = "6")]
+        Upgrade(super::SuiCommandUpgrade),
+        /// `forall T: Vec<T> -> vector<T>`
+        /// Given n-values of the same type, it constructs a vector. For non objects or an empty vector,
+        /// the type tag must be specified.
+        #[prost(message, tag = "7")]
+        MakeMoveVec(super::MakeMoveVecPair),
     }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TransferObjectsPair {
+    #[prost(message, repeated, tag = "1")]
+    pub one: ::prost::alloc::vec::Vec<SuiArgument>,
+    #[prost(message, optional, tag = "2")]
+    pub two: ::core::option::Option<SuiArgument>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SplitCoinsPair {
+    #[prost(message, optional, tag = "1")]
+    pub one: ::core::option::Option<SuiArgument>,
+    #[prost(message, repeated, tag = "2")]
+    pub two: ::prost::alloc::vec::Vec<SuiArgument>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MergeCoinsPair {
+    #[prost(message, optional, tag = "1")]
+    pub one: ::core::option::Option<SuiArgument>,
+    #[prost(message, repeated, tag = "2")]
+    pub two: ::prost::alloc::vec::Vec<SuiArgument>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListOfObjects {
+    #[prost(message, repeated, tag = "1")]
+    pub list: ::prost::alloc::vec::Vec<ObjectId>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MakeMoveVecPair {
+    #[prost(string, optional, tag = "1")]
+    pub one: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(message, repeated, tag = "2")]
+    pub two: ::prost::alloc::vec::Vec<SuiArgument>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SuiCommandUpgrade {
+    #[prost(message, optional, tag = "1")]
+    pub one: ::core::option::Option<ListOfObjects>,
+    #[prost(message, optional, tag = "2")]
+    pub two: ::core::option::Option<ObjectId>,
+    #[prost(message, optional, tag = "3")]
+    pub three: ::core::option::Option<SuiArgument>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

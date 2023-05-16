@@ -289,7 +289,7 @@ message SuiCommand {
 
     // `(&mut Coin<T>, Vec<Coin<T>>)`
     // It merges n-coins into the first coin
-    MergeCoinsPair merge_coints = 4;
+    MergeCoinsPair merge_coins = 4;
 
     // Publishes a Move package. It takes the package bytes and a list of the package's transitive
     // dependencies to link against on-chain.
@@ -301,7 +301,7 @@ message SuiCommand {
     // `forall T: Vec<T> -> vector<T>`
     // Given n-values of the same type, it constructs a vector. For non objects or an empty vector,
     // the type tag must be specified.
-    MakeMoveVecPair make_move_vec_pair = 7;
+    MakeMoveVecPair make_move_vec = 7;
   }
 }
 
