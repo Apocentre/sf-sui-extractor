@@ -6,11 +6,11 @@ use sui_sf_indexer::runtime::FirehoseStreamer;
 
 #[derive(Debug, Parser)]
 struct Args {
-  #[arg(short = 'r', long)]
-  rpc_client_url: String,
-
   #[arg(short = 'c', long, default_value = "mainnet")]
   chain_id: String,
+
+  #[arg(short = 'r', long, default_value = "https://fullnode.mainnet.sui.io:443")]
+  rpc_client_url: String,
 
   #[arg(short = 's', long, default_value_t = 0)]
   starting_checkpoint_seq: u64,
@@ -27,9 +27,8 @@ async fn main() -> Result<()> {
   
   env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
-  let Args {rpc_client_url, chain_id, starting_checkpoint_seq} = Args::parse();
-
-  let mut fireshose_streamer = FirehoseStreamer::new(starting_checkpoint_seq, rpc_client_url);
+  let Args {chain_id, rpc_client_url, starting_checkpoint_seq} = Args::parse();
+  let mut fireshose_streamer = FirehoseStreamer::new(chain_id, rpc_client_url, starting_checkpoint_seq);
   
   fireshose_streamer.start().await?;
 

@@ -1,9 +1,15 @@
+use std::time::Duration;
 use eyre::{Result, Report};
 use jsonrpsee::http_client::{HeaderMap, HeaderValue, HttpClient, HttpClientBuilder};
 use backoff::{ExponentialBackoff, future::retry};
-use log::error;
+use prost::Message;
+use log::{error, debug};
 use sui_json_rpc::{CLIENT_SDK_TYPE_HEADER};
-use crate::checkpoint_handler::CheckpointHandler;
+use tokio::time::{sleep};
+use crate::{
+  checkpoint_handler::CheckpointHandler, convert::convert_transaction,
+  pb::sui::checkpoint as pb,
+};
 
 pub struct FirehoseStreamer {
   rpc_client_url: String,
@@ -24,14 +30,13 @@ impl FirehoseStreamer {
 
   pub async fn start(&mut self) -> Result<()> {
     // Format is FIRE INIT sui-node <PACKAGE_VERSION> <MAJOR_VERSION> <MINOR_VERSION> <CHAIN_ID>
-    // TODO: add the reamining parts
     println!(
       "\nFIRE INIT sui-node {} sui 1 1 {}",
       env!("CARGO_PKG_VERSION"), self.chain_id,
     );
 
     let checkpoint_handler = retry(ExponentialBackoff::default(), || async {
-      let http_client = get_http_client(&self.rpc_client_url).map_err(|err| {
+      let http_client = Self::get_http_client(&self.rpc_client_url).map_err(|err| {
         error!("Failed to create HTTP client: {}", err);
         err
       })?;
@@ -52,24 +57,50 @@ impl FirehoseStreamer {
     let checkpoint_handler = self.checkpoint_handler.as_ref().expect("Checkpoint handler should be created");
     let checkpoint_data = checkpoint_handler.download_checkpoint_data(self.current_checkpoint_seq).await?;
 
-    for _onchain_txn in &checkpoint_data.transactions {
-      //TODO: convert transaction data and print to stdout
+    if checkpoint_data.transactions.is_empty() {
+      debug!("[fh-stream] no transactions to send");
+      sleep(Duration::from_millis(100)).await;
+
+      return Ok(())
+    }
+
+    debug!(
+      "[fh-stream] got {} transactions from  {}",
+      checkpoint_data.transactions.len(),
+      self.current_checkpoint_seq,
+    );
+
+    for tx in &checkpoint_data.transactions {
+      let txn_proto = convert_transaction(&tx);
+      Self::print_transaction(&txn_proto);
     }
 
     Ok(())
   }
-}
 
-fn get_http_client(rpc_client_url: &str) -> Result<HttpClient> {
-  let mut headers = HeaderMap::new();
-  headers.insert(CLIENT_SDK_TYPE_HEADER, HeaderValue::from_static("indexer"));
-
-  HttpClientBuilder::default()
-  .max_request_body_size(2 << 30)
-  .max_concurrent_requests(usize::MAX)
-  .set_headers(headers.clone())
-  .build(rpc_client_url)
-  .map_err(|e| {
-    Report::msg(format!("Failed to initialize fullnode RPC client with error: {:?}", e))
-  })
+  fn get_http_client(rpc_client_url: &str) -> Result<HttpClient> {
+    let mut headers = HeaderMap::new();
+    headers.insert(CLIENT_SDK_TYPE_HEADER, HeaderValue::from_static("indexer"));
+  
+    HttpClientBuilder::default()
+    .max_request_body_size(2 << 30)
+    .max_concurrent_requests(usize::MAX)
+    .set_headers(headers.clone())
+    .build(rpc_client_url)
+    .map_err(|e| {
+      Report::msg(format!("Failed to initialize fullnode RPC client with error: {:?}", e))
+    })
+  }
+  
+  
+  fn print_transaction(transaction: &pb::CheckpointTransactionBlockResponse) {
+    let mut buf = vec![];
+    transaction.encode(&mut buf).unwrap_or_else(|_| {
+      panic!(
+        "Could not convert protobuf transaction to bytes '{:?}'",
+        transaction
+      )
+    });
+    println!("\nFIRE TRX {}", base64::encode(buf));
+  }  
 }

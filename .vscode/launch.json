@@ -23,7 +23,7 @@
         "ENV": "development"
       },
       "args": [
-        "-r", "https://sui-mainnet-rpc.allthatnode.com"
+        // "-r", "https://sui-mainnet-rpc.allthatnode.com"
       ],
       "cwd": "${workspaceFolder}"
     }
