@@ -1,6 +1,6 @@
 use serde_json::Value;
 use sui_json_rpc_types::{SuiArgument, SuiObjectRef, SuiExecutionStatus};
-use sui_types::{base_types::ObjectID, TypeTag};
+use sui_types::{base_types::ObjectID, TypeTag, gas::GasCostSummary};
 use crate::pb::sui::checkpoint::{self as pb};
 
 pub fn convert_sui_object(obj_id: &ObjectID) -> pb::ObjectId {
@@ -89,5 +89,15 @@ pub fn convert_sui_execution_status(source: &SuiExecutionStatus) -> pb::SuiExecu
   
   pb::SuiExecutionStatus {
     sui_execution_status: Some(sui_execution_status),
+  }
+}
+
+
+pub fn convert_gas_cost_summary(source: &GasCostSummary) -> pb::GasCostSummary {
+  pb::GasCostSummary {
+    computation_cost: source.computation_cost,
+    storage_cost: source.storage_cost,
+    storage_rebate: source.storage_rebate,
+    non_refundable_storage_fee: source.non_refundable_storage_fee,
   }
 }
