@@ -75,6 +75,9 @@ impl FirehoseStreamer {
       Self::print_transaction(&txn_proto);
     }
 
+    println!("\nFIRE BLOCK_END {}", self.current_checkpoint_seq);
+    self.current_checkpoint_seq += 1;
+
     Ok(())
   }
 
