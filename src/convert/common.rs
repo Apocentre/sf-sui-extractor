@@ -56,7 +56,6 @@ pub fn convert_sui_json_value(source: &Value) -> pb::SuiJsonValue {
   }
 }
 
-
 pub fn convert_sui_argument(source: &SuiArgument) -> pb::SuiArgument {
   let sui_arguments = match source {
     SuiArgument::GasCoin => pb::sui_argument::SuiArguments::GasCoin(()),
@@ -72,7 +71,6 @@ pub fn convert_sui_argument(source: &SuiArgument) -> pb::SuiArgument {
     sui_arguments: Some(sui_arguments),
   }
 }
-
 
 pub fn convert_sui_object_ref(source: &SuiObjectRef) -> pb::SuiObjectRef {
   pb::SuiObjectRef {
@@ -94,7 +92,6 @@ pub fn convert_sui_execution_status(source: &SuiExecutionStatus) -> pb::SuiExecu
     sui_execution_status: Some(sui_execution_status),
   }
 }
-
 
 pub fn convert_gas_cost_summary(source: &GasCostSummary) -> pb::GasCostSummary {
   pb::GasCostSummary {
