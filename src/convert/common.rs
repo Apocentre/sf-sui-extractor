@@ -1,11 +1,11 @@
 use serde_json::Value;
 use sui_json_rpc_types::{
   SuiArgument, SuiObjectRef, SuiExecutionStatus, SuiTransactionBlockEffectsModifiedAtVersions, OwnedObjectRef,
-  SuiTransactionBlockEvents
+  SuiTransactionBlockEvents, SuiParsedData, SuiParsedMoveObject, SuiMoveStruct, SuiMoveValue
 };
 use sui_types::{
   base_types::{ObjectID, ObjectType, MoveObjectType},
-  TypeTag, gas::GasCostSummary, object::Owner, event::EventID, error::SuiObjectResponseError
+  TypeTag, gas::GasCostSummary, object::Owner, event::EventID, error::SuiObjectResponseError, id::UID
 };
 use crate::pb::sui::checkpoint::{self as pb};
 
@@ -228,5 +228,74 @@ pub fn convert_sui_object_response_error(source: &SuiObjectResponseError) -> pb:
 
   pb::SuiObjectResponseError {
     sui_object_response_error: Some(sui_object_response_error),
+  }
+}
+
+pub fn convert_sui_parsed_data(source: &SuiParsedData) -> pb::SuiParsedData {
+  let sui_parsed_data = match source {
+    SuiParsedData::MoveObject(source) => todo!(),
+    SuiParsedData::Package(_) => todo!(),
+  };
+
+  pb::SuiParsedData {
+    sui_parsed_data: Some(sui_parsed_data),
+  }
+}
+
+pub fn convert_sui_parsed_move_object(source: &SuiParsedMoveObject) -> pb::SuiParsedMoveObject {
+  pb::SuiParsedMoveObject {
+    r#type: Some(pb::StructTag {
+      address: source.type_.address.to_canonical_string(),
+      module: source.type_.module.to_string(),
+      name: source.type_.name.to_string(),
+      type_params: Some(pb::ListOfTypeTags {
+        list: source.type_.type_params.iter().map(convert_type_tag).collect(),
+      }),
+    }),
+    has_public_transfer: source.has_public_transfer,
+    fields: Some(convert_sui_move_struct(&source.fields)),
+  }
+}
+
+pub fn convert_sui_move_struct(source: &SuiMoveStruct) -> pb::SuiMoveStruct {
+  let sui_move_struct = match source {
+    SuiMoveStruct::Runtime(source) => pb::sui_move_struct::SuiMoveStruct::Runtime(pb::ListOfSuiMoveValues {
+      list: source.iter().map(convert_sui_move_value).collect(),
+    }),
+    SuiMoveStruct::WithTypes {type_, fields} => todo!(),
+    SuiMoveStruct::WithFields(_) => todo!(),
+  };
+
+  pb::SuiMoveStruct {
+    sui_move_struct: Some(sui_move_struct),
+  }
+}
+
+pub fn convert_sui_move_value(source: &SuiMoveValue) -> pb::SuiMoveValue {
+  let sui_move_value = match source {
+    SuiMoveValue::Number(source) => pb::sui_move_value::SuiMoveValue::Number(*source),
+    SuiMoveValue::Bool(source) => pb::sui_move_value::SuiMoveValue::Bool(*source),
+    SuiMoveValue::Address(source) => pb::sui_move_value::SuiMoveValue::Address(source.to_vec()),
+    SuiMoveValue::Vector(source) => pb::sui_move_value::SuiMoveValue::Vector(pb::ListOfSuiMoveValues {
+      list: source.iter().map(convert_sui_move_value).collect(),
+    }),
+    SuiMoveValue::String(source) => pb::sui_move_value::SuiMoveValue::String(source.clone()),
+    SuiMoveValue::UID {id} => pb::sui_move_value::SuiMoveValue::Uid(pb::Uid {
+      id: Some(convert_sui_object(id)),
+    }),
+    SuiMoveValue::Struct(source) => pb::sui_move_value::SuiMoveValue::Struct(convert_sui_move_struct(source)),
+    SuiMoveValue::Option(source) => pb::sui_move_value::SuiMoveValue::Option(
+      Box::new(source.clone().map(|o| convert_sui_move_value(&o)).unwrap()),
+    ),
+  };
+
+  pb::SuiMoveValue {
+    sui_move_value: Some(sui_move_value),
+  }
+}
+
+pub fn convert_uid(source: &UID) -> pb::Uid {
+  pb::Uid {
+    id: Some(convert_sui_object(source.object_id())),
   }
 }

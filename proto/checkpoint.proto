@@ -671,7 +671,7 @@ message SuiMoveValue {
     bytes address = 3;
     ListOfSuiMoveValues vector = 4;
     string string = 5;
-    UID uid = 6;
+    UID UID = 6;
     SuiMoveStruct struct = 7;
     SuiMoveValue option = 8;
   }
