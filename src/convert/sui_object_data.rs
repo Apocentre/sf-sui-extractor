@@ -7,8 +7,8 @@ use super::common::{
 
 fn convert_display_fields_response(source: &DisplayFieldsResponse) -> pb::DisplayFieldsResponse {
   pb::DisplayFieldsResponse {
-    data: source.data.map(|d| Into::<HashMap<String, String>>(d)),
-    error: source.error.map(convert_sui_object_response_error),
+    data: source.data.as_ref().map(|d| d.clone().into_iter().collect::<HashMap<String, String>>()).unwrap_or_default(),
+    error: source.error.as_ref().map(convert_sui_object_response_error),
   }
 }
 
