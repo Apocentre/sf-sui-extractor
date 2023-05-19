@@ -1,13 +1,14 @@
 use std::collections::HashMap;
-
 use serde_json::Value;
 use sui_json_rpc_types::{
   SuiArgument, SuiObjectRef, SuiExecutionStatus, SuiTransactionBlockEffectsModifiedAtVersions, OwnedObjectRef,
-  SuiTransactionBlockEvents, SuiParsedData, SuiParsedMoveObject, SuiMoveStruct, SuiMoveValue, SuiMovePackage, SuiRawData, SuiRawMoveObject
+  SuiTransactionBlockEvents, SuiParsedData, SuiParsedMoveObject, SuiMoveStruct, SuiMoveValue, SuiMovePackage,
+  SuiRawData, SuiRawMoveObject, SuiRawMovePackage,
 };
 use sui_types::{
   base_types::{ObjectID, ObjectType, MoveObjectType},
-  TypeTag, gas::GasCostSummary, object::Owner, event::EventID, error::SuiObjectResponseError, id::UID
+  TypeTag, gas::GasCostSummary, object::Owner, event::EventID, error::SuiObjectResponseError, id::UID,
+  move_package::{TypeOrigin, UpgradeInfo},
 };
 use crate::pb::sui::checkpoint::{self as pb};
 
@@ -268,8 +269,34 @@ pub fn convert_sui_move_struct(source: &SuiMoveStruct) -> pb::SuiMoveStruct {
     SuiMoveStruct::Runtime(source) => pb::sui_move_struct::SuiMoveStruct::Runtime(pb::ListOfSuiMoveValues {
       list: source.iter().map(convert_sui_move_value).collect(),
     }),
-    SuiMoveStruct::WithTypes {type_, fields} => todo!(),
-    SuiMoveStruct::WithFields(_) => todo!(),
+    SuiMoveStruct::WithTypes {type_, fields} => {
+      let mut fields_ = HashMap::new();
+      for (k, v) in fields {
+        fields_.insert(k.clone(), convert_sui_move_value(&v));
+      }
+
+      pb::sui_move_struct::SuiMoveStruct::WithTypes(pb::WithTypes {
+        r#type: Some(pb::StructTag {
+          address: type_.address.to_canonical_string(),
+          module: type_.module.to_string(),
+          name: type_.name.to_string(),
+          type_params: Some(pb::ListOfTypeTags {
+            list: type_.type_params.iter().map(convert_type_tag).collect(),
+          }),
+        }),
+        fields: fields_,
+      })
+    },
+    SuiMoveStruct::WithFields(source) => {
+      let mut fields = HashMap::new();
+      for (k, v) in source {
+        fields.insert(k.clone(), convert_sui_move_value(&v));
+      }
+
+      pb::sui_move_struct::SuiMoveStruct::WithFields(pb::WithFields {
+        fields,
+      })
+    },
   };
 
   pb::SuiMoveStruct {
@@ -319,8 +346,12 @@ pub fn convert_sui_move_package(source: &SuiMovePackage) -> pb::SuiMovePackage {
 
 pub fn convert_sui_raw_data(source: &SuiRawData) -> pb::SuiRawData {
   let sui_raw_data = match source {
-    SuiRawData::MoveObject(_) => todo!(),
-    SuiRawData::Package(_) => todo!(),
+    SuiRawData::MoveObject(source) => pb::sui_raw_data::SuiRawData::MoveObject(
+      convert_sui_raw_move_object(source),
+    ),
+    SuiRawData::Package(source) => pb::sui_raw_data::SuiRawData::Package(
+      convert_sui_raw_move_package(source),
+    ),
   };
 
   pb::SuiRawData {
@@ -328,7 +359,7 @@ pub fn convert_sui_raw_data(source: &SuiRawData) -> pb::SuiRawData {
   }
 }
 
-pub fn conver_sui_raw_move_object(source: &SuiRawMoveObject) -> pb::SuiRawMoveObject {
+pub fn convert_sui_raw_move_object(source: &SuiRawMoveObject) -> pb::SuiRawMoveObject {
   pb::SuiRawMoveObject {
     r#type: Some(pb::StructTag {
       address: source.type_.address.to_canonical_string(),
@@ -341,5 +372,36 @@ pub fn conver_sui_raw_move_object(source: &SuiRawMoveObject) -> pb::SuiRawMoveOb
     has_public_transfer: source.has_public_transfer,
     version: source.version.value(),
     bcs_bytes: source.bcs_bytes.clone(),
+  }
+}
+
+pub fn convert_sui_raw_move_package(source: &SuiRawMovePackage) -> pb::SuiRawMovePackage {
+  let mut linkage_table = HashMap::new();
+  for (k, v) in source.linkage_table.clone() {
+    // Note the key here is ObjectID, but we cannot use Message as keys in a map thus we covnert it into hex string
+    // that is key = ObjectId.to_hex_uncompressed
+    linkage_table.insert(k.to_hex_uncompressed(), convert_upgrade_info(&v));
+  }
+  pb::SuiRawMovePackage {
+    id: Some(convert_sui_object(&source.id)),
+    version: source.version.value(),
+    module_map: source.module_map.clone().into_iter().collect::<HashMap<String, Vec<u8>>>(),
+    type_origin_table: source.type_origin_table.iter().map(convert_type_origin).collect(),
+    linkage_table,
+  }
+}
+
+pub fn convert_type_origin(source: &TypeOrigin) -> pb::TypeOrigin {
+  pb::TypeOrigin {
+    module_name: source.module_name.clone(),
+    struct_name: source.struct_name.clone(),
+    package: Some(convert_sui_object(&source.package)),
+  }
+}
+
+pub fn convert_upgrade_info(source: &UpgradeInfo) -> pb::UpgradeInfo {
+  pb::UpgradeInfo {
+    upgraded_id: Some(convert_sui_object(&source.upgraded_id)),
+    upgraded_version: source.upgraded_version.value(),
   }
 }

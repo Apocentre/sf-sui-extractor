@@ -3,7 +3,7 @@ use sui_json_rpc_types::{SuiObjectData, DisplayFieldsResponse};
 use crate::pb::sui::checkpoint::{self as pb};
 use super::common::{
   convert_sui_object, convert_object_type, convert_owner, convert_sui_object_response_error,
-  convert_sui_parsed_data, 
+  convert_sui_parsed_data, convert_sui_raw_data,
 };
 
 fn convert_display_fields_response(source: &DisplayFieldsResponse) -> pb::DisplayFieldsResponse {
@@ -25,6 +25,6 @@ pub fn convert_sui_object_data(source: &SuiObjectData) -> pb::SuiObjectData {
     storage_rebate: source.storage_rebate.map(|sr| sr),
     display: source.display.as_ref().map(convert_display_fields_response),
     content: source.content.as_ref().map(convert_sui_parsed_data),
-    bcs: todo!(),
+    bcs: source.bcs.as_ref().map(convert_sui_raw_data),
   }
 }
