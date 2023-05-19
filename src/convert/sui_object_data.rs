@@ -24,7 +24,7 @@ pub fn convert_sui_object_data(source: &SuiObjectData) -> pb::SuiObjectData {
     previous_transaction: source.previous_transaction.map(|pt| pt.into_inner().to_vec()),
     storage_rebate: source.storage_rebate.map(|sr| sr),
     display: source.display.as_ref().map(convert_display_fields_response),
-    content: todo!(),
+    content: source.content.as_ref().map(convert_sui_parsed_data),
     bcs: todo!(),
   }
 }

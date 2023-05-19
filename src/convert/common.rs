@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde_json::Value;
 use sui_json_rpc_types::{
   SuiArgument, SuiObjectRef, SuiExecutionStatus, SuiTransactionBlockEffectsModifiedAtVersions, OwnedObjectRef,
-  SuiTransactionBlockEvents, SuiParsedData, SuiParsedMoveObject, SuiMoveStruct, SuiMoveValue, SuiMovePackage
+  SuiTransactionBlockEvents, SuiParsedData, SuiParsedMoveObject, SuiMoveStruct, SuiMoveValue, SuiMovePackage, SuiRawData, SuiRawMoveObject
 };
 use sui_types::{
   base_types::{ObjectID, ObjectType, MoveObjectType},
@@ -314,5 +314,32 @@ pub fn convert_sui_move_package(source: &SuiMovePackage) -> pb::SuiMovePackage {
 
   pb::SuiMovePackage {
     disassembled,
+  }
+}
+
+pub fn convert_sui_raw_data(source: &SuiRawData) -> pb::SuiRawData {
+  let sui_raw_data = match source {
+    SuiRawData::MoveObject(_) => todo!(),
+    SuiRawData::Package(_) => todo!(),
+  };
+
+  pb::SuiRawData {
+    sui_raw_data: Some(sui_raw_data),
+  }
+}
+
+pub fn conver_sui_raw_move_object(source: &SuiRawMoveObject) -> pb::SuiRawMoveObject {
+  pb::SuiRawMoveObject {
+    r#type: Some(pb::StructTag {
+      address: source.type_.address.to_canonical_string(),
+      module: source.type_.module.to_string(),
+      name: source.type_.name.to_string(),
+      type_params: Some(pb::ListOfTypeTags {
+        list: source.type_.type_params.iter().map(convert_type_tag).collect(),
+      }),
+    }),
+    has_public_transfer: source.has_public_transfer,
+    version: source.version.value(),
+    bcs_bytes: source.bcs_bytes.clone(),
   }
 }
