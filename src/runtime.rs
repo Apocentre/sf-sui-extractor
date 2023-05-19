@@ -33,7 +33,7 @@ impl FirehoseStreamer {
   pub async fn start(&mut self) -> Result<()> {
     // Format is FIRE INIT sui-node <PACKAGE_VERSION> <MAJOR_VERSION> <MINOR_VERSION> <CHAIN_ID>
     println!(
-      "\nFIRE INIT sui-node {} sui 1 1 {}",
+      "\nFIRE INIT sui-node {} sui 0 0 {}",
       env!("CARGO_PKG_VERSION"), self.chain_id,
     );
 
