@@ -47,9 +47,8 @@ async fn main() -> Result<()> {
   let rpc_client_url = if let Some(rpc_client_url) = rpc_client_url {
     rpc_client_url
   } else {
-    sui_node::start_sui_node(sui_node_config).await;
-
     // Start local sui node
+    sui_node::start_sui_node(sui_node_config).await;
     "http://127.0.0.1:9000".to_string()
   };
 

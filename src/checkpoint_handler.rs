@@ -1,4 +1,5 @@
 use eyre::{Result, Report};
+use async_recursion::async_recursion;
 use jsonrpsee::http_client::{HttpClient};
 use futures::future::join_all;
 use futures::FutureExt;
@@ -53,23 +54,24 @@ impl CheckpointHandler {
     })
   }
 
+  #[async_recursion]
   async fn get_checkpoint(&self, seq: CheckpointSequenceNumber) -> Result<Checkpoint> {
-    let mut checkpoint = Err(Report::msg("Empty Error"));
+    let checkpoint = self.http_client
+    .get_checkpoint(seq.into())
+    .await
+    .map_err(|e| {
+      error!("Failed to get checkpoint with sequence number {} and error {:?}", seq, e);
+      Report::msg(e)
+    });
 
-    while checkpoint.is_err() {
-      checkpoint = self.http_client
-      .get_checkpoint(seq.into())
-      .await
-      .map_err(|e| {
-        error!("Failed to get checkpoint with sequence number {} and error {:?}", seq, e);
-        Report::msg(e)
-      });
+    let Err(_) = checkpoint else {
+      return Ok(checkpoint?)
+    };
 
-      // sleep for 0.1 second and retry if latest checkpoint is not available yet
-      tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-    }
-
-    Ok(checkpoint?)
+    error!("Failed to get checkpoint with sequence number {}", seq);
+    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+    
+    self.get_checkpoint(seq).await
   }
 
     // TODO(gegaowp): re-orgnize object util functions below
