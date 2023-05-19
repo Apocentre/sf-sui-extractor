@@ -1,15 +1,4 @@
-use std::{process::{Command, Child}};
-
-pub struct ChildGuard(Child);
-
-impl Drop for ChildGuard {
-  fn drop(&mut self) {
-    match self.0.kill() {
-      Err(e) => println!("Could not kill child process: {}", e),
-      Ok(_) => println!("Successfully killed child process"),
-    }
-  }
-}
+use std::{process::Command};
 
 pub async fn start_sui_node(config_file_path: String) {
   tokio::spawn(async move {

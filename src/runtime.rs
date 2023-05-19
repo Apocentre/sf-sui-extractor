@@ -42,9 +42,8 @@ impl FirehoseStreamer {
         error!("Failed to create HTTP client: {}", err);
         err
       })?;
-      let cp = CheckpointHandler::new(http_client);
 
-      Ok(cp)
+      Ok(CheckpointHandler::new(http_client))
     }).await?;
 
     self.checkpoint_handler = Some(checkpoint_handler);

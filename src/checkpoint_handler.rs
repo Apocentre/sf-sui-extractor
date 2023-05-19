@@ -2,6 +2,7 @@ use eyre::{Result, Report};
 use jsonrpsee::http_client::{HttpClient};
 use futures::future::join_all;
 use futures::FutureExt;
+use log::error;
 use sui_indexer::{models::objects::ObjectStatus, types::CheckpointTransactionBlockResponse, store::CheckpointData};
 use sui_json_rpc::api::ReadApiClient;
 use sui_types::base_types::{TransactionDigest, ObjectID, SequenceNumber};
@@ -56,15 +57,16 @@ impl CheckpointHandler {
     let mut checkpoint = Err(Report::msg("Empty Error"));
 
     while checkpoint.is_err() {
-      // sleep for 0.1 second and retry if latest checkpoint is not available yet
-      tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-      
       checkpoint = self.http_client
       .get_checkpoint(seq.into())
       .await
       .map_err(|e| {
-        Report::msg(format!("Failed to get checkpoint with sequence number {} and error {:?}", seq, e))
-      })
+        error!("Failed to get checkpoint with sequence number {} and error {:?}", seq, e);
+        Report::msg(e)
+      });
+
+      // sleep for 0.1 second and retry if latest checkpoint is not available yet
+      tokio::time::sleep(std::time::Duration::from_millis(100)).await;
     }
 
     Ok(checkpoint?)
