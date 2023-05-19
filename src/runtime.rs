@@ -54,9 +54,10 @@ impl FirehoseStreamer {
   }
 
   pub async fn convert_next_block(&mut self) -> Result<()> {
-    println!("\nFIRE BLOCK_START {}", self.current_checkpoint_seq);
     let checkpoint_handler = self.checkpoint_handler.as_ref().expect("Checkpoint handler should be created");
     let checkpoint_data = checkpoint_handler.download_checkpoint_data(self.current_checkpoint_seq).await?;
+
+    println!("\nFIRE BLOCK_START {}", self.current_checkpoint_seq);
 
     if checkpoint_data.transactions.is_empty() {
       debug!("[fh-stream] no transactions to send");
