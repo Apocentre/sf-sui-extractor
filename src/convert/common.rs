@@ -1,7 +1,9 @@
+use std::collections::HashMap;
+
 use serde_json::Value;
 use sui_json_rpc_types::{
   SuiArgument, SuiObjectRef, SuiExecutionStatus, SuiTransactionBlockEffectsModifiedAtVersions, OwnedObjectRef,
-  SuiTransactionBlockEvents, SuiParsedData, SuiParsedMoveObject, SuiMoveStruct, SuiMoveValue
+  SuiTransactionBlockEvents, SuiParsedData, SuiParsedMoveObject, SuiMoveStruct, SuiMoveValue, SuiMovePackage
 };
 use sui_types::{
   base_types::{ObjectID, ObjectType, MoveObjectType},
@@ -233,8 +235,12 @@ pub fn convert_sui_object_response_error(source: &SuiObjectResponseError) -> pb:
 
 pub fn convert_sui_parsed_data(source: &SuiParsedData) -> pb::SuiParsedData {
   let sui_parsed_data = match source {
-    SuiParsedData::MoveObject(source) => todo!(),
-    SuiParsedData::Package(_) => todo!(),
+    SuiParsedData::MoveObject(source) => pb::sui_parsed_data::SuiParsedData::MoveObject(
+      convert_sui_parsed_move_object(source)
+    ),
+    SuiParsedData::Package(source) => pb::sui_parsed_data::SuiParsedData::Package(
+      convert_sui_move_package(source)
+    ),
   };
 
   pb::SuiParsedData {
@@ -297,5 +303,16 @@ pub fn convert_sui_move_value(source: &SuiMoveValue) -> pb::SuiMoveValue {
 pub fn convert_uid(source: &UID) -> pb::Uid {
   pb::Uid {
     id: Some(convert_sui_object(source.object_id())),
+  }
+}
+
+pub fn convert_sui_move_package(source: &SuiMovePackage) -> pb::SuiMovePackage {
+  let mut disassembled = HashMap::new();
+  for (k, v) in source.disassembled.clone() {
+    disassembled.insert(k, convert_sui_json_value(&v));
+  }
+
+  pb::SuiMovePackage {
+    disassembled,
   }
 }
