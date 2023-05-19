@@ -6,7 +6,7 @@ pub struct CheckpointData {
     #[prost(message, repeated, tag = "2")]
     pub transactions: ::prost::alloc::vec::Vec<CheckpointTransactionBlockResponse>,
     #[prost(message, repeated, tag = "3")]
-    pub changed_objects: ::prost::alloc::vec::Vec<ChangedObjectPair>,
+    pub changed_objects: ::prost::alloc::vec::Vec<ChangedObject>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -770,11 +770,11 @@ pub struct EventId {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ChangedObjectPair {
+pub struct ChangedObject {
     #[prost(message, optional, tag = "1")]
-    pub one: ::core::option::Option<ObjectStatus>,
+    pub status: ::core::option::Option<ObjectStatus>,
     #[prost(message, optional, tag = "2")]
-    pub two: ::core::option::Option<SuiObjectData>,
+    pub data: ::core::option::Option<SuiObjectData>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

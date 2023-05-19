@@ -3,7 +3,10 @@ use sui_json_rpc_types::{
   SuiArgument, SuiObjectRef, SuiExecutionStatus, SuiTransactionBlockEffectsModifiedAtVersions, OwnedObjectRef,
   SuiTransactionBlockEvents
 };
-use sui_types::{base_types::ObjectID, TypeTag, gas::GasCostSummary, object::Owner, event::EventID};
+use sui_types::{
+  base_types::{ObjectID, ObjectType, MoveObjectType},
+  TypeTag, gas::GasCostSummary, object::Owner, event::EventID, error::SuiObjectResponseError
+};
 use crate::pb::sui::checkpoint::{self as pb};
 
 pub fn convert_sui_object(source: &ObjectID) -> pb::ObjectId {
@@ -102,8 +105,8 @@ pub fn convert_gas_cost_summary(source: &GasCostSummary) -> pb::GasCostSummary {
   }
 }
 
-pub fn convert_owned_object_ref(source: &OwnedObjectRef) -> pb::OwnedObjectRef {
-  let owner = match source.owner {
+pub fn convert_owner(source: &Owner) -> pb::Owner {
+  let owner = match source {
     Owner::AddressOwner(val) => pb::owner::Owner::AddressOwner(val.to_vec()),
     Owner::ObjectOwner(val) => pb::owner::Owner::ObjectOwner(val.to_vec()),
     Owner::Shared {initial_shared_version} => pb::owner::Owner::Shared(pb::Shared {
@@ -112,10 +115,14 @@ pub fn convert_owned_object_ref(source: &OwnedObjectRef) -> pb::OwnedObjectRef {
     Owner::Immutable => pb::owner::Owner::Immutable(()),
   };
 
+  pb::Owner{
+    owner: Some(owner)
+  }
+}
+
+pub fn convert_owned_object_ref(source: &OwnedObjectRef) -> pb::OwnedObjectRef {
   pb::OwnedObjectRef {
-    owner: Some(pb::Owner{
-      owner: Some(owner)
-    }),
+    owner: Some(convert_owner(&source.owner)),
     reference: Some(convert_sui_object_ref(&source.reference)),
   }
 }
@@ -158,5 +165,68 @@ pub fn convert_tx_block_events(source: &SuiTransactionBlockEvents) -> pb::SuiTra
 
   pb::SuiTransactionBlockEvents {
     data,
+  }
+}
+
+pub fn convert_object_type(source: &ObjectType) -> pb::ObjectType {
+  let object_type = match source {
+    ObjectType::Package => pb::object_type::ObjectType::Package(()),
+    ObjectType::Struct(source) => pb::object_type::ObjectType::Struct(convert_move_object_type(&source))
+  };
+  
+  pb::ObjectType {
+    object_type: Some(object_type)
+  }
+}
+
+pub fn convert_move_object_type(source: &MoveObjectType) -> pb::MoveObjectType {
+  let move_object_type = match source.clone().into_inner() {
+    sui_types::base_types::MoveObjectType_::Other(source) => pb::move_object_type::MoveObjectType::Other(pb::StructTag {
+      address: source.address.to_canonical_string(),
+      module: source.module.to_string(),
+      name: source.name.to_string(),
+      type_params: Some(pb::ListOfTypeTags {
+        list: source.type_params.iter().map(convert_type_tag).collect(),
+      }),
+    }),
+    sui_types::base_types::MoveObjectType_::GasCoin => pb::move_object_type::MoveObjectType::GasCoin(()),
+    sui_types::base_types::MoveObjectType_::StakedSui => pb::move_object_type::MoveObjectType::StakedSui(()),
+    sui_types::base_types::MoveObjectType_::Coin(source) => pb::move_object_type::MoveObjectType::Coin(convert_type_tag(&source)),
+  };
+  
+  pb::MoveObjectType {
+    move_object_type: Some(move_object_type)
+  }
+}
+
+pub fn convert_sui_object_response_error(source: &SuiObjectResponseError) -> pb::SuiObjectResponseError {
+  let sui_object_response_error = match source {
+    SuiObjectResponseError::NotExists {object_id} => pb::sui_object_response_error::SuiObjectResponseError::NotExists(
+      pb::sui_object_response_error::NotExists {
+        object_id: Some(convert_sui_object(&object_id)),
+      },
+    ),
+    SuiObjectResponseError::DynamicFieldNotFound {parent_object_id} => pb::sui_object_response_error::SuiObjectResponseError::DynamicFieldNotFound(
+      pb::sui_object_response_error::DynamicFieldNotFound {
+        parent_object_id: Some(convert_sui_object(&parent_object_id)),
+      },
+    ),
+    SuiObjectResponseError::Deleted {object_id, version, digest} => pb::sui_object_response_error::SuiObjectResponseError::Deleted(
+      pb::sui_object_response_error::Deleted {
+        object_id: Some(convert_sui_object(&object_id)),
+        version: version.value(),
+        digest: digest.into_inner().to_vec(),
+      },
+    ),
+    SuiObjectResponseError::Unknown => pb::sui_object_response_error::SuiObjectResponseError::Unknown(()),
+    SuiObjectResponseError::DisplayError {error} => pb::sui_object_response_error::SuiObjectResponseError::DisplayError(
+      pb::sui_object_response_error::DisplayError {
+        error: error.clone(),
+      },
+    ),
+  };
+
+  pb::SuiObjectResponseError {
+    sui_object_response_error: Some(sui_object_response_error),
   }
 }

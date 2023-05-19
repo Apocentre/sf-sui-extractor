@@ -7,8 +7,10 @@ use log::{error, debug};
 use sui_json_rpc::{CLIENT_SDK_TYPE_HEADER};
 use tokio::time::{sleep};
 use crate::{
-  checkpoint_handler::CheckpointHandler, convert::tx::convert_transaction,
-  pb::sui::checkpoint as pb,
+  checkpoint_handler::CheckpointHandler, pb::sui::checkpoint as pb,
+  convert::{
+    tx::convert_transaction, object::convert_object_change,
+  },
 };
 
 pub struct FirehoseStreamer {
@@ -75,6 +77,11 @@ impl FirehoseStreamer {
       Self::print_transaction(&txn_proto);
     }
 
+    for obj_change in &checkpoint_data.changed_objects {
+      let obj_change_proto = convert_object_change(&obj_change);
+      Self::print_changed_object(&obj_change_proto);
+    }
+
     println!("\nFIRE BLOCK_END {}", self.current_checkpoint_seq);
     self.current_checkpoint_seq += 1;
 
@@ -105,5 +112,16 @@ impl FirehoseStreamer {
       )
     });
     println!("\nFIRE TRX {}", base64::encode(buf));
+  }
+
+  fn print_changed_object(obj_change: &pb::ChangedObject) {
+    let mut buf = vec![];
+    obj_change.encode(&mut buf).unwrap_or_else(|_| {
+      panic!(
+        "Could not convert protobuf object cahange to bytes '{:?}'",
+        obj_change
+      )
+    });
+    println!("\nFIRE OBJ {}", base64::encode(buf));
   }  
 }
