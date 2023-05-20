@@ -119,7 +119,7 @@ message SuiTransactionBlockData {
 
 message SuiTransactionBlockDataV1 {
   SuiTransactionBlockKind transaction = 1;
-  bytes sender = 2;
+  string sender = 2;
   SuiGasData gas_data = 3;
 }
 
@@ -141,7 +141,7 @@ message SuiTransactionBlockKind {
 
 message SuiGasData {
   repeated SuiObjectRef payment = 1;
-  bytes owner = 2;
+  string owner = 2;
   uint64 price = 3;
   uint64 budget = 4;
 }
@@ -440,11 +440,11 @@ message OwnedObjectRef {
 message Owner {
   oneof owner {
     // Object is exclusively owned by a single address, and is mutable.
-    bytes address_owner = 1;
+    string address_owner = 1;
 
     // Object is exclusively owned by a single object, and is mutable.
     // The object ID is converted to SuiAddress as SuiAddress is universal.
-    bytes object_owner = 2;
+    string object_owner = 2;
 
     // Object is shared, can be used by any address, and is mutable.
     Shared shared = 3;
@@ -506,7 +506,7 @@ message SuiEvent {
   SuiJsonValue parsed_json = 6;
 
   // Base 58 encoded bcs bytes of the move event
-  bytes bcs = 7;
+  string bcs = 7;
 
   // UTC timestamp in milliseconds since epoch (1/1/1970)
   optional uint64 timestamp_ms = 8;
@@ -668,7 +668,7 @@ message SuiMoveValue {
   oneof sui_move_value {
     uint32 number = 1;
     bool bool = 2;
-    bytes address = 3;
+    string address = 3;
     ListOfSuiMoveValues vector = 4;
     string string = 5;
     UID UID = 6;
