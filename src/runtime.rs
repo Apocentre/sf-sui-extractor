@@ -72,6 +72,8 @@ impl FirehoseStreamer {
       self.current_checkpoint_seq,
     );
 
+    Self::print_checkpoint_overview(&convert_checkpoint(&checkpoint_data.checkpoint));
+
     for tx in &checkpoint_data.transactions {
       let txn_proto = convert_transaction(&tx);
       Self::print_transaction(&txn_proto);
@@ -101,8 +103,18 @@ impl FirehoseStreamer {
       Report::msg(format!("Failed to initialize fullnode RPC client with error: {:?}", e))
     })
   }
-  
-  
+
+  fn print_checkpoint_overview(checkpoint: &pb::Checkpoint) {
+    let mut buf = vec![];
+    checkpoint.encode(&mut buf).unwrap_or_else(|_| {
+      panic!(
+        "Could not convert protobuf object cahange to bytes '{:?}'",
+        checkpoint
+      )
+    });
+    println!("\nFIRE CHECKPOINT {}", base64::encode(buf));
+  }
+
   fn print_transaction(transaction: &pb::CheckpointTransactionBlockResponse) {
     let mut buf = vec![];
     transaction.encode(&mut buf).unwrap_or_else(|_| {
@@ -123,5 +135,5 @@ impl FirehoseStreamer {
       )
     });
     println!("\nFIRE OBJ {}", base64::encode(buf));
-  }  
+  }
 }

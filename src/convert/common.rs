@@ -8,7 +8,7 @@ use sui_json_rpc_types::{
 use sui_types::{
   base_types::{ObjectID, ObjectType, MoveObjectType},
   TypeTag, gas::GasCostSummary, object::Owner, event::EventID, error::SuiObjectResponseError, id::UID,
-  move_package::{TypeOrigin, UpgradeInfo},
+  move_package::{TypeOrigin, UpgradeInfo}, messages_checkpoint::CheckpointCommitment,
 };
 use crate::pb::sui::checkpoint::{self as pb};
 
@@ -403,5 +403,19 @@ pub fn convert_upgrade_info(source: &UpgradeInfo) -> pb::UpgradeInfo {
   pb::UpgradeInfo {
     upgraded_id: Some(convert_sui_object(&source.upgraded_id)),
     upgraded_version: source.upgraded_version.value(),
+  }
+}
+
+pub fn convert_checkpoint_commitment(source: &CheckpointCommitment) -> pb::CheckpointCommitment {
+  let checkpoint_commitment = match source {
+    CheckpointCommitment::ECMHLiveObjectSetDigest(source) => pb::checkpoint_commitment::CheckpointCommitment::EcmhLiveObjectSetDigest(
+      pb::EcmhLiveObjectSetDigest {
+        digest: source.digest.into_inner().to_vec(),
+      }
+    )
+  };
+
+  pb::CheckpointCommitment {
+    checkpoint_commitment: Some(checkpoint_commitment),
   }
 }

@@ -1,3 +1,4 @@
+pub mod checkpoint;
 pub mod tx;
 pub mod object;
 pub mod sui_tx_block_kind;
