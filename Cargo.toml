@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 async-recursion = "1"
 backoff = { version = "0.4", features = ["futures", "futures-core", "pin-project-lite", "tokio", "tokio_1"] }
+base58 = "0.2"
 base64 = "0.20.0"
 clap = { version = "4.2.7", features = ["derive"] }
 eyre = "0.6.8"

@@ -18,10 +18,10 @@ pub fn convert_sui_object_data(source: &SuiObjectData) -> pb::SuiObjectData {
   pb::SuiObjectData {
     object_id: Some(convert_sui_object(&source.object_id)),
     version: source.version.value(),
-    digest: source.digest.into_inner().to_vec(),
+    digest: source.digest.base58_encode(),
     r#type: source.type_.as_ref().map(|t| convert_object_type(&t)),
     owner: source.owner.as_ref().map(convert_owner),
-    previous_transaction: source.previous_transaction.map(|pt| pt.into_inner().to_vec()),
+    previous_transaction: source.previous_transaction.map(|pt| pt.base58_encode()),
     storage_rebate: source.storage_rebate.map(|sr| sr),
     display: source.display.as_ref().map(convert_display_fields_response),
     content: source.content.as_ref().map(convert_sui_parsed_data),

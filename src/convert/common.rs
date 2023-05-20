@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use base58::ToBase58;
 use serde_json::Value;
 use sui_json_rpc_types::{
   SuiArgument, SuiObjectRef, SuiExecutionStatus, SuiTransactionBlockEffectsModifiedAtVersions, OwnedObjectRef,
@@ -82,7 +83,7 @@ pub fn convert_sui_object_ref(source: &SuiObjectRef) -> pb::SuiObjectRef {
   pb::SuiObjectRef {
     object_id: Some(convert_sui_object(&source.object_id)),
     version: source.version.value(),
-    digest: source.digest.into_inner().to_vec(),
+    digest: source.digest.base58_encode(),
   }
 }
 
@@ -141,7 +142,7 @@ pub fn convert_tx_block_effects_modified_at_versions(
 
 pub fn convert_event_id(source: &EventID) -> pb::EventId {
   pb::EventId {
-    tx_digest: source.tx_digest.into_inner().to_vec(),
+    tx_digest: source.tx_digest.base58_encode(),
     event_seq: source.event_seq,
   }
 }
@@ -218,7 +219,7 @@ pub fn convert_sui_object_response_error(source: &SuiObjectResponseError) -> pb:
       pb::sui_object_response_error::Deleted {
         object_id: Some(convert_sui_object(&object_id)),
         version: version.value(),
-        digest: digest.into_inner().to_vec(),
+        digest: digest.base58_encode(),
       },
     ),
     SuiObjectResponseError::Unknown => pb::sui_object_response_error::SuiObjectResponseError::Unknown(()),
@@ -410,7 +411,7 @@ pub fn convert_checkpoint_commitment(source: &CheckpointCommitment) -> pb::Check
   let checkpoint_commitment = match source {
     CheckpointCommitment::ECMHLiveObjectSetDigest(source) => pb::checkpoint_commitment::CheckpointCommitment::EcmhLiveObjectSetDigest(
       pb::EcmhLiveObjectSetDigest {
-        digest: source.digest.into_inner().to_vec(),
+        digest: source.digest.into_inner().to_base58(),
       }
     )
   };

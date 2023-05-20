@@ -6,7 +6,7 @@ use super::{
 
 pub fn convert_transaction(source: &CheckpointTransactionBlockResponse) -> pb::CheckpointTransactionBlockResponse {
   pb::CheckpointTransactionBlockResponse {
-    digest: source.digest.into_inner().to_vec(),
+    digest: source.digest.base58_encode(),
     transaction: convert_sui_tx_block(&source.transaction),
     raw_transaction: source.raw_transaction.clone(),
     effects: Some(convert_sui_effects(&source.effects)),

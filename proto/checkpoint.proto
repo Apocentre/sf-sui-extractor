@@ -19,13 +19,13 @@ message Checkpoint {
   uint64 sequence_number = 2;
 
   // Checkpoint digest (base58 encoded)
-  bytes digest = 3;
+  string digest = 3;
   
   // Total number of transactions committed since genesis, including those in this checkpoint.
   uint64 network_total_transactions = 4;
   
   // Digest of the previous checkpoint
-  optional bytes previous_digest = 5;
+  optional string previous_digest = 5;
   
   // The running total gas costs of all transactions included in the current epoch so far until this checkpoint.
   GasCostSummary epoch_rolling_gas_cost_summary = 6;
@@ -39,7 +39,7 @@ message Checkpoint {
   optional EndOfEpochData end_of_epoch_data = 8;
   
   // Transaction digests (base58 encoded)
-  repeated bytes transactions = 9;
+  repeated string transactions = 9;
   
   // Commitments to checkpoint state
   repeated CheckpointCommitment checkpoint_commitments = 10;
@@ -49,7 +49,7 @@ message Checkpoint {
 }
 
 message CheckpointTransactionBlockResponse {
-  bytes digest = 1;
+  string digest = 1;
   // Transaction input data
   SuiTransactionBlock transaction = 2;
   bytes raw_transaction = 3;
@@ -104,7 +104,7 @@ message CheckpointCommitment {
 
 message ECMHLiveObjectSetDigest {
   // base58 encoded
-  bytes digest = 1;
+  string digest = 1;
 }
 
 message SuiTransactionBlock {
@@ -153,8 +153,8 @@ message SuiObjectRef {
   // Object version.
   uint64 version = 2;
 
-  // Base64 string representing the object digest
-  bytes digest = 3;
+  // Base58 string representing the object digest
+  string digest = 3;
 }
 
 message SuiChangeEpoch {
@@ -212,7 +212,7 @@ message SuiObjectArg {
 message ImmOrOwnedObject {
   ObjectID object_id = 1;
   uint64 version = 2;
-  bytes digest = 3;
+  string digest = 3;
 }
 
 message SharedObject {
@@ -398,7 +398,7 @@ message SuiTransactionBlockEffectsV1 {
   repeated SuiObjectRef shared_objects = 5;
 
   // The transaction digest
-  bytes transaction_digest = 6;
+  string transaction_digest = 6;
 
   // ObjectRef and owner of new objects created.
   repeated OwnedObjectRef created = 7;
@@ -426,10 +426,10 @@ message SuiTransactionBlockEffectsV1 {
 
   // The digest of the events emitted during execution,
   // can be None if the transaction does not emit any event.
-  optional bytes events_digest = 14;
+  optional string events_digest = 14;
 
   // The set of transaction digests this transaction depends on.
-  repeated bytes dependencies = 15;
+  repeated string dependencies = 15;
 }
 
 message OwnedObjectRef {
@@ -513,7 +513,7 @@ message SuiEvent {
 }
 
 message EventID {
-  bytes tx_digest = 1;
+  string tx_digest = 1;
   uint64 event_seq = 2;
 }
 
@@ -540,8 +540,8 @@ message SuiObjectData {
   // Object version
   uint64 version = 2;
 
-  // Base64 string representing the object digest
-  bytes digest = 3;
+  // Base58 string representing the object digest
+  string digest = 3;
 
   // The type of the object. Default to be None unless SuiObjectDataOptions.showType is set to true
   optional ObjectType type = 4;
@@ -552,7 +552,7 @@ message SuiObjectData {
 
   // The digest of the transaction that created or last mutated this object. Default to be None unless
   // SuiObjectDataOptions.showPreviousTransaction is set to true
-  optional bytes previous_transaction = 6;
+  optional string previous_transaction = 6;
 
   // The amount of SUI we would rebate if this object gets deleted.
   // This number is re-calculated each time the object is mutated based on
@@ -622,7 +622,7 @@ message SuiObjectResponseError {
   message Deleted {
     ObjectID object_id = 1;
     uint64 version = 2;
-    bytes digest = 3;
+    string digest = 3;
   }
 
   message DisplayError {

@@ -11,7 +11,7 @@ pub fn convert_sui_call_arg(source: &SuiCallArg) -> pb::SuiCallArg {
         sui_object_arg: Some(pb::sui_object_arg::SuiObjectArg::ImmOrOwnedObject(pb::ImmOrOwnedObject {
           object_id: Some(convert_sui_object(&object_id)),
           version: version.value(),
-          digest: digest.into_inner().to_vec(),
+          digest: digest.base58_encode(),
         }))
       }),
       SuiObjectArg::SharedObject {object_id, initial_shared_version, mutable} => pb::sui_call_arg::SuiCallArg::Object(pb::SuiObjectArg {

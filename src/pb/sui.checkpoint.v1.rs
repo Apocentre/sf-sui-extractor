@@ -18,14 +18,14 @@ pub struct Checkpoint {
     #[prost(uint64, tag = "2")]
     pub sequence_number: u64,
     /// Checkpoint digest (base58 encoded)
-    #[prost(bytes = "vec", tag = "3")]
-    pub digest: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "3")]
+    pub digest: ::prost::alloc::string::String,
     /// Total number of transactions committed since genesis, including those in this checkpoint.
     #[prost(uint64, tag = "4")]
     pub network_total_transactions: u64,
     /// Digest of the previous checkpoint
-    #[prost(bytes = "vec", optional, tag = "5")]
-    pub previous_digest: ::core::option::Option<::prost::alloc::vec::Vec<u8>>,
+    #[prost(string, optional, tag = "5")]
+    pub previous_digest: ::core::option::Option<::prost::alloc::string::String>,
     /// The running total gas costs of all transactions included in the current epoch so far until this checkpoint.
     #[prost(message, optional, tag = "6")]
     pub epoch_rolling_gas_cost_summary: ::core::option::Option<GasCostSummary>,
@@ -38,8 +38,8 @@ pub struct Checkpoint {
     #[prost(message, optional, tag = "8")]
     pub end_of_epoch_data: ::core::option::Option<EndOfEpochData>,
     /// Transaction digests (base58 encoded)
-    #[prost(bytes = "vec", repeated, tag = "9")]
-    pub transactions: ::prost::alloc::vec::Vec<::prost::alloc::vec::Vec<u8>>,
+    #[prost(string, repeated, tag = "9")]
+    pub transactions: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Commitments to checkpoint state
     #[prost(message, repeated, tag = "10")]
     pub checkpoint_commitments: ::prost::alloc::vec::Vec<CheckpointCommitment>,
@@ -50,8 +50,8 @@ pub struct Checkpoint {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CheckpointTransactionBlockResponse {
-    #[prost(bytes = "vec", tag = "1")]
-    pub digest: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "1")]
+    pub digest: ::prost::alloc::string::String,
     /// Transaction input data
     #[prost(message, optional, tag = "2")]
     pub transaction: ::core::option::Option<SuiTransactionBlock>,
@@ -132,8 +132,8 @@ pub mod checkpoint_commitment {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EcmhLiveObjectSetDigest {
     /// base58 encoded
-    #[prost(bytes = "vec", tag = "1")]
-    pub digest: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "1")]
+    pub digest: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -219,9 +219,9 @@ pub struct SuiObjectRef {
     /// Object version.
     #[prost(uint64, tag = "2")]
     pub version: u64,
-    /// Base64 string representing the object digest
-    #[prost(bytes = "vec", tag = "3")]
-    pub digest: ::prost::alloc::vec::Vec<u8>,
+    /// Base58 string representing the object digest
+    #[prost(string, tag = "3")]
+    pub digest: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -316,8 +316,8 @@ pub struct ImmOrOwnedObject {
     pub object_id: ::core::option::Option<ObjectId>,
     #[prost(uint64, tag = "2")]
     pub version: u64,
-    #[prost(bytes = "vec", tag = "3")]
-    pub digest: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "3")]
+    pub digest: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -612,8 +612,8 @@ pub struct SuiTransactionBlockEffectsV1 {
     #[prost(message, repeated, tag = "5")]
     pub shared_objects: ::prost::alloc::vec::Vec<SuiObjectRef>,
     /// The transaction digest
-    #[prost(bytes = "vec", tag = "6")]
-    pub transaction_digest: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "6")]
+    pub transaction_digest: ::prost::alloc::string::String,
     /// ObjectRef and owner of new objects created.
     #[prost(message, repeated, tag = "7")]
     pub created: ::prost::alloc::vec::Vec<OwnedObjectRef>,
@@ -640,11 +640,11 @@ pub struct SuiTransactionBlockEffectsV1 {
     pub gas_object: ::core::option::Option<OwnedObjectRef>,
     /// The digest of the events emitted during execution,
     /// can be None if the transaction does not emit any event.
-    #[prost(bytes = "vec", optional, tag = "14")]
-    pub events_digest: ::core::option::Option<::prost::alloc::vec::Vec<u8>>,
+    #[prost(string, optional, tag = "14")]
+    pub events_digest: ::core::option::Option<::prost::alloc::string::String>,
     /// The set of transaction digests this transaction depends on.
-    #[prost(bytes = "vec", repeated, tag = "15")]
-    pub dependencies: ::prost::alloc::vec::Vec<::prost::alloc::vec::Vec<u8>>,
+    #[prost(string, repeated, tag = "15")]
+    pub dependencies: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -763,8 +763,8 @@ pub struct SuiEvent {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EventId {
-    #[prost(bytes = "vec", tag = "1")]
-    pub tx_digest: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "1")]
+    pub tx_digest: ::prost::alloc::string::String,
     #[prost(uint64, tag = "2")]
     pub event_seq: u64,
 }
@@ -810,9 +810,9 @@ pub struct SuiObjectData {
     /// Object version
     #[prost(uint64, tag = "2")]
     pub version: u64,
-    /// Base64 string representing the object digest
-    #[prost(bytes = "vec", tag = "3")]
-    pub digest: ::prost::alloc::vec::Vec<u8>,
+    /// Base58 string representing the object digest
+    #[prost(string, tag = "3")]
+    pub digest: ::prost::alloc::string::String,
     /// The type of the object. Default to be None unless SuiObjectDataOptions.showType is set to true
     #[prost(message, optional, tag = "4")]
     pub r#type: ::core::option::Option<ObjectType>,
@@ -822,8 +822,8 @@ pub struct SuiObjectData {
     pub owner: ::core::option::Option<Owner>,
     /// The digest of the transaction that created or last mutated this object. Default to be None unless
     /// SuiObjectDataOptions.showPreviousTransaction is set to true
-    #[prost(bytes = "vec", optional, tag = "6")]
-    pub previous_transaction: ::core::option::Option<::prost::alloc::vec::Vec<u8>>,
+    #[prost(string, optional, tag = "6")]
+    pub previous_transaction: ::core::option::Option<::prost::alloc::string::String>,
     /// The amount of SUI we would rebate if this object gets deleted.
     /// This number is re-calculated each time the object is mutated based on
     /// the present storage gas price.
@@ -928,8 +928,8 @@ pub mod sui_object_response_error {
         pub object_id: ::core::option::Option<super::ObjectId>,
         #[prost(uint64, tag = "2")]
         pub version: u64,
-        #[prost(bytes = "vec", tag = "3")]
-        pub digest: ::prost::alloc::vec::Vec<u8>,
+        #[prost(string, tag = "3")]
+        pub digest: ::prost::alloc::string::String,
     }
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Message)]
