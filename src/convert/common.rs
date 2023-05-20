@@ -111,8 +111,8 @@ pub fn convert_gas_cost_summary(source: &GasCostSummary) -> pb::GasCostSummary {
 
 pub fn convert_owner(source: &Owner) -> pb::Owner {
   let owner = match source {
-    Owner::AddressOwner(val) => pb::owner::Owner::AddressOwner(val.to_vec()),
-    Owner::ObjectOwner(val) => pb::owner::Owner::ObjectOwner(val.to_vec()),
+    Owner::AddressOwner(val) => pb::owner::Owner::AddressOwner(hex::encode(val)),
+    Owner::ObjectOwner(val) => pb::owner::Owner::ObjectOwner(hex::encode(val)),
     Owner::Shared {initial_shared_version} => pb::owner::Owner::Shared(pb::Shared {
       initial_shared_version: initial_shared_version.value(),
     }),
@@ -309,7 +309,7 @@ pub fn convert_sui_move_value(source: &SuiMoveValue) -> pb::SuiMoveValue {
   let sui_move_value = match source {
     SuiMoveValue::Number(source) => pb::sui_move_value::SuiMoveValue::Number(*source),
     SuiMoveValue::Bool(source) => pb::sui_move_value::SuiMoveValue::Bool(*source),
-    SuiMoveValue::Address(source) => pb::sui_move_value::SuiMoveValue::Address(source.to_vec()),
+    SuiMoveValue::Address(source) => pb::sui_move_value::SuiMoveValue::Address(hex::encode(source)),
     SuiMoveValue::Vector(source) => pb::sui_move_value::SuiMoveValue::Vector(pb::ListOfSuiMoveValues {
       list: source.iter().map(convert_sui_move_value).collect(),
     }),

@@ -163,8 +163,8 @@ pub mod sui_transaction_block_data {
 pub struct SuiTransactionBlockDataV1 {
     #[prost(message, optional, tag = "1")]
     pub transaction: ::core::option::Option<SuiTransactionBlockKind>,
-    #[prost(bytes = "vec", tag = "2")]
-    pub sender: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "2")]
+    pub sender: ::prost::alloc::string::String,
     #[prost(message, optional, tag = "3")]
     pub gas_data: ::core::option::Option<SuiGasData>,
 }
@@ -203,8 +203,8 @@ pub mod sui_transaction_block_kind {
 pub struct SuiGasData {
     #[prost(message, repeated, tag = "1")]
     pub payment: ::prost::alloc::vec::Vec<SuiObjectRef>,
-    #[prost(bytes = "vec", tag = "2")]
-    pub owner: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "2")]
+    pub owner: ::prost::alloc::string::String,
     #[prost(uint64, tag = "3")]
     pub price: u64,
     #[prost(uint64, tag = "4")]
@@ -666,12 +666,12 @@ pub mod owner {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Owner {
         /// Object is exclusively owned by a single address, and is mutable.
-        #[prost(bytes, tag = "1")]
-        AddressOwner(::prost::alloc::vec::Vec<u8>),
+        #[prost(string, tag = "1")]
+        AddressOwner(::prost::alloc::string::String),
         /// Object is exclusively owned by a single object, and is mutable.
         /// The object ID is converted to SuiAddress as SuiAddress is universal.
-        #[prost(bytes, tag = "2")]
-        ObjectOwner(::prost::alloc::vec::Vec<u8>),
+        #[prost(string, tag = "2")]
+        ObjectOwner(::prost::alloc::string::String),
         /// Object is shared, can be used by any address, and is mutable.
         #[prost(message, tag = "3")]
         Shared(super::Shared),
@@ -1039,8 +1039,8 @@ pub mod sui_move_value {
         Number(u32),
         #[prost(bool, tag = "2")]
         Bool(bool),
-        #[prost(bytes, tag = "3")]
-        Address(::prost::alloc::vec::Vec<u8>),
+        #[prost(string, tag = "3")]
+        Address(::prost::alloc::string::String),
         #[prost(message, tag = "4")]
         Vector(super::ListOfSuiMoveValues),
         #[prost(string, tag = "5")]
