@@ -9,7 +9,7 @@ use tokio::time::{sleep};
 use crate::{
   checkpoint_handler::CheckpointHandler, pb::sui::checkpoint as pb,
   convert::{
-    tx::convert_transaction, object::convert_object_change,
+    tx::convert_transaction, object::convert_object_change, checkpoint::convert_checkpoint,
   },
 };
 
@@ -108,7 +108,7 @@ impl FirehoseStreamer {
     let mut buf = vec![];
     checkpoint.encode(&mut buf).unwrap_or_else(|_| {
       panic!(
-        "Could not convert protobuf object cahange to bytes '{:?}'",
+        "Could not convert protobuf checkpoint to bytes '{:?}'",
         checkpoint
       )
     });
@@ -130,7 +130,7 @@ impl FirehoseStreamer {
     let mut buf = vec![];
     obj_change.encode(&mut buf).unwrap_or_else(|_| {
       panic!(
-        "Could not convert protobuf object cahange to bytes '{:?}'",
+        "Could not convert protobuf object change to bytes '{:?}'",
         obj_change
       )
     });
