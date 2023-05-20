@@ -6,9 +6,9 @@ use sui_json_rpc_types::{
   SuiRawData, SuiRawMoveObject, SuiRawMovePackage,
 };
 use sui_types::{
-  base_types::{ObjectID, ObjectType, MoveObjectType},
+  base_types::{ObjectID, ObjectType, MoveObjectType, AuthorityName},
   TypeTag, gas::GasCostSummary, object::Owner, event::EventID, error::SuiObjectResponseError, id::UID,
-  move_package::{TypeOrigin, UpgradeInfo}, messages_checkpoint::CheckpointCommitment,
+  move_package::{TypeOrigin, UpgradeInfo}, messages_checkpoint::CheckpointCommitment, committee::StakeUnit,
 };
 use crate::pb::sui::checkpoint::{self as pb};
 
@@ -417,5 +417,12 @@ pub fn convert_checkpoint_commitment(source: &CheckpointCommitment) -> pb::Check
 
   pb::CheckpointCommitment {
     checkpoint_commitment: Some(checkpoint_commitment),
+  }
+}
+
+pub fn convert_next_epoch_committee(source: &(AuthorityName, StakeUnit)) -> pb::NextEpochCommittee {
+  pb::NextEpochCommittee {
+    authority_name: source.0.as_ref().to_vec(),
+    stake_unit: source.1,
   }
 }
