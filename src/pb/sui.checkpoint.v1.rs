@@ -754,8 +754,8 @@ pub struct SuiEvent {
     #[prost(message, optional, tag = "6")]
     pub parsed_json: ::core::option::Option<SuiJsonValue>,
     /// Base 58 encoded bcs bytes of the move event
-    #[prost(bytes = "vec", tag = "7")]
-    pub bcs: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "7")]
+    pub bcs: ::prost::alloc::string::String,
     /// UTC timestamp in milliseconds since epoch (1/1/1970)
     #[prost(uint64, optional, tag = "8")]
     pub timestamp_ms: ::core::option::Option<u64>,

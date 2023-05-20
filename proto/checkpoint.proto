@@ -506,7 +506,7 @@ message SuiEvent {
   SuiJsonValue parsed_json = 6;
 
   // Base 58 encoded bcs bytes of the move event
-  bytes bcs = 7;
+  string bcs = 7;
 
   // UTC timestamp in milliseconds since epoch (1/1/1970)
   optional uint64 timestamp_ms = 8;

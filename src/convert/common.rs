@@ -162,7 +162,7 @@ pub fn convert_tx_block_events(source: &SuiTransactionBlockEvents) -> pb::SuiTra
       }),
     }),
     parsed_json: Some(convert_sui_json_value(&e.parsed_json)),
-    bcs: e.bcs.clone(),
+    bcs: e.bcs.to_base58(),
     timestamp_ms: e.timestamp_ms,
   })
   .collect();
