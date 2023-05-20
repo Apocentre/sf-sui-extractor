@@ -111,8 +111,8 @@ pub fn convert_gas_cost_summary(source: &GasCostSummary) -> pb::GasCostSummary {
 
 pub fn convert_owner(source: &Owner) -> pb::Owner {
   let owner = match source {
-    Owner::AddressOwner(val) => pb::owner::Owner::AddressOwner(val.as_ref().to_base58()),
-    Owner::ObjectOwner(val) => pb::owner::Owner::ObjectOwner(val.as_ref().to_base58()),
+    Owner::AddressOwner(val) => pb::owner::Owner::AddressOwner(val.to_vec()),
+    Owner::ObjectOwner(val) => pb::owner::Owner::ObjectOwner(val.to_vec()),
     Owner::Shared {initial_shared_version} => pb::owner::Owner::Shared(pb::Shared {
       initial_shared_version: initial_shared_version.value(),
     }),
@@ -152,7 +152,7 @@ pub fn convert_tx_block_events(source: &SuiTransactionBlockEvents) -> pb::SuiTra
     id: Some(convert_event_id(&e.id)),
     package_id: Some(convert_sui_object(&e.package_id)),
     transaction_module: e.transaction_module.clone().into_string(),
-    sender: e.sender.as_ref().to_base58(),
+    sender: hex::encode(e.sender),
     r#type: Some(pb::StructTag {
       address: e.type_.address.to_canonical_string(),
       module: e.type_.module.to_string(),
@@ -162,7 +162,7 @@ pub fn convert_tx_block_events(source: &SuiTransactionBlockEvents) -> pb::SuiTra
       }),
     }),
     parsed_json: Some(convert_sui_json_value(&e.parsed_json)),
-    bcs: e.bcs.to_base58(),
+    bcs: e.bcs.clone(),
     timestamp_ms: e.timestamp_ms,
   })
   .collect();
@@ -309,7 +309,7 @@ pub fn convert_sui_move_value(source: &SuiMoveValue) -> pb::SuiMoveValue {
   let sui_move_value = match source {
     SuiMoveValue::Number(source) => pb::sui_move_value::SuiMoveValue::Number(*source),
     SuiMoveValue::Bool(source) => pb::sui_move_value::SuiMoveValue::Bool(*source),
-    SuiMoveValue::Address(source) => pb::sui_move_value::SuiMoveValue::Address(source.as_ref().to_base58()),
+    SuiMoveValue::Address(source) => pb::sui_move_value::SuiMoveValue::Address(source.to_vec()),
     SuiMoveValue::Vector(source) => pb::sui_move_value::SuiMoveValue::Vector(pb::ListOfSuiMoveValues {
       list: source.iter().map(convert_sui_move_value).collect(),
     }),
