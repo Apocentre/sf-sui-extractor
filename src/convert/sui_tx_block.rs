@@ -7,7 +7,7 @@ pub fn convert_sui_tx_block(source: &SuiTransactionBlock) -> Option<pb::SuiTrans
     SuiTransactionBlockData::V1(source) => pb::sui_transaction_block_data::SuiTransactionBlockData::V1(
       pb::SuiTransactionBlockDataV1 {
         transaction: convert_sui_transaction_block_kind(&source.transaction),
-        sender: source.sender.to_inner().to_vec(),
+        sender: source.sender.to_vec(),
         gas_data: Some(convert_sui_gas_data(&source.gas_data)),
       }
     ),
