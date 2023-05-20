@@ -92,7 +92,7 @@ message EndOfEpochData {
 }
 
 message NextEpochCommittee {
-  bytes authority_name = 1;
+  string authority_name = 1;
   uint64 stake_unit = 2;
 }
 

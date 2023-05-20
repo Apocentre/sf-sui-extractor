@@ -106,8 +106,8 @@ pub struct EndOfEpochData {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NextEpochCommittee {
-    #[prost(bytes = "vec", tag = "1")]
-    pub authority_name: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "1")]
+    pub authority_name: ::prost::alloc::string::String,
     #[prost(uint64, tag = "2")]
     pub stake_unit: u64,
 }

@@ -423,7 +423,7 @@ pub fn convert_checkpoint_commitment(source: &CheckpointCommitment) -> pb::Check
 
 pub fn convert_next_epoch_committee(source: &(AuthorityName, StakeUnit)) -> pb::NextEpochCommittee {
   pb::NextEpochCommittee {
-    authority_name: source.0.as_ref().to_vec(),
+    authority_name: base64::encode(source.0.as_ref()),
     stake_unit: source.1,
   }
 }
