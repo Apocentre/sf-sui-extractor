@@ -2686,6 +2686,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ctrlc"
+version = "3.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04d778600249295e82b6ab12e291ed9029407efee0cfb7baf67157edc65964df"
+dependencies = [
+ "nix 0.26.2",
+ "windows-sys 0.48.0",
+]
+
+[[package]]
 name = "curve25519-dalek-fiat"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10106,6 +10116,7 @@ dependencies = [
  "base58",
  "base64 0.20.0",
  "clap 4.2.7",
+ "ctrlc",
  "env_logger 0.10.0",
  "eyre",
  "futures",
