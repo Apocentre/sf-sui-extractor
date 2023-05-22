@@ -117,10 +117,7 @@ impl CheckpointHandler {
       Ok(acc)
     })
     .map_err(|e: Report| {
-      Report::msg(format!(
-        "Failed to generate changed objects of checkpoint with err {:?}",
-        e
-      ))
+      Report::msg(format!("Failed to generate changed objects of checkpoint with err {:?}", e))
     })
   }
 
@@ -128,6 +125,7 @@ impl CheckpointHandler {
     http_client: HttpClient,
     digests: Vec<TransactionDigest>,
   ) -> Result<Vec<CheckpointTransactionBlockResponse>> {
+    return Err(Report::msg(">>>>>>>>>"));
     let sui_transactions = http_client.multi_get_transaction_blocks(
       digests.clone(),
       // MUSTFIX(gegaowp): avoid double fetching both input and raw_input

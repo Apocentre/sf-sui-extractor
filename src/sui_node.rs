@@ -1,27 +1,27 @@
-use std::{sync::{Arc, Mutex}, process::Command};
-use ctrlc;
+use tokio::{
+  process::Command, sync::oneshot::{Receiver},
+};
 
-pub async fn start_sui_node(config_file_path: String) {
-  tokio::spawn(async move {
-    let child = Arc::new(
-      Mutex::new(
-        Command::new("sui-node")
-        .arg(format!("--config-path={}", config_file_path))
-        .spawn()
-        .expect("start sui-node child process")
-      )
-    );
+pub struct SuiNode {
+  config_path: String,
+}
 
-    let child_clone = Arc::clone(&child);
-    ctrlc::set_handler(move|| {
-      let mut child = child_clone.lock().unwrap();
+impl SuiNode {
+  pub fn new(config_path: String) -> Self {
+    Self {config_path}
+  }
 
-      child.kill().expect("kill sui-node");
-    }).unwrap();
+  pub async fn start(&self, rx: Receiver<()>) {
+    let mut child = Command::new("sui-node")
+    .arg(format!("--config-path={}", self.config_path))
+    .spawn()
+    .expect("start sui-node child process");
 
-    let mut child = child.lock().unwrap();
-    if let Ok(status) = child.wait() {
-      panic!("result: {status:?}");
-    }
-  });
+    tokio::select! {
+      status = child.wait() => {
+        panic!("Sui Node exited: {status:?}");
+      }
+      _ = rx => child.kill().await.expect("kill failed"),
+    };
+  }
 }
