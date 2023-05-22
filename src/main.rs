@@ -53,7 +53,10 @@ async fn main() -> Result<()> {
   };
 
   let mut fireshose_streamer = FirehoseStreamer::new(chain_id, rpc_client_url, starting_checkpoint_seq);
-  fireshose_streamer.start().await?;
+
+  if let Err(e) = fireshose_streamer.start().await {
+    panic!("{:?}", e);
+  }
 
   Ok(())
 }
