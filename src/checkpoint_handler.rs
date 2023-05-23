@@ -125,7 +125,6 @@ impl CheckpointHandler {
     http_client: HttpClient,
     digests: Vec<TransactionDigest>,
   ) -> Result<Vec<CheckpointTransactionBlockResponse>> {
-    return Err(Report::msg(">>>>>>>>>"));
     let sui_transactions = http_client.multi_get_transaction_blocks(
       digests.clone(),
       // MUSTFIX(gegaowp): avoid double fetching both input and raw_input

@@ -1,4 +1,4 @@
-use log::error;
+use log::info;
 use tokio::{
   process::Command, sync::oneshot::{Receiver},
 };
@@ -23,7 +23,7 @@ impl SuiNode {
         panic!("Sui Node exited: {status:?}");
       }
       _ = rx => {
-        println!("Killing Sui Node");
+        info!("Killing Sui Node");
         child.kill().await.expect("kill sui-node")
       },
     };
