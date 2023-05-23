@@ -55,7 +55,9 @@ impl FirehoseStreamer {
 
   pub async fn convert_next_block(&mut self) -> Result<()> {
     let checkpoint_handler = self.checkpoint_handler.as_ref().expect("Checkpoint handler should be created");
-    let checkpoint_data = checkpoint_handler.download_checkpoint_data(self.current_checkpoint_seq).await?;
+    let checkpoint_data = retry(ExponentialBackoff::default(), || async {
+      Ok(checkpoint_handler.download_checkpoint_data(self.current_checkpoint_seq).await?)
+    }).await?;
 
     println!("\nFIRE BLOCK_START {}", self.current_checkpoint_seq);
 

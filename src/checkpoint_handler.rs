@@ -140,6 +140,7 @@ impl CheckpointHandler {
     .map_err(|e| {
       Report::msg(format!("Failed to get transactions {:?} with error: {:?}", digests.clone(), e))
     })?;
+
     let sui_full_transactions: Vec<CheckpointTransactionBlockResponse> = sui_transactions
     .into_iter()
     .map(CheckpointTransactionBlockResponse::try_from)
