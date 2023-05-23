@@ -8,8 +8,8 @@ use sui_sf_indexer::{
 async fn main() -> Result<()> {
   env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
-  let mut pm = ProcessManager::new();
-  pm.start();
+  let pm = Box::leak(Box::new(ProcessManager::new()));
+  pm.start().await;
 
   Ok(())
 }

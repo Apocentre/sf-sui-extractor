@@ -1,9 +1,12 @@
-use std::{panic, process, mem};
+use std::{
+  sync::{mpsc::sync_channel, Arc, Mutex}, panic, process, mem
+};
 use ctrlc;
+use log::{info};
 use tokio::{
   spawn, sync::{
-    oneshot::{channel, Sender}, mpsc,
-  },
+    oneshot::{channel, Sender},
+  }, task::JoinHandle,
 };
 use clap::{Parser};
 use crate::{sui_node::SuiNode, runtime::FirehoseStreamer};
@@ -29,109 +32,98 @@ struct Args {
 }
 
 #[derive(Default)]
-pub struct ProcessManager {
+struct ProcessManagerInner {
   args: Args,
   tasks: Vec<Sender<()>>,
 }
 
-impl ProcessManager {
-  pub fn new() -> ProcessManager {
-    let args = Args::parse();
+pub struct ProcessManager(Arc<Mutex<ProcessManagerInner>>);
 
-    ProcessManager {
-      args,
-      tasks: vec![],
-    }
+impl ProcessManager {
+  pub fn new() -> Self {
+    let args = Args::parse();
+    let pm = ProcessManagerInner {args, tasks: Vec::new(),};
+
+    ProcessManager(Arc::new(Mutex::new(pm)))
   }
 
   fn register_hooks(&mut self)  {
-    let pm = mem::take(self);
-    
-    spawn(async move {
-      let (tx, mut rx) = mpsc::channel(2);
+    let (tx, rx) = sync_channel(2);
+    let tx_2 = tx.clone();
+    let orig_hook = panic::take_hook();
 
-      let tx_2 = tx.clone();
-      let orig_hook = panic::take_hook();
+    // this hook will be called if any of the threads panics
+    panic::set_hook(Box::new(move |panic_info| {
+      tx_2.send(()).expect("send msg");
+      orig_hook(panic_info);
+    }));
 
-      // this hook will be called if any of the threads panics
-      panic::set_hook(Box::new(move |panic_info| {
-        tx_2.blocking_send(()).expect("send msg");
-        orig_hook(panic_info);
-        std::thread::sleep(std::time::Duration::from_secs(1000));
-      }));
+    let tx_3 = tx.clone();
+    ctrlc::set_handler(move || {
+      tx_3.send(()).expect("send msg");
+    }).unwrap();
 
-      let tx_3 = tx.clone();
-      ctrlc::set_handler(move || {
-        tx_3.blocking_send(()).expect("send msg");
-      }).unwrap();
-
-      loop {
-        let _ = rx.recv().await;
-        pm.kill_all();
-        break;
-      }
-    });
+    let _ = rx.recv();
+    self.kill_all();
   }
 
-  pub fn start(&mut self) {
-    self.register_hooks();
+  pub async fn start(&mut self) {
+    let mut tasks = vec![];
+
+    let pm = Arc::clone(&self.0);
+    let rpc_client_url = pm.lock().unwrap().args.rpc_client_url.clone();
 
     // If no rpc url provided the we need to start a local sui-node
-    let rpc_client_url = if let Some(rpc_client_url) = &self.args.rpc_client_url {
+    let rpc_client_url = if let Some(rpc_client_url) = rpc_client_url {
       rpc_client_url.clone()
     } else {
-      self.spawn_sui_node();
+      tasks.push(self.spawn_sui_node());
       "http://127.0.0.1:9000".to_string()
     };
 
-    self.spawn_firehose_streamer(rpc_client_url);
+    tasks.push(self.spawn_firehose_streamer(rpc_client_url));
     self.register_hooks();
   }
 
-  fn spawn_sui_node (&mut self) {
+  fn spawn_sui_node (&mut self) -> JoinHandle<()> {
     let (tx, rx) = channel();
-    self.tasks.push(tx);
-    let sui_config = self.args.sui_node_config.clone();
+    let pm = Arc::clone(&self.0);
+    let mut pm = pm.lock().unwrap();
+    let sui_config = pm.args.sui_node_config.clone();
+
+    pm.tasks.push(tx);
 
     spawn(async move {
       let sui_node = SuiNode::new(sui_config);
       sui_node.start(rx).await;
-    });
+    })
   }
 
-  fn spawn_firehose_streamer(&mut self, rpc_client_url: String) {
-    let chain_id = self.args.chain_id.clone();
-    let starting_checkpoint_seq = self.args.starting_checkpoint_seq.clone();
+  fn spawn_firehose_streamer(&mut self, rpc_client_url: String) -> JoinHandle<()> {
+    let pm = Arc::clone(&self.0);
+    let pm = pm.lock().unwrap();
+    let chain_id = pm.args.chain_id.clone();
+    let starting_checkpoint_seq = pm.args.starting_checkpoint_seq.clone();
 
     spawn(async move {
       let mut fireshose_streamer = FirehoseStreamer::new(chain_id, rpc_client_url, starting_checkpoint_seq);
       if let Err(e) = fireshose_streamer.start().await {
         panic!("{}", e);
       }
-    });
+    })
   }
 
-  pub fn kill_all(self) {
-    for task in self.tasks {
+  pub fn kill_all(&mut self) {
+    info!("Killing all processes and exiting");
+
+    let pm = Arc::clone(&self.0);
+    let mut pm = pm.lock().unwrap();
+    let tasks = mem::take(&mut pm.tasks);
+
+    for task in tasks {
       task.send(()).expect("send task termination messages");
     }
 
     process::exit(1);
   }
-
-  // pub async fn start_sui_node(&mut self, sui_node_config: String) {
-  //   let sui_node_process = sui_node::start_sui_node(sui_node_config).await;
-  //   self.children.push(sui_node_process);
-  // }
-
-  // pub fn kill_all(&mut self) -> Result<()> {
-  //   for child in &self.children {
-  //     let mut child = child.lock().unwrap();
-  //     child.kill()?;
-  //   }
-
-  //   process::exit(1);
-
-  //   Ok(())
-  // }
 }
