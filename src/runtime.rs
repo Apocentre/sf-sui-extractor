@@ -1,7 +1,7 @@
 use eyre::Result;
 use futures::StreamExt;
-use mysten_metrics::
-  {metered_channel::{channel, Sender, Receiver, ReceiverStream}, get_metrics,
+use mysten_metrics::{
+  init_metrics, get_metrics, metered_channel::{channel, Sender, Receiver, ReceiverStream},
 };
 use sui_indexer::{
   framework::{fetcher::CheckpointFetcher, Handler},
@@ -29,17 +29,22 @@ const CHECKPOINT_QUEUE_SIZE: usize = 1000;
 const CHECKPOINT_PROCESSING_BATCH_SIZE: usize = 25;
 
 pub struct FirehoseStreamer {
+  pub current_checkpoint_seq: u64,
   rpc_client_url: String,
   chain_id: String,
-  pub current_checkpoint_seq: u64,
+  registry: Registry,
 }
 
 impl FirehoseStreamer {
   pub fn new(chain_id: String, rpc_client_url: String, starting_checkpoint_seq: u64) -> Self {
+    let registry = Registry::default();
+    init_metrics(&registry);
+
     Self {
+      current_checkpoint_seq: starting_checkpoint_seq,
       rpc_client_url,
       chain_id,
-      current_checkpoint_seq: starting_checkpoint_seq,
+      registry,
     }
   }
 
@@ -68,13 +73,13 @@ impl FirehoseStreamer {
       handle_checkpoint_receiver
     ) = channel::<CheckpointDataToCommit>(
       CHECKPOINT_QUEUE_SIZE,
-      &mysten_metrics::get_metrics()
+      &get_metrics()
       .unwrap()
       .channels
       .with_label_values(&["checkpoint_indexing"]),
     );
     
-    Self::spawn_checkpoint_handler(handle_checkpoint_sender, checkpoint_data_receiver).await?;
+    self.spawn_checkpoint_handler(handle_checkpoint_sender, checkpoint_data_receiver).await?;
     Self::commit_checkpoint_data(handle_checkpoint_receiver).await;
 
     Ok(())
@@ -105,10 +110,11 @@ impl FirehoseStreamer {
   }
 
   async fn spawn_checkpoint_handler(
+    &self,
     handle_checkpoint_sender: Sender<CheckpointDataToCommit>,
     checkpoint_data_receiver: Receiver<CheckpointData>
   ) -> Result<()> {
-    let mut checkpoint_handler = Self::create_handler(handle_checkpoint_sender).await?;
+    let mut checkpoint_handler = self.create_handler(handle_checkpoint_sender).await?;
     let stream = ReceiverStream::new(checkpoint_data_receiver);
     let mut chunks = stream.ready_chunks(CHECKPOINT_PROCESSING_BATCH_SIZE);
 
@@ -130,9 +136,9 @@ impl FirehoseStreamer {
     }
   }
 
-  async fn create_handler(handle_checkpoint_sender: Sender<CheckpointDataToCommit>) -> Result<CheckpointHandler<SuiStore>> {
+  async fn create_handler(&self, handle_checkpoint_sender: Sender<CheckpointDataToCommit>) -> Result<CheckpointHandler<SuiStore>> {
     let (_, rx) = watch::channel(None);
-    let indexer_metrics = IndexerMetrics::new(&Registry::default());
+    let indexer_metrics = IndexerMetrics::new(&self.registry);
     
     let checkpoint_handler = CheckpointHandler::new(
       SuiStore::new(),

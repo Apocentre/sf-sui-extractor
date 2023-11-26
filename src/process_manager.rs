@@ -25,7 +25,7 @@ struct Args {
 
   /// You can use https://fullnode.mainnet.sui.io:443 for mainnet
   /// Note that if one is not provided, a local sui-node will be spinned up instead
-  #[arg(short = 'r', long)]
+  #[arg(short = 'r', long, default_value = "https://fullnode.devnet.sui.io:443")]
   rpc_client_url: Option<String>,
 }
 

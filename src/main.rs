@@ -1,8 +1,6 @@
 use env_logger::Env;
 use eyre::Result;
-use sui_sf_indexer::{
-  process_manager::ProcessManager,
-};
+use sui_sf_indexer::process_manager::ProcessManager;
 
 #[tokio::main]
 async fn main() -> Result<()> {
