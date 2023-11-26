@@ -137,6 +137,9 @@ impl FirehoseStreamer {
       // 2. object_changes.changed_objects[].df_info
       //
       // These fields are computed and rely on state being stored which we don't want to do here.
+      //
+      // We will have to update the proto buf models and thus all convertsion logic that exist in the
+      // convert module.
       println!(
         "Block {} -----> Tx count {:?}",
         checkpoint_data.checkpoint.sequence_number, checkpoint_data.transactions.len(),
