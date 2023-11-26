@@ -4,11 +4,11 @@ use mysten_metrics::{
   init_metrics, get_metrics, metered_channel::{channel, Sender, Receiver, ReceiverStream},
 };
 use sui_indexer::{
-  framework::{fetcher::CheckpointFetcher, Handler},
+  framework::fetcher::CheckpointFetcher,
   handlers::{
-    checkpoint_handler_v2::CheckpointHandler, CheckpointDataToCommit, tx_processor::IndexingPackageCache
+    checkpoint_handler::CheckpointProcessor, CheckpointDataToCommit, tx_processor::IndexingPackageCache,
   },
-  metrics::IndexerMetrics,
+  metrics::IndexerMetrics, store::TemporaryCheckpointStore,
 };
 use sui_rest_api::{Client, CheckpointData};
 use backoff::{ExponentialBackoff, future::retry};
@@ -100,7 +100,6 @@ impl FirehoseStreamer {
       Some(self.current_checkpoint_seq),
       checkpoint_data_sender,
     );
-
     
     spawn(async move {
       checkpoint_fetcher.run().await;
@@ -127,7 +126,7 @@ impl FirehoseStreamer {
     Ok(())
   }
 
-  async fn commit_checkpoint_data(handle_checkpoint_receiver: Receiver<CheckpointDataToCommit>) {
+  async fn commit_checkpoint_data(handle_checkpoint_receiver: Receiver<TemporaryCheckpointStore>) {
     let mut stream = ReceiverStream::new(handle_checkpoint_receiver);
 
     while let Some(checkpoint_data) = stream.next().await {
@@ -136,11 +135,11 @@ impl FirehoseStreamer {
     }
   }
 
-  async fn create_handler(&self, handle_checkpoint_sender: Sender<CheckpointDataToCommit>) -> Result<CheckpointHandler<SuiStore>> {
+  async fn create_handler(&self, handle_checkpoint_sender: Sender<TemporaryCheckpointStore>) -> Result<CheckpointProcessor<SuiStore>> {
     let (_, rx) = watch::channel(None);
     let indexer_metrics = IndexerMetrics::new(&self.registry);
     
-    let checkpoint_handler = CheckpointHandler::new(
+    let checkpoint_handler = CheckpointProcessor::new(
       SuiStore::new(),
       indexer_metrics,
       handle_checkpoint_sender,
