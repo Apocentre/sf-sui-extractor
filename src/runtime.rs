@@ -132,7 +132,15 @@ impl FirehoseStreamer {
 
     while let Some(checkpoint_data) = stream.next().await {
       // TODO: convert and log data to the stdout
-      println!("Block {} -> {:?}", checkpoint_data.checkpoint.epoch, checkpoint_data)
+      // We would need to ignore the following fields from CheckpointDataToCommit:
+      // 1. epoch
+      // 2. object_changes.changed_objects[].df_info
+      //
+      // These fields are computed and rely on state being stored which we don't want to do here.
+      println!(
+        "Block {} -----> Tx count {:?}",
+        checkpoint_data.checkpoint.sequence_number, checkpoint_data.transactions.len(),
+      )
     }
   }
 
