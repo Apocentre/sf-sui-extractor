@@ -15,17 +15,17 @@ eyre = "0.6.8"
 env_logger = "0.10.0"
 futures = "0.3.23"
 hex = "0.4"
-jsonrpsee = { version = "0.16.2", features = ["full"] }
 log = "0.4.17"
 prost = "0.11.9"
 prost-types = "0.11.9"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
-sui-json-rpc = { git = "https://github.com/apocentre/sui", rev = "4008bac" }
-sui-json-rpc-types = { git = "https://github.com/apocentre/sui", rev = "4008bac" }
-sui-indexer = { git = "https://github.com/apocentre/sui", rev = "4008bac" }
-sui-types = { git = "https://github.com/apocentre/sui", rev = "4008bac" }
-sui-json = { git = "https://github.com/apocentre/sui", rev = "4008bac" }
+sui-json-rpc = { path = "../sui/crates/sui-json-rpc" }
+sui-rest-api = { path = "../sui/crates/sui-rest-api" }
+sui-json-rpc-types = { path = "../sui/crates/sui-json-rpc-types" }
+sui-indexer = { path = "../sui/crates/sui-indexer" }
+sui-types = { path = "../sui/crates/sui-types" }
+sui-json = { path = "../sui/crates/sui-json" }
 tokio = { version = "1.27.0", features = ["full"] }
 
 [build-dependencies]

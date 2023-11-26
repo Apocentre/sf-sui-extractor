@@ -1,9 +1,9 @@
 use eyre::{Result, Report};
 use backoff::{ExponentialBackoff, future::retry};
-use jsonrpsee::http_client::{HttpClient};
 use futures::future::join_all;
+use sui_rest_api::{Client, CheckpointData};
 use futures::FutureExt;
-use sui_indexer::{models::objects::ObjectStatus, types::CheckpointTransactionBlockResponse, store::CheckpointData};
+use sui_indexer::{models::objects::ObjectStatus, types::CheckpointTransactionBlockResponse};
 use sui_json_rpc::api::ReadApiClient;
 use sui_types::base_types::{TransactionDigest, ObjectID, SequenceNumber};
 use sui_json_rpc_types::{
@@ -16,12 +16,12 @@ const MULTI_GET_CHUNK_SIZE: usize = 50;
 type CheckpointSequenceNumber = u64;
 
 pub struct CheckpointHandler {
-  http_client: HttpClient,
+  http_client: Client,
 }
 
 impl CheckpointHandler {
   pub fn new(
-    http_client: HttpClient,
+    http_client: Client,
   ) -> Self {
     Self {
       http_client,
@@ -53,10 +53,9 @@ impl CheckpointHandler {
     })
   }
 
-  async fn get_checkpoint(&self, seq: CheckpointSequenceNumber) -> Result<Checkpoint> {
+  async fn get_checkpoint(&self, seq: CheckpointSequenceNumber) -> Result<CheckpointData> {
     let checkpoint = retry(ExponentialBackoff::default(), || async {
-      let checkpoint = self.http_client
-      .get_checkpoint(seq.into())
+      let checkpoint = self.http_client.get_full_checkpoint(seq)
       .await
       .map_err(|e| {
         Report::msg(format!("Failed to get checkpoint with sequence number {} and error {:?}", seq, e))
@@ -84,7 +83,7 @@ impl CheckpointHandler {
   }
 
   pub async fn fetch_changed_objects(
-    http_client: HttpClient,
+    http_client: Client,
     object_changes: Vec<(ObjectID, SequenceNumber, ObjectStatus)>,
   ) -> Result<Vec<(ObjectStatus, SuiObjectData)>> {
     join_all(object_changes.chunks(MULTI_GET_CHUNK_SIZE).map(|objects| {
@@ -122,7 +121,7 @@ impl CheckpointHandler {
   }
 
   pub async fn multi_get_full_transactions(
-    http_client: HttpClient,
+    http_client: Client,
     digests: Vec<TransactionDigest>,
   ) -> Result<Vec<CheckpointTransactionBlockResponse>> {
     let sui_transactions = http_client.multi_get_transaction_blocks(

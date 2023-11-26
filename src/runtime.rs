@@ -1,11 +1,10 @@
 use std::time::Duration;
 use eyre::{Result, Report};
-use jsonrpsee::http_client::{HeaderMap, HeaderValue, HttpClient, HttpClientBuilder};
+use sui_rest_api::Client;
 use backoff::{ExponentialBackoff, future::retry};
 use prost::Message;
 use log::{error, debug};
-use sui_json_rpc::{CLIENT_SDK_TYPE_HEADER};
-use tokio::time::{sleep};
+use tokio::time::sleep;
 use crate::{
   checkpoint_handler::CheckpointHandler, pb::sui::checkpoint as pb,
   convert::{
@@ -92,18 +91,11 @@ impl FirehoseStreamer {
     Ok(())
   }
 
-  fn get_http_client(rpc_client_url: &str) -> Result<HttpClient> {
-    let mut headers = HeaderMap::new();
-    headers.insert(CLIENT_SDK_TYPE_HEADER, HeaderValue::from_static("indexer"));
-  
-    HttpClientBuilder::default()
-    .max_request_body_size(2 << 30)
-    .max_concurrent_requests(usize::MAX)
-    .set_headers(headers.clone())
-    .build(rpc_client_url)
-    .map_err(|e| {
-      Report::msg(format!("Failed to initialize fullnode RPC client with error: {:?}", e))
-    })
+  fn get_http_client(rpc_client_url: &str) -> Result<Client> {
+    let rest_api_url = format!("{}/rest", rpc_client_url);
+    let rest_client = Client::new(&rest_api_url);
+
+    Ok(rest_client)
   }
 
   fn print_checkpoint_overview(checkpoint: &pb::Checkpoint) {
