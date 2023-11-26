@@ -1,21 +1,28 @@
 use std::time::Duration;
-use eyre::{Result, Report};
+use eyre::Result;
+use mysten_metrics::metered_channel;
+use sui_indexer::{
+  framework::fetcher::CheckpointFetcher,
+  handlers::{checkpoint_handler_v2::CheckpointHandler, CheckpointDataToCommit},
+};
 use sui_rest_api::Client;
 use backoff::{ExponentialBackoff, future::retry};
 use prost::Message;
 use log::{error, debug};
 use tokio::time::sleep;
 use crate::{
-  checkpoint_handler::CheckpointHandler, pb::sui::checkpoint as pb,
-  convert::{
-    tx::convert_transaction, object::convert_object_change, checkpoint::convert_checkpoint,
-  },
+  pb::sui::checkpoint as pb,
+  // convert::{
+  //   tx::convert_transaction, object::convert_object_change, checkpoint::convert_checkpoint,
+  // },
 };
 
+const DOWNLOAD_QUEUE_SIZE: usize = 1000;
+const CHECKPOINT_QUEUE_SIZE: usize = 1000;
 pub struct FirehoseStreamer {
   rpc_client_url: String,
   chain_id: String,
-  checkpoint_handler: Option<CheckpointHandler>,
+  // checkpoint_handler: Option<Fetcher>,
   pub current_checkpoint_seq: u64,
 }
 
@@ -25,7 +32,6 @@ impl FirehoseStreamer {
       rpc_client_url,
       chain_id,
       current_checkpoint_seq: starting_checkpoint_seq,
-      checkpoint_handler: None,
     }
   }
 
@@ -36,59 +42,64 @@ impl FirehoseStreamer {
       env!("CARGO_PKG_VERSION"), self.chain_id,
     );
 
-    let checkpoint_handler = retry(ExponentialBackoff::default(), || async {
+    
+    retry(ExponentialBackoff::default(), || async {
       let http_client = Self::get_http_client(&self.rpc_client_url).map_err(|err| {
         error!("Failed to create HTTP client: {}", err);
         err
       })?;
+      
+      let (
+        checkpoint_data_sender,
+        checkpoint_data_receiver
+      ) = metered_channel::channel(
+          DOWNLOAD_QUEUE_SIZE,
+          &mysten_metrics::get_metrics()
+          .unwrap()
+          .channels
+          .with_label_values(&["checkpoint_tx_downloading"]),
+      );
 
-      Ok(CheckpointHandler::new(http_client))
+      let checkpoint_fetcher = CheckpointFetcher::new(
+        http_client,
+        Some(self.current_checkpoint_seq),
+        checkpoint_data_sender,
+      );
+
+      // Self::create_handler().await?
+      Ok(())
     }).await?;
 
-    self.checkpoint_handler = Some(checkpoint_handler);
+    // self.checkpoint_handler = Some(checkpoint_handler);
 
-    loop {
-      self.convert_next_block().await?;
-    }
-  }
-
-  pub async fn convert_next_block(&mut self) -> Result<()> {
-    let checkpoint_handler = self.checkpoint_handler.as_ref().expect("Checkpoint handler should be created");
-    let checkpoint_data = retry(ExponentialBackoff::default(), || async {
-      Ok(checkpoint_handler.download_checkpoint_data(self.current_checkpoint_seq).await?)
-    }).await?;
-
-    println!("\nFIRE BLOCK_START {}", self.current_checkpoint_seq);
-
-    if checkpoint_data.transactions.is_empty() {
-      debug!("[fh-stream] no transactions to send");
-      sleep(Duration::from_millis(100)).await;
-
-      return Ok(())
-    }
-
-    debug!(
-      "[fh-stream] got {} transactions from  {}",
-      checkpoint_data.transactions.len(),
-      self.current_checkpoint_seq,
-    );
-
-    Self::print_checkpoint_overview(&convert_checkpoint(&checkpoint_data.checkpoint));
-
-    for tx in &checkpoint_data.transactions {
-      let txn_proto = convert_transaction(&tx);
-      Self::print_transaction(&txn_proto);
-    }
-
-    for obj_change in &checkpoint_data.changed_objects {
-      let obj_change_proto = convert_object_change(&obj_change);
-      Self::print_changed_object(&obj_change_proto);
-    }
-
-    println!("\nFIRE BLOCK_END {}", self.current_checkpoint_seq);
-    self.current_checkpoint_seq += 1;
+    // loop {
+    //   self.convert_next_block().await?;
+    // }
 
     Ok(())
+  }
+
+  async fn create_handler() -> Result<()> {
+    let (
+      handle_checkpoint_sender,
+      handle_checkpoint_receiver
+    ) = metered_channel::channel::<CheckpointDataToCommit>(
+      CHECKPOINT_QUEUE_SIZE,
+      &mysten_metrics::get_metrics()
+      .unwrap()
+      .channels
+      .with_label_values(&["checkpoint_indexing"]),
+    );
+
+    // let checkpoint_handler = CheckpointHandler {
+    //   state,
+    //   metrics,
+    //   indexed_checkpoint_sender,
+    //   package_cache: IndexingPackageCache::start(rx),
+    // };
+
+
+    todo!()
   }
 
   fn get_http_client(rpc_client_url: &str) -> Result<Client> {
@@ -98,36 +109,75 @@ impl FirehoseStreamer {
     Ok(rest_client)
   }
 
-  fn print_checkpoint_overview(checkpoint: &pb::Checkpoint) {
-    let mut buf = vec![];
-    checkpoint.encode(&mut buf).unwrap_or_else(|_| {
-      panic!(
-        "Could not convert protobuf checkpoint to bytes '{:?}'",
-        checkpoint
-      )
-    });
-    println!("\nFIRE CHECKPOINT {}", base64::encode(buf));
-  }
+  // pub async fn convert_next_block(&mut self) -> Result<()> {
+  //   let checkpoint_handler = self.checkpoint_handler.as_ref().expect("Checkpoint handler should be created");
+  //   let checkpoint_data = retry(ExponentialBackoff::default(), || async {
+  //     Ok(checkpoint_handler.download_checkpoint_data(self.current_checkpoint_seq).await?)
+  //   }).await?;
 
-  fn print_transaction(transaction: &pb::CheckpointTransactionBlockResponse) {
-    let mut buf = vec![];
-    transaction.encode(&mut buf).unwrap_or_else(|_| {
-      panic!(
-        "Could not convert protobuf transaction to bytes '{:?}'",
-        transaction
-      )
-    });
-    println!("\nFIRE TRX {}", base64::encode(buf));
-  }
+  //   println!("\nFIRE BLOCK_START {}", self.current_checkpoint_seq);
 
-  fn print_changed_object(obj_change: &pb::ChangedObject) {
-    let mut buf = vec![];
-    obj_change.encode(&mut buf).unwrap_or_else(|_| {
-      panic!(
-        "Could not convert protobuf object change to bytes '{:?}'",
-        obj_change
-      )
-    });
-    println!("\nFIRE OBJ {}", base64::encode(buf));
-  }
+  //   if checkpoint_data.transactions.is_empty() {
+  //     debug!("[fh-stream] no transactions to send");
+  //     sleep(Duration::from_millis(100)).await;
+
+  //     return Ok(())
+  //   }
+
+  //   debug!(
+  //     "[fh-stream] got {} transactions from  {}",
+  //     checkpoint_data.transactions.len(),
+  //     self.current_checkpoint_seq,
+  //   );
+
+  //   Self::print_checkpoint_overview(&convert_checkpoint(&checkpoint_data.checkpoint));
+
+  //   for tx in &checkpoint_data.transactions {
+  //     let txn_proto = convert_transaction(&tx);
+  //     Self::print_transaction(&txn_proto);
+  //   }
+
+  //   for obj_change in &checkpoint_data.changed_objects {
+  //     let obj_change_proto = convert_object_change(&obj_change);
+  //     Self::print_changed_object(&obj_change_proto);
+  //   }
+
+  //   println!("\nFIRE BLOCK_END {}", self.current_checkpoint_seq);
+  //   self.current_checkpoint_seq += 1;
+
+  //   Ok(())
+  // }
+
+  // fn print_checkpoint_overview(checkpoint: &pb::Checkpoint) {
+  //   let mut buf = vec![];
+  //   checkpoint.encode(&mut buf).unwrap_or_else(|_| {
+  //     panic!(
+  //       "Could not convert protobuf checkpoint to bytes '{:?}'",
+  //       checkpoint
+  //     )
+  //   });
+  //   println!("\nFIRE CHECKPOINT {}", base64::encode(buf));
+  // }
+
+  // fn print_transaction(transaction: &pb::CheckpointTransactionBlockResponse) {
+  //   let mut buf = vec![];
+  //   transaction.encode(&mut buf).unwrap_or_else(|_| {
+  //     panic!(
+  //       "Could not convert protobuf transaction to bytes '{:?}'",
+  //       transaction
+  //     )
+  //   });
+  //   println!("\nFIRE TRX {}", base64::encode(buf));
+  // }
+
+  // fn print_changed_object(obj_change: &pb::ChangedObject) {
+  //   let mut buf = vec![];
+  //   obj_change.encode(&mut buf).unwrap_or_else(|_| {
+  //     panic!(
+  //       "Could not convert protobuf object change to bytes '{:?}'",
+  //       obj_change
+  //     )
+  //   });
+  //   println!("\nFIRE OBJ {}", base64::encode(buf));
+  // }
 }

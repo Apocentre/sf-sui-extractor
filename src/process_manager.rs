@@ -2,14 +2,12 @@ use std::{
   sync::{mpsc::sync_channel, Arc, Mutex}, panic, process, mem
 };
 use ctrlc;
-use log::{info};
+use log::info;
 use tokio::{
-  spawn, sync::{
-    oneshot::{channel, Sender},
-  }, task::JoinHandle,
+  spawn, sync::oneshot::{channel, Sender}, task::JoinHandle,
 };
-use clap::{Parser};
-use crate::{sui_node::SuiNode, runtime::FirehoseStreamer};
+use clap::Parser;
+use crate::{sui::sui_node::SuiNode, runtime::FirehoseStreamer};
 
 #[derive(Default, Debug, Parser)]
 struct Args {
