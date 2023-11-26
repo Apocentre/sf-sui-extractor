@@ -1,14 +1,28 @@
+use std::{collections::BTreeMap, sync::Arc};
 use async_trait::async_trait;
-use sui_indexer::{store::indexer_store_v2::IndexerStoreV2, errors::IndexerError};
 use move_bytecode_utils::module_cache::SyncModuleCache;
 use sui_types::{
   base_types::{ObjectID, SequenceNumber}, object::ObjectRead,
+};
+use sui_indexer::{
+  store::indexer_store_v2::IndexerStoreV2, errors::IndexerError, handlers::{TransactionObjectChangesToCommit, EpochToCommit},
+  types_v2::{IndexedCheckpoint, IndexedTransaction, IndexedEvent, IndexedPackage, TxIndex}, models_v2::display::StoredDisplay
 };
 use super::module_resolver::SuiModuleResolver;
 
 /// Dummy implementation of the IndexerStoreV2 trait. This is currently required by the CheckpointHandler we're utilizing
 /// from the sui-indexer crate.
-struct SuiStore;
+struct SuiStore {
+  module_cache: Arc<SyncModuleCache<SuiModuleResolver>>,
+}
+
+impl SuiStore {
+  pub fn new() -> Self {
+    let module_cache = Arc::new(SyncModuleCache::new(SuiModuleResolver));
+
+    Self {module_cache}
+  }
+}
 
 #[async_trait]
 impl IndexerStoreV2 for SuiStore {
