@@ -31,6 +31,7 @@ sui-indexer = { path = "../sui/crates/sui-indexer" }
 sui-types = { path = "../sui/crates/sui-types" }
 sui-json = { path = "../sui/crates/sui-json" }
 tokio = { version = "1.27.0", features = ["full"] }
+prometheus = "0.13"
 
 [build-dependencies]
 tonic-build = { version = "0.9.2", features = ["prost"] }

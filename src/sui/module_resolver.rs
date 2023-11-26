@@ -7,7 +7,7 @@ pub struct SuiModuleResolver;
 impl ModuleResolver for SuiModuleResolver {
   type Error = Report;
 
-  fn get_module(&self, id: &move_core_types::language_storage::ModuleId) -> Result<Option<Vec<u8>>, Self::Error> {
+  fn get_module(&self, _: &move_core_types::language_storage::ModuleId) -> Result<Option<Vec<u8>>, Self::Error> {
     Ok(None)
   }
 }

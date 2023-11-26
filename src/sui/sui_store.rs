@@ -6,13 +6,15 @@ use sui_types::{
 };
 use sui_indexer::{
   store::indexer_store_v2::IndexerStoreV2, errors::IndexerError, handlers::{TransactionObjectChangesToCommit, EpochToCommit},
-  types_v2::{IndexedCheckpoint, IndexedTransaction, IndexedEvent, IndexedPackage, TxIndex}, models_v2::display::StoredDisplay
+  types_v2::{IndexedCheckpoint, IndexedTransaction, IndexedEvent, IndexedPackage, TxIndex},
+  models_v2::display::StoredDisplay,
 };
 use super::module_resolver::SuiModuleResolver;
 
 /// Dummy implementation of the IndexerStoreV2 trait. This is currently required by the CheckpointHandler we're utilizing
 /// from the sui-indexer crate.
-struct SuiStore {
+#[derive(Clone)]
+pub struct SuiStore {
   module_cache: Arc<SyncModuleCache<SuiModuleResolver>>,
 }
 

@@ -8228,6 +8228,7 @@ dependencies = [
  "move-bytecode-utils",
  "move-core-types",
  "mysten-metrics",
+ "prometheus",
  "prost 0.11.9",
  "prost-types 0.11.9",
  "serde",

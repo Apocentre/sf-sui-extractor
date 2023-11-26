@@ -1,17 +1,24 @@
-use std::time::Duration;
 use eyre::Result;
-use mysten_metrics::metered_channel;
-use sui_indexer::{
-  framework::fetcher::CheckpointFetcher,
-  handlers::{checkpoint_handler_v2::CheckpointHandler, CheckpointDataToCommit},
+use futures::StreamExt;
+use mysten_metrics::
+  {metered_channel::{channel, Sender, Receiver, ReceiverStream}, get_metrics,
 };
-use sui_rest_api::Client;
+use sui_indexer::{
+  framework::{fetcher::CheckpointFetcher, Handler},
+  handlers::{
+    checkpoint_handler_v2::CheckpointHandler, CheckpointDataToCommit, tx_processor::IndexingPackageCache
+  },
+  metrics::IndexerMetrics,
+};
+use sui_rest_api::{Client, CheckpointData};
 use backoff::{ExponentialBackoff, future::retry};
-use prost::Message;
-use log::{error, debug};
-use tokio::time::sleep;
+// use prost::Message;
+use log::error;
+use prometheus::Registry;
+use tokio::{sync::watch, spawn};
 use crate::{
-  pb::sui::checkpoint as pb,
+  sui::sui_store::SuiStore,
+  // pb::sui::checkpoint as pb, 
   // convert::{
   //   tx::convert_transaction, object::convert_object_change, checkpoint::convert_checkpoint,
   // },
@@ -19,10 +26,11 @@ use crate::{
 
 const DOWNLOAD_QUEUE_SIZE: usize = 1000;
 const CHECKPOINT_QUEUE_SIZE: usize = 1000;
+const CHECKPOINT_PROCESSING_BATCH_SIZE: usize = 25;
+
 pub struct FirehoseStreamer {
   rpc_client_url: String,
   chain_id: String,
-  // checkpoint_handler: Option<Fetcher>,
   pub current_checkpoint_seq: u64,
 }
 
@@ -42,64 +50,99 @@ impl FirehoseStreamer {
       env!("CARGO_PKG_VERSION"), self.chain_id,
     );
 
-    
-    retry(ExponentialBackoff::default(), || async {
-      let http_client = Self::get_http_client(&self.rpc_client_url).map_err(|err| {
-        error!("Failed to create HTTP client: {}", err);
-        err
-      })?;
-      
-      let (
-        checkpoint_data_sender,
-        checkpoint_data_receiver
-      ) = metered_channel::channel(
-          DOWNLOAD_QUEUE_SIZE,
-          &mysten_metrics::get_metrics()
-          .unwrap()
-          .channels
-          .with_label_values(&["checkpoint_tx_downloading"]),
-      );
+    let (
+      checkpoint_data_sender,
+      checkpoint_data_receiver
+    ) = channel(
+        DOWNLOAD_QUEUE_SIZE,
+        &get_metrics()
+        .unwrap()
+        .channels
+        .with_label_values(&["checkpoint_tx_downloading"]),
+    );
 
-      let checkpoint_fetcher = CheckpointFetcher::new(
-        http_client,
-        Some(self.current_checkpoint_seq),
-        checkpoint_data_sender,
-      );
+    self.spawn_fetcher(checkpoint_data_sender).await?;
 
-      // Self::create_handler().await?
-      Ok(())
-    }).await?;
-
-    // self.checkpoint_handler = Some(checkpoint_handler);
-
-    // loop {
-    //   self.convert_next_block().await?;
-    // }
-
-    Ok(())
-  }
-
-  async fn create_handler() -> Result<()> {
     let (
       handle_checkpoint_sender,
       handle_checkpoint_receiver
-    ) = metered_channel::channel::<CheckpointDataToCommit>(
+    ) = channel::<CheckpointDataToCommit>(
       CHECKPOINT_QUEUE_SIZE,
       &mysten_metrics::get_metrics()
       .unwrap()
       .channels
       .with_label_values(&["checkpoint_indexing"]),
     );
+    
+    Self::spawn_checkpoint_handler(handle_checkpoint_sender, checkpoint_data_receiver).await?;
+    Self::commit_checkpoint_data(handle_checkpoint_receiver).await;
 
-    // let checkpoint_handler = CheckpointHandler {
-    //   state,
-    //   metrics,
-    //   indexed_checkpoint_sender,
-    //   package_cache: IndexingPackageCache::start(rx),
-    // };
+    Ok(())
+  }
+
+  async fn spawn_fetcher(&self, checkpoint_data_sender: Sender<CheckpointData>) -> Result<()> {
+    let http_client = retry(ExponentialBackoff::default(), || async {
+      let http_client = Self::get_http_client(&self.rpc_client_url).map_err(|err| {
+        error!("Failed to create HTTP client: {}", err);
+        err
+      })?;
+      
+      Ok(http_client)
+    }).await?;
+
+    let checkpoint_fetcher = CheckpointFetcher::new(
+      http_client,
+      Some(self.current_checkpoint_seq),
+      checkpoint_data_sender,
+    );
+
+    
+    spawn(async move {
+      checkpoint_fetcher.run().await;
+    });
+
+    Ok(())
+  }
+
+  async fn spawn_checkpoint_handler(
+    handle_checkpoint_sender: Sender<CheckpointDataToCommit>,
+    checkpoint_data_receiver: Receiver<CheckpointData>
+  ) -> Result<()> {
+    let mut checkpoint_handler = Self::create_handler(handle_checkpoint_sender).await?;
+    let stream = ReceiverStream::new(checkpoint_data_receiver);
+    let mut chunks = stream.ready_chunks(CHECKPOINT_PROCESSING_BATCH_SIZE);
+
+    spawn(async move {
+      while let Some(checkpoints) = chunks.next().await {
+        checkpoint_handler.process_checkpoints(&checkpoints).await.expect("process checkpoints"); 
+      }
+    });
+
+    Ok(())
+  }
+
+  async fn commit_checkpoint_data(handle_checkpoint_receiver: Receiver<CheckpointDataToCommit>) {
+    let mut stream = ReceiverStream::new(handle_checkpoint_receiver);
+
+    while let Some(checkpoint_data) = stream.next().await {
+      // TODO: convert and log data to the stdout
+      println!("Block {} -> {:?}", checkpoint_data.checkpoint.epoch, checkpoint_data)
+    }
+  }
+
+  async fn create_handler(handle_checkpoint_sender: Sender<CheckpointDataToCommit>) -> Result<CheckpointHandler<SuiStore>> {
+    let (_, rx) = watch::channel(None);
+    let indexer_metrics = IndexerMetrics::new(&Registry::default());
+    
+    let checkpoint_handler = CheckpointHandler::new(
+      SuiStore::new(),
+      indexer_metrics,
+      handle_checkpoint_sender,
+      IndexingPackageCache::start(rx),
+    );
 
 
-    todo!()
+    Ok(checkpoint_handler)
   }
 
   fn get_http_client(rpc_client_url: &str) -> Result<Client> {
