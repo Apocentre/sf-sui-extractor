@@ -19,13 +19,13 @@ struct Args {
   #[arg(short = 'i', long, default_value = "4btiuiMPvEENsttpZC7CZ53DruC3MAgfznDbASZ7DR6S")]
   chain_id: String,
 
-  /// Which checkount should we start streaming data from
+  /// Which checkpoint should we start streaming data from
   #[arg(short = 's', long, default_value_t = 0)]
   starting_checkpoint_seq: u64,
 
   /// You can use https://fullnode.mainnet.sui.io:443 for mainnet
   /// Note that if one is not provided, a local sui-node will be spinned up instead
-  #[arg(short = 'r', long, default_value = "https://fullnode.devnet.sui.io:443")]
+  #[arg(short = 'r', long)]
   rpc_client_url: Option<String>,
 }
 
