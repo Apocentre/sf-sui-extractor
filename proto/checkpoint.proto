@@ -76,10 +76,89 @@ message Transaction {
   TransactionBlockEffects effects = 4;
   uint64 checkpoint_sequence_number = 5;
   uint64 timestamp_ms = 6;
-  // TransactionBlockEvents events = 5;
-  // uint64 timestamp_ms = 6;
-  // optional bool confirmed_local_execution = 7;
-  // uint64 checkpoint = 8;
+  repeated ObjectChange object_changes = 7;
+  repeated BalanceChange balance_change = 8;
+  repeated Event events = 9;
+  TransactionKind transaction_kind = 10;
+  uint64 successful_tx_num = 11;
+}
+
+message Event {
+  ObjectID package_id = 1;
+  string transaction_module = 2;
+  string sender = 3;
+  StructTag type = 4;
+  bytes contents = 5;
+}
+
+message BalanceChange {
+  /// Owner of the balance change
+  Owner owner = 1;
+  TypeTag coin_type = 2;
+  /// The amount indicate the balance value changes,
+  /// negative amount means spending coin value and positive means receiving coin value.
+  /// covnert this to i128 later on
+  string amount = 3;
+}
+
+message ObjectChange {
+  oneof object_change {
+    Published published = 1;
+    Transferred transferred = 2;
+    Mutated mutated = 3;
+    Deleted deleted = 4;
+    Wrapped wrapped = 5;
+    Created created = 6;
+  }
+}
+
+message Published {
+  ObjectID package_id = 1;
+  uint64 version = 2;
+  string digest = 3;
+  repeated string modules = 4;
+}
+
+message Transferred {
+  string sender = 1;
+  Owner owner = 2;
+  StructTag object_type = 3;
+  ObjectID object_id = 4;
+  uint64 version = 5;
+  string digest = 6;
+}
+
+message Mutated {
+  string sender = 1;
+  Owner owner = 2;
+  StructTag object_type = 3;
+  ObjectID object_id = 4;
+  uint64 version = 5;
+  uint64 previous_version = 6;
+  string digest = 7;
+}
+
+message Deleted {
+  string sender = 1;
+  StructTag object_type = 2;
+  ObjectID object_id = 3;
+  uint64 version = 4;
+}
+
+message Wrapped {
+  string sender = 1;
+  StructTag object_type = 2;
+  ObjectID object_id = 3;
+  uint64 version = 4;
+}
+
+message Created {
+  string sender = 1;
+  Owner owner = 2;
+  StructTag object_type = 3;
+  ObjectID object_id = 4;
+  uint64 version = 5;
+  string digest = 6;
 }
 
 message SenderSignedTransaction {
@@ -638,40 +717,6 @@ message Failure {
 message TransactionBlockEffectsModifiedAtVersions {
   ObjectID object_id = 1;
   uint64 sequence_number = 2;
-}
-
-message TransactionBlockEvents {
-  repeated SuiEvent data = 1;
-}
-
-message SuiEvent {
-  // Sequential event ID, ie (transaction seq number, event seq number).
-  // 1) Serves as a unique event ID for each fullnode
-  // 2) Also serves to sequence events for the purposes of pagination and querying.
-  //    A higher id is an event seen later by that fullnode.
-  // This ID is the "cursor" for event querying.
-  EventID id = 1;
-
-  // Move package where this event was emitted.
-  ObjectID package_id = 2;
-
-  // Move module where this event was emitted.
-  string transaction_module = 3;
-
-  // Sender's Sui address.
-  string sender = 4;
-
-  // Move event type.
-  StructTag type = 5;
-
-  // Parsed json value of the event
-  SuiJsonValue parsed_json = 6;
-
-  // Base 58 encoded bcs bytes of the move event
-  string bcs = 7;
-
-  // UTC timestamp in milliseconds since epoch (1/1/1970)
-  optional uint64 timestamp_ms = 8;
 }
 
 message EventID {
