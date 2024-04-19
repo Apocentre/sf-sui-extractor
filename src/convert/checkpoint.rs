@@ -1,4 +1,4 @@
-use sui_json_rpc_types::Checkpoint;
+use sui_indexer::types::IndexedCheckpoint;
 use sui_types::messages_checkpoint::EndOfEpochData;
 use crate::pb::sui::checkpoint as pb;
 use super::common::{
@@ -13,7 +13,7 @@ fn convert_end_of_epoch_data(source: &EndOfEpochData) -> pb::EndOfEpochData {
   }
 }
 
-pub fn convert_checkpoint(source: &Checkpoint) -> pb::Checkpoint {
+pub fn convert_checkpoint(source: &IndexedCheckpoint) -> pb::Checkpoint {
   pb::Checkpoint {
     epoch: source.epoch,
     sequence_number: source.sequence_number,

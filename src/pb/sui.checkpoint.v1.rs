@@ -28,7 +28,7 @@ pub struct Checkpoint {
     pub previous_digest: ::core::option::Option<::prost::alloc::string::String>,
     /// The running total gas costs of all transactions included in the current epoch so far until this checkpoint.
     #[prost(message, optional, tag = "6")]
-    pub epoch_rolling_gas_cost_summary: ::core::option::Option<GasCostSummary>,
+    pub gas_cost_summary: ::core::option::Option<GasCostSummary>,
     /// Timestamp of the checkpoint - number of milliseconds from the Unix epoch
     /// Checkpoint timestamps are monotonic, but not strongly monotonic - subsequent
     /// checkpoints can have same timestamp if they originate from the same underlining consensus commit
@@ -46,6 +46,29 @@ pub struct Checkpoint {
     /// Validator Signature (base64  encoded). This is a BLS signature
     #[prost(bytes = "vec", tag = "11")]
     pub validator_signature: ::prost::alloc::vec::Vec<u8>,
+    #[prost(uint64, tag = "12")]
+    pub successful_tx_num: u64,
+    #[prost(bool, tag = "13")]
+    pub end_of_epoch: bool,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GasCostSummary {
+    /// total gas cost could be negative
+    #[prost(int64, tag = "12")]
+    pub total_gas_cost: i64,
+    /// Cost of computation/execution
+    #[prost(uint64, tag = "1")]
+    pub computation_cost: u64,
+    /// Storage cost, it's the sum of all storage cost for all objects created or mutated.
+    #[prost(uint64, tag = "2")]
+    pub storage_cost: u64,
+    /// The amount of storage cost refunded to the user for all objects deleted or mutated in the transaction.
+    #[prost(uint64, tag = "3")]
+    pub storage_rebate: u64,
+    /// The fee for the rebate. The portion of the storage rebate kept by the system.
+    #[prost(uint64, tag = "4")]
+    pub non_refundable_storage_fee: u64,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -70,22 +93,6 @@ pub struct CheckpointTransactionBlockResponse {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GasCostSummary {
-    /// Cost of computation/execution
-    #[prost(uint64, tag = "1")]
-    pub computation_cost: u64,
-    /// Storage cost, it's the sum of all storage cost for all objects created or mutated.
-    #[prost(uint64, tag = "2")]
-    pub storage_cost: u64,
-    /// The amount of storage cost refunded to the user for all objects deleted or mutated in the transaction.
-    #[prost(uint64, tag = "3")]
-    pub storage_rebate: u64,
-    /// The fee for the rebate. The portion of the storage rebate kept by the system.
-    #[prost(uint64, tag = "4")]
-    pub non_refundable_storage_fee: u64,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EndOfEpochData {
     /// next_epoch_committee is `Some` if and only if the current checkpoint is
     /// the last checkpoint of an epoch.
@@ -106,8 +113,9 @@ pub struct EndOfEpochData {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NextEpochCommittee {
-    #[prost(string, tag = "1")]
-    pub authority_name: ::prost::alloc::string::String,
+    /// base64 value
+    #[prost(bytes = "vec", tag = "1")]
+    pub authority_name: ::prost::alloc::vec::Vec<u8>,
     #[prost(uint64, tag = "2")]
     pub stake_unit: u64,
 }
