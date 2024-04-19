@@ -11,10 +11,7 @@ message CheckpointData {
   repeated IndexedEvent events = 3;
   repeated TxIndex tx_indices = 4;
   map<string, StoredDisplay> display_updates = 5;
-  TransactionObjectChange object_changes = 6;
-  TransactionObjectChange object_history_changes = 7;
-  IndexedPackage packages = 8;
-  // repeated ChangedObject changed_objects = 3;
+  IndexedPackage packages = 6;
 }
 
 message Checkpoint {
@@ -448,7 +445,12 @@ message MovePackage {
 
   // For each dependency, maps original package ID to the info about the (upgraded) dependency
   // version that this package is using
-  map<ObjectID, UpgradeInfo> linkage_table = 5;
+  repeated LinkageTablePair linkage_table = 5;
+}
+
+message LinkageTablePair {
+  ObjectID key = 1;
+  UpgradeInfo value = 2;
 }
 
 message DynamicFieldInfo {
@@ -476,6 +478,12 @@ message DynamicFieldType {
 message IndexedDeletedObject {
   ObjectID object_id = 1;
   uint64 object_version = 2;
+  uint64 checkpoint_sequence_number = 3;
+}
+
+message IndexedPackage {
+  ObjectID package_id = 1;
+  MovePackage move_package = 2;
   uint64 checkpoint_sequence_number = 3;
 }
 
@@ -839,6 +847,115 @@ message TransactionBlockEffectsV1 {
   repeated string dependencies = 15;
 }
 
+message TransactionBlockEffectsV2 {
+  // The status of the execution
+  ExecutionStatus status = 1;
+  // The epoch when this transaction was executed.
+  uint64 executed_epoch = 2;
+  // Gas cost summary of the transaction
+  GasCostSummary gas_used = 3;
+  // The transaction digest
+  string transaction_digest = 4;
+  /// The updated gas object reference, as an index into the `changed_objects` vector.
+  /// Having a dedicated field for convenient access.
+  /// System transaction that don't require gas will leave this as None.
+  optional uint32 gas_object_index = 5;
+  /// The digest of the events emitted during execution,
+  /// can be None if the transaction does not emit any event.
+  optional string events_digest = 6;
+  // The set of transaction digests this transaction depends on.
+  repeated string dependencies = 7;
+  /// The version number of all the written Move objects by this transaction.
+  uint64 lamport_version = 8;
+  /// Objects whose state are changed in the object store.
+  repeated ChangedObjectV2 changed_objects = 9;
+  /// Shared objects that are not mutated in this transaction. Unlike owned objects,
+  /// read-only shared objects' version are not committed in the transaction,
+  /// and in order for a node to catch up and execute it without consensus sequencing,
+  /// the version needs to be committed in the effects.
+  repeated UnchangedSharedObject unchanged_shared_objects = 10;
+  /// Auxiliary data that are not protocol-critical, generated as part of the effects but are stored separately.
+  /// Storing it separately allows us to avoid bloating the effects with data that are not critical.
+  /// It also provides more flexibility on the format and type of the data.
+  optional string aux_data_digest = 11;
+}
+
+message UnchangedSharedObject {
+  oneof unchanged_shared_object {
+    /// Read-only shared objects from the input. We don't really need ObjectDigest
+    /// for protocol correctness, but it will make it easier to verify untrusted read.
+    VersionDigest read_only_root = 1;
+    /// Deleted shared objects that appear mutably/owned in the input.
+    string mutate_deleted = 2;
+    /// Deleted shared objects that appear as read-only in the input.
+    string read_deleted = 3;
+  }
+}
+
+message ChangedObjectV2 {
+  ObjectID object_id = 1;
+  EffectsObjectChange effects = 2;
+}
+
+message EffectsObjectChange {
+  // input_state and output_state are the core fields that's required by
+  // the protocol as it tells how an object changes on-chain.
+  /// State of the object in the store prior to this transaction.
+  ObjectIn input_state = 1;
+  /// State of the object in the store after this transaction.
+  ObjectOut output_state = 2;
+  /// Whether this object ID is created or deleted in this transaction.
+  /// This information isn't required by the protocol but is useful for providing more detailed
+  /// semantics on object changes.
+  IDOperation id_operation = 3;
+}
+
+message IDOperation {
+  oneof ido_operation {
+    uint32 none = 1;
+    uint32 created = 2;
+    uint32 deleted = 3;
+  }
+}
+
+message ObjectOut {
+  oneof object_id {
+    uint32 not_exist = 1;
+    /// The old version, digest and owner.
+    ObjectInExist exist = 2;
+  }
+}
+
+message ObjectIn {
+  oneof object_id {
+    uint32 not_exist = 1;
+    /// Any written object, including all of mutated, created, unwrapped today.
+    ObjectWrite object_write = 2;
+    /// Packages writes need to be tracked separately with version because
+    /// we don't use lamport version for package publish and upgrades.
+    PackageWrite package_write = 3;
+  }
+}
+
+message ObjectWrite {
+  string object_digest = 1;
+  Owner owner = 2;
+}
+
+message PackageWrite {
+  VersionDigest version_digest = 1;
+}
+
+message ObjectInExist {
+  VersionDigest version_digest = 1;
+  Owner owner = 2;
+}
+
+message VersionDigest {
+  uint32 sequence_number = 1;
+  string object_digest = 2;
+}
+
 message OwnedObjectRef {
   Owner owner = 1;
   ObjectRef reference = 2;
@@ -885,65 +1002,6 @@ message TransactionBlockEffectsModifiedAtVersions {
   uint64 sequence_number = 2;
 }
 
-message EventID {
-  string tx_digest = 1;
-  uint64 event_seq = 2;
-}
-
-message ChangedObject {
-  ObjectStatus status = 1;
-  SuiObjectData data = 2;
-}
-
-message ObjectStatus {
-  oneof object_status {
-    google.protobuf.Empty created = 1;
-    google.protobuf.Empty mutated = 2;
-    google.protobuf.Empty deleted = 3;
-    google.protobuf.Empty wrapped = 4;
-    google.protobuf.Empty unwrapped = 5;
-    google.protobuf.Empty unwrapped_then_deleted = 6;
-  }
-}
-
-message SuiObjectData {
-  // Object id
-  ObjectID object_id = 1;
-
-  // Object version
-  uint64 version = 2;
-
-  // Base58 string representing the object digest
-  string digest = 3;
-
-  // The type of the object. Default to be None unless SuiObjectDataOptions.showType is set to true
-  optional ObjectType type = 4;
-
-  // Default to be None because otherwise it will be repeated for the getOwnedObjects endpoint
-  // The owner of this object. Default to be None unless SuiObjectDataOptions.showOwner is set to true
-  optional Owner owner = 5;
-
-  // The digest of the transaction that created or last mutated this object. Default to be None unless
-  // SuiObjectDataOptions.showPreviousTransaction is set to true
-  optional string previous_transaction = 6;
-
-  // The amount of SUI we would rebate if this object gets deleted.
-  // This number is re-calculated each time the object is mutated based on
-  // the present storage gas price.
-  optional uint64 storage_rebate = 7;
-
-  // The Display metadata for frontend UI rendering, default to be None unless SuiObjectDataOptions.showContent is set to true
-  // This can also be None if the struct type does not have Display defined
-  // See more details in <https://forums.sui.io/t/nft-object-display-proposal/4872>
-  optional DisplayFieldsResponse display = 8;
-
-  // Move object content or package content, default to be None unless SuiObjectDataOptions.showContent is set to true
-  optional SuiParsedData content = 9;
-
-  // Move object content or package content in BCS, default to be None unless SuiObjectDataOptions.showBcs is set to true
-  optional SuiRawData bcs = 10;
-}
-
 message ObjectType {
   oneof object_type {
     // Move package containing one or more bytecode modules
@@ -968,83 +1026,6 @@ message MoveObjectType {
     // A non-SUI coin type (i.e., `0x2::coin::Coin<T> where T != 0x2::sui::SUI`)
     TypeTag coin = 4;
   }
-}
-
-message DisplayFieldsResponse {
-  map<string, string> data = 1;
-  SuiObjectResponseError error = 2;
-}
-
-message SuiObjectResponseError {
-  oneof sui_object_response_error {
-    NotExists not_exists = 1;
-    DynamicFieldNotFound dynamic_field_not_found = 2;
-    Deleted deleted = 3;
-    google.protobuf.Empty Unknown = 4;
-    DisplayError display_error = 5;
-  }
-
-  message NotExists {
-    ObjectID object_id = 1;
-  }
-
-  message DynamicFieldNotFound {
-    ObjectID parent_object_id = 1;
-  }
-
-  message Deleted {
-    ObjectID object_id = 1;
-    uint64 version = 2;
-    string digest = 3;
-  }
-
-  message DisplayError {
-    string error = 1;
-  }
-}
-
-message SuiParsedMoveObject {
-  StructTag type = 1;
-  bool has_public_transfer = 2;
-  SuiMoveStruct fields = 3;
-}
-
-message SuiMoveStruct {
-  oneof sui_move_struct {
-    ListOfSuiMoveValues runtime = 1;
-    WithTypes with_types = 2;
-    WithFields with_fields = 3;
-  }
-}
-
-message ListOfSuiMoveValues {
-  repeated SuiMoveValue list = 1;
-}
-
-message WithTypes {
-  StructTag type = 1;
-  map<string, SuiMoveValue> fields = 2;
-}
-
-message WithFields {
-  map<string, SuiMoveValue> fields = 2;
-}
-
-message SuiMoveValue {
-  oneof sui_move_value {
-    uint32 number = 1;
-    bool bool = 2;
-    string address = 3;
-    ListOfSuiMoveValues vector = 4;
-    string string = 5;
-    UID UID = 6;
-    SuiMoveStruct struct = 7;
-    SuiMoveValue option = 8;
-  }
-}
-
-message UID {
-  ObjectID id = 1;
 }
 
 message TypeOrigin {

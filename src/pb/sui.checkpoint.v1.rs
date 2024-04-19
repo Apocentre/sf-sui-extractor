@@ -4,9 +4,18 @@ pub struct CheckpointData {
     #[prost(message, optional, tag = "1")]
     pub checkpoint: ::core::option::Option<Checkpoint>,
     #[prost(message, repeated, tag = "2")]
-    pub transactions: ::prost::alloc::vec::Vec<CheckpointTransactionBlockResponse>,
+    pub transactions: ::prost::alloc::vec::Vec<Transaction>,
     #[prost(message, repeated, tag = "3")]
-    pub changed_objects: ::prost::alloc::vec::Vec<ChangedObject>,
+    pub events: ::prost::alloc::vec::Vec<IndexedEvent>,
+    #[prost(message, repeated, tag = "4")]
+    pub tx_indices: ::prost::alloc::vec::Vec<TxIndex>,
+    #[prost(map = "string, message", tag = "5")]
+    pub display_updates: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        StoredDisplay,
+    >,
+    #[prost(message, optional, tag = "6")]
+    pub packages: ::core::option::Option<IndexedPackage>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -69,24 +78,769 @@ pub struct GasCostSummary {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct CheckpointTransactionBlockResponse {
-    #[prost(string, tag = "1")]
+pub struct Transaction {
+    #[prost(uint64, tag = "1")]
+    pub sequence_number: u64,
+    #[prost(string, tag = "2")]
     pub digest: ::prost::alloc::string::String,
+    #[prost(message, repeated, tag = "3")]
+    pub sender_signed_data: ::prost::alloc::vec::Vec<SenderSignedTransaction>,
     /// Transaction input data
-    #[prost(message, optional, tag = "2")]
-    pub transaction: ::core::option::Option<SuiTransactionBlock>,
-    #[prost(bytes = "vec", tag = "3")]
-    pub raw_transaction: ::prost::alloc::vec::Vec<u8>,
+    /// TransactionBlock transaction = 2;
+    /// bytes raw_transaction = 3;
     #[prost(message, optional, tag = "4")]
-    pub effects: ::core::option::Option<SuiTransactionBlockEffects>,
-    #[prost(message, optional, tag = "5")]
-    pub events: ::core::option::Option<SuiTransactionBlockEvents>,
+    pub effects: ::core::option::Option<TransactionBlockEffects>,
+    #[prost(uint64, tag = "5")]
+    pub checkpoint_sequence_number: u64,
     #[prost(uint64, tag = "6")]
     pub timestamp_ms: u64,
-    #[prost(bool, optional, tag = "7")]
-    pub confirmed_local_execution: ::core::option::Option<bool>,
-    #[prost(uint64, tag = "8")]
-    pub checkpoint: u64,
+    #[prost(message, repeated, tag = "7")]
+    pub object_changes: ::prost::alloc::vec::Vec<ObjectChange>,
+    #[prost(message, repeated, tag = "8")]
+    pub balance_change: ::prost::alloc::vec::Vec<BalanceChange>,
+    #[prost(message, repeated, tag = "9")]
+    pub events: ::prost::alloc::vec::Vec<Event>,
+    #[prost(message, optional, tag = "10")]
+    pub transaction_kind: ::core::option::Option<GenericTransactionKind>,
+    #[prost(uint64, tag = "11")]
+    pub successful_tx_num: u64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GenericTransactionKind {
+    #[prost(oneof = "generic_transaction_kind::Kind", tags = "1, 2")]
+    pub kind: ::core::option::Option<generic_transaction_kind::Kind>,
+}
+/// Nested message and enum types in `GenericTransactionKind`.
+pub mod generic_transaction_kind {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Kind {
+        #[prost(uint32, tag = "1")]
+        SystemRansaction(u32),
+        #[prost(uint32, tag = "2")]
+        ProgrammableTransaction(u32),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Event {
+    #[prost(message, optional, tag = "1")]
+    pub package_id: ::core::option::Option<ObjectId>,
+    #[prost(string, tag = "2")]
+    pub transaction_module: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub sender: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "4")]
+    pub r#type: ::core::option::Option<StructTag>,
+    #[prost(bytes = "vec", tag = "5")]
+    pub contents: ::prost::alloc::vec::Vec<u8>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BalanceChange {
+    /// / Owner of the balance change
+    #[prost(message, optional, tag = "1")]
+    pub owner: ::core::option::Option<Owner>,
+    #[prost(message, optional, tag = "2")]
+    pub coin_type: ::core::option::Option<TypeTag>,
+    /// / The amount indicate the balance value changes,
+    /// / negative amount means spending coin value and positive means receiving coin value.
+    /// / covnert this to i128 later on
+    #[prost(string, tag = "3")]
+    pub amount: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ObjectChange {
+    #[prost(oneof = "object_change::ObjectChange", tags = "1, 2, 3, 4, 5, 6")]
+    pub object_change: ::core::option::Option<object_change::ObjectChange>,
+}
+/// Nested message and enum types in `ObjectChange`.
+pub mod object_change {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum ObjectChange {
+        #[prost(message, tag = "1")]
+        Published(super::Published),
+        #[prost(message, tag = "2")]
+        Transferred(super::Transferred),
+        #[prost(message, tag = "3")]
+        Mutated(super::Mutated),
+        #[prost(message, tag = "4")]
+        Deleted(super::Deleted),
+        #[prost(message, tag = "5")]
+        Wrapped(super::Wrapped),
+        #[prost(message, tag = "6")]
+        Created(super::Created),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Published {
+    #[prost(message, optional, tag = "1")]
+    pub package_id: ::core::option::Option<ObjectId>,
+    #[prost(uint64, tag = "2")]
+    pub version: u64,
+    #[prost(string, tag = "3")]
+    pub digest: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "4")]
+    pub modules: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Transferred {
+    #[prost(string, tag = "1")]
+    pub sender: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "2")]
+    pub owner: ::core::option::Option<Owner>,
+    #[prost(message, optional, tag = "3")]
+    pub object_type: ::core::option::Option<StructTag>,
+    #[prost(message, optional, tag = "4")]
+    pub object_id: ::core::option::Option<ObjectId>,
+    #[prost(uint64, tag = "5")]
+    pub version: u64,
+    #[prost(string, tag = "6")]
+    pub digest: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Mutated {
+    #[prost(string, tag = "1")]
+    pub sender: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "2")]
+    pub owner: ::core::option::Option<Owner>,
+    #[prost(message, optional, tag = "3")]
+    pub object_type: ::core::option::Option<StructTag>,
+    #[prost(message, optional, tag = "4")]
+    pub object_id: ::core::option::Option<ObjectId>,
+    #[prost(uint64, tag = "5")]
+    pub version: u64,
+    #[prost(uint64, tag = "6")]
+    pub previous_version: u64,
+    #[prost(string, tag = "7")]
+    pub digest: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Deleted {
+    #[prost(string, tag = "1")]
+    pub sender: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "2")]
+    pub object_type: ::core::option::Option<StructTag>,
+    #[prost(message, optional, tag = "3")]
+    pub object_id: ::core::option::Option<ObjectId>,
+    #[prost(uint64, tag = "4")]
+    pub version: u64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Wrapped {
+    #[prost(string, tag = "1")]
+    pub sender: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "2")]
+    pub object_type: ::core::option::Option<StructTag>,
+    #[prost(message, optional, tag = "3")]
+    pub object_id: ::core::option::Option<ObjectId>,
+    #[prost(uint64, tag = "4")]
+    pub version: u64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Created {
+    #[prost(string, tag = "1")]
+    pub sender: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "2")]
+    pub owner: ::core::option::Option<Owner>,
+    #[prost(message, optional, tag = "3")]
+    pub object_type: ::core::option::Option<StructTag>,
+    #[prost(message, optional, tag = "4")]
+    pub object_id: ::core::option::Option<ObjectId>,
+    #[prost(uint64, tag = "5")]
+    pub version: u64,
+    #[prost(string, tag = "6")]
+    pub digest: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SenderSignedTransaction {
+    #[prost(message, optional, tag = "1")]
+    pub intent_message: ::core::option::Option<IntentMessage>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct IntentMessage {
+    #[prost(message, optional, tag = "1")]
+    pub intent: ::core::option::Option<Intent>,
+    #[prost(message, optional, tag = "2")]
+    pub value: ::core::option::Option<TransactionData>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Intent {
+    #[prost(message, optional, tag = "1")]
+    pub scope: ::core::option::Option<IntentScope>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct IntentScope {
+    #[prost(oneof = "intent_scope::Scope", tags = "1, 2, 3, 4, 5, 6, 7, 8, 9")]
+    pub scope: ::core::option::Option<intent_scope::Scope>,
+}
+/// Nested message and enum types in `IntentScope`.
+pub mod intent_scope {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Scope {
+        /// Used for a user signature on a transaction data.
+        #[prost(uint32, tag = "1")]
+        TransactionData(u32),
+        /// Used for an authority signature on transaction effects.
+        #[prost(uint32, tag = "2")]
+        TransactionEffects(u32),
+        /// Used for an authority signature on a checkpoint summary.
+        #[prost(uint32, tag = "3")]
+        CheckpointSummary(u32),
+        /// Used for a user signature on a personal message.
+        #[prost(uint32, tag = "4")]
+        PersonalMessage(u32),
+        /// Used for an authority signature on a user signed transaction.
+        #[prost(uint32, tag = "5")]
+        SenderSignedTransaction(u32),
+        /// Used as a signature representing an authority's proof of possession of its authority protocol key.
+        #[prost(uint32, tag = "6")]
+        ProofOfPossession(u32),
+        /// Used for narwhal authority signature on header digest.
+        #[prost(uint32, tag = "7")]
+        HeaderDigest(u32),
+        /// for bridge purposes but it's currently not included in messages.
+        #[prost(uint32, tag = "8")]
+        BridgeEventUnused(u32),
+        /// Used for consensus authority signature on block's digest
+        #[prost(uint32, tag = "9")]
+        ConsensusBlock(u32),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TransactionData {
+    #[prost(oneof = "transaction_data::TxData", tags = "1")]
+    pub tx_data: ::core::option::Option<transaction_data::TxData>,
+}
+/// Nested message and enum types in `TransactionData`.
+pub mod transaction_data {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum TxData {
+        #[prost(message, tag = "1")]
+        V1(super::TransactionDataV1),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TransactionDataV1 {
+    #[prost(message, optional, tag = "1")]
+    pub kind: ::core::option::Option<TransactionKind>,
+    #[prost(string, tag = "2")]
+    pub sender: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "3")]
+    pub gas_data: ::core::option::Option<GasData>,
+    #[prost(message, optional, tag = "4")]
+    pub expiration: ::core::option::Option<TransactionExpiration>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TransactionExpiration {
+    #[prost(oneof = "transaction_expiration::TxExpiration", tags = "1, 2")]
+    pub tx_expiration: ::core::option::Option<transaction_expiration::TxExpiration>,
+}
+/// Nested message and enum types in `TransactionExpiration`.
+pub mod transaction_expiration {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum TxExpiration {
+        #[prost(uint32, tag = "1")]
+        None(u32),
+        #[prost(uint64, tag = "2")]
+        Epoch(u64),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TransactionKind {
+    #[prost(
+        oneof = "transaction_kind::TransactionKind",
+        tags = "1, 2, 3, 4, 5, 6, 7, 8"
+    )]
+    pub transaction_kind: ::core::option::Option<transaction_kind::TransactionKind>,
+}
+/// Nested message and enum types in `TransactionKind`.
+pub mod transaction_kind {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum TransactionKind {
+        /// / A transaction that allows the interleaving of native commands and Move calls
+        #[prost(message, tag = "1")]
+        ProgrammableTx(super::ProgrammableTransaction),
+        #[prost(message, tag = "2")]
+        ChangeEpoch(super::ChangeEpoch),
+        #[prost(message, tag = "3")]
+        Genesis(super::GenesisTransaction),
+        #[prost(message, tag = "4")]
+        ConsensusCommitPrologue(super::ConsensusCommitPrologue),
+        #[prost(message, tag = "5")]
+        AuthenticatorStateUpdate(super::AuthenticatorStateUpdate),
+        /// / EndOfEpochTransaction replaces ChangeEpoch with a list of transactions that are allowed to
+        /// / run at the end of the epoch.
+        #[prost(message, tag = "6")]
+        EndOdEpochTransaction(super::EndOfEpochTransaction),
+        #[prost(message, tag = "7")]
+        RandomnessStateUpdate(super::RandomnessStateUpdate),
+        /// V2 ConsensusCommitPrologue also includes the digest of the current consensus output.
+        #[prost(message, tag = "8")]
+        ConsensusCommitPrologueV2(super::ConsensusCommitPrologueV2),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ConsensusCommitPrologueV2 {
+    /// / Epoch of the commit prologue transaction
+    #[prost(uint64, tag = "1")]
+    pub epoch: u64,
+    /// / Consensus round of the commit
+    #[prost(uint64, tag = "2")]
+    pub round: u64,
+    /// / Unix timestamp from consensus
+    #[prost(uint64, tag = "3")]
+    pub commit_timestamp_ms: u64,
+    /// / Digest of consensus output
+    #[prost(string, tag = "4")]
+    pub consensus_commit_digest: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RandomnessStateUpdate {
+    /// / Epoch of the randomness state update transaction
+    #[prost(uint64, tag = "1")]
+    pub epoch: u64,
+    /// / Randomness round of the update
+    #[prost(uint64, tag = "2")]
+    pub randomness_round: u64,
+    /// / Updated random bytes
+    #[prost(bytes = "vec", tag = "3")]
+    pub random_bytes: ::prost::alloc::vec::Vec<u8>,
+    /// / The initial version of the randomness object that it was shared at.
+    #[prost(uint64, tag = "4")]
+    pub randomness_obj_initial_shared_version: u64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EndOfEpochTransaction {
+    #[prost(message, repeated, tag = "1")]
+    pub end_od_epoch_transaction_kind: ::prost::alloc::vec::Vec<
+        EndOfEpochTransactionKind,
+    >,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EndOfEpochTransactionKind {
+    #[prost(oneof = "end_of_epoch_transaction_kind::Kind", tags = "1, 2, 3, 4, 5")]
+    pub kind: ::core::option::Option<end_of_epoch_transaction_kind::Kind>,
+}
+/// Nested message and enum types in `EndOfEpochTransactionKind`.
+pub mod end_of_epoch_transaction_kind {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Kind {
+        #[prost(message, tag = "1")]
+        ChangeEpoch(super::ChangeEpoch),
+        #[prost(uint32, tag = "2")]
+        AuthenticatorStateCreate(u32),
+        #[prost(message, tag = "3")]
+        AuthenticatorStateExpire(super::AuthenticatorStateExpire),
+        #[prost(uint32, tag = "4")]
+        RandomnessStateCreate(u32),
+        #[prost(uint32, tag = "5")]
+        DenyListStateCreate(u32),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AuthenticatorStateUpdate {
+    /// / Epoch of the authenticator state update transaction
+    #[prost(uint64, tag = "1")]
+    pub epoch: u64,
+    /// / Consensus round of the authenticator state update
+    #[prost(uint64, tag = "2")]
+    pub round: u64,
+    /// / newly active jwks
+    #[prost(message, repeated, tag = "3")]
+    pub new_active_jwks: ::prost::alloc::vec::Vec<ActiveJwk>,
+    /// / The initial version of the authenticator object that it was shared at.
+    #[prost(uint64, tag = "4")]
+    pub authenticator_obj_initial_shared_version: u64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ActiveJwk {
+    #[prost(message, optional, tag = "1")]
+    pub jwk_id: ::core::option::Option<JwkId>,
+    #[prost(message, optional, tag = "2")]
+    pub jwk: ::core::option::Option<Jwk>,
+    /// the most recent epoch in which the jwk was validated
+    #[prost(uint64, tag = "3")]
+    pub epoch: u64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct JwkId {
+    /// / iss string that identifies the OIDC provider.
+    #[prost(string, tag = "1")]
+    pub iss: ::prost::alloc::string::String,
+    /// / kid string that identifies the JWK.
+    #[prost(string, tag = "2")]
+    pub kid: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Jwk {
+    /// / Key type parameter, <https://datatracker.ietf.org/doc/html/rfc7517#section-4.1>
+    #[prost(string, tag = "1")]
+    pub kty: ::prost::alloc::string::String,
+    /// / RSA public exponent, <https://datatracker.ietf.org/doc/html/rfc7517#section-9.3>
+    #[prost(string, tag = "2")]
+    pub e: ::prost::alloc::string::String,
+    /// / RSA modulus, <https://datatracker.ietf.org/doc/html/rfc7517#section-9.3>
+    #[prost(string, tag = "3")]
+    pub n: ::prost::alloc::string::String,
+    /// / Algorithm parameter, <https://datatracker.ietf.org/doc/html/rfc7517#section-4.4>
+    #[prost(string, tag = "4")]
+    pub alg: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AuthenticatorStateExpire {
+    /// / expire JWKs that have a lower epoch than this
+    #[prost(uint64, tag = "1")]
+    pub min_epoch: u64,
+    /// / The initial version of the authenticator object that it was shared at.
+    #[prost(uint64, tag = "2")]
+    pub authenticator_obj_initial_shared_version: u64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct IndexedEvent {
+    #[prost(uint64, tag = "1")]
+    pub tx_sequence_number: u64,
+    #[prost(uint64, tag = "2")]
+    pub event_sequence_number: u64,
+    #[prost(uint64, tag = "3")]
+    pub checkpoint_sequence_number: u64,
+    #[prost(string, tag = "4")]
+    pub transaction_digest: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "5")]
+    pub senders: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(message, optional, tag = "6")]
+    pub package: ::core::option::Option<ObjectId>,
+    #[prost(string, tag = "7")]
+    pub module: ::prost::alloc::string::String,
+    #[prost(string, tag = "8")]
+    pub event_type: ::prost::alloc::string::String,
+    #[prost(bytes = "vec", tag = "9")]
+    pub bsc: ::prost::alloc::vec::Vec<u8>,
+    #[prost(uint64, tag = "10")]
+    pub timestamp_ms: u64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TxIndex {
+    #[prost(uint64, tag = "1")]
+    pub tx_sequence_number: u64,
+    #[prost(string, tag = "2")]
+    pub transaction_digest: ::prost::alloc::string::String,
+    #[prost(uint64, tag = "3")]
+    pub checkpoint_sequence_number: u64,
+    #[prost(message, repeated, tag = "4")]
+    pub input_objects: ::prost::alloc::vec::Vec<ObjectId>,
+    #[prost(message, repeated, tag = "5")]
+    pub changed_objects: ::prost::alloc::vec::Vec<ObjectId>,
+    #[prost(string, repeated, tag = "6")]
+    pub payers: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, repeated, tag = "7")]
+    pub senders: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, repeated, tag = "8")]
+    pub recipients: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(message, repeated, tag = "9")]
+    pub move_calls: ::prost::alloc::vec::Vec<MoveCallOverview>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MoveCallOverview {
+    /// The package containing the module and function.
+    #[prost(message, optional, tag = "1")]
+    pub package: ::core::option::Option<ObjectId>,
+    /// The specific module in the package containing the function.
+    #[prost(string, tag = "2")]
+    pub module: ::prost::alloc::string::String,
+    /// The function to be called.
+    #[prost(string, tag = "3")]
+    pub function: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct StoredDisplay {
+    #[prost(string, tag = "1")]
+    pub object_type: ::prost::alloc::string::String,
+    #[prost(bytes = "vec", tag = "2")]
+    pub id: ::prost::alloc::vec::Vec<u8>,
+    #[prost(int32, tag = "3")]
+    pub version: i32,
+    #[prost(bytes = "vec", tag = "4")]
+    pub bcs: ::prost::alloc::vec::Vec<u8>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TransactionObjectChange {
+    #[prost(message, repeated, tag = "1")]
+    pub changed_objects: ::prost::alloc::vec::Vec<IndexedObject>,
+    #[prost(message, repeated, tag = "2")]
+    pub deleted_objects: ::prost::alloc::vec::Vec<IndexedDeletedObject>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct IndexedObject {
+    #[prost(message, optional, tag = "1")]
+    pub object_id: ::core::option::Option<ObjectId>,
+    #[prost(uint64, tag = "2")]
+    pub object_version: u64,
+    #[prost(string, tag = "3")]
+    pub object_digest: ::prost::alloc::string::String,
+    #[prost(uint64, tag = "4")]
+    pub checkpoint_sequence_number: u64,
+    #[prost(message, optional, tag = "5")]
+    pub owner_type: ::core::option::Option<OwnerType>,
+    #[prost(string, optional, tag = "6")]
+    pub owner_id: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(message, optional, tag = "7")]
+    pub object: ::core::option::Option<Object>,
+    #[prost(string, optional, tag = "8")]
+    pub coin_type: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(uint64, tag = "9")]
+    pub coin_balance: u64,
+    #[prost(message, optional, tag = "10")]
+    pub df_info: ::core::option::Option<DynamicFieldInfo>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Object {
+    /// / The meat of the object
+    #[prost(message, optional, tag = "1")]
+    pub data: ::core::option::Option<Data>,
+    /// / The owner that unlocks this object
+    #[prost(message, optional, tag = "2")]
+    pub owner: ::core::option::Option<Owner>,
+    /// / The digest of the transaction that created or last mutated this object
+    #[prost(string, tag = "3")]
+    pub previous_transaction: ::prost::alloc::string::String,
+    /// / The amount of SUI we would rebate if this object gets deleted.
+    /// / This number is re-calculated each time the object is mutated based on
+    /// / the present storage gas price.
+    #[prost(uint64, tag = "4")]
+    pub storage_rebate: u64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct OwnerType {
+    #[prost(oneof = "owner_type::OwnerType", tags = "1, 2, 3, 4")]
+    pub owner_type: ::core::option::Option<owner_type::OwnerType>,
+}
+/// Nested message and enum types in `OwnerType`.
+pub mod owner_type {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum OwnerType {
+        #[prost(uint32, tag = "1")]
+        Immutable(u32),
+        #[prost(uint32, tag = "2")]
+        Address(u32),
+        #[prost(uint32, tag = "3")]
+        Object(u32),
+        #[prost(uint32, tag = "4")]
+        Shared(u32),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Data {
+    #[prost(oneof = "data::Data", tags = "1, 2")]
+    pub data: ::core::option::Option<data::Data>,
+}
+/// Nested message and enum types in `Data`.
+pub mod data {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Data {
+        #[prost(message, tag = "1")]
+        Move(super::MoveObject),
+        #[prost(message, tag = "2")]
+        Package(super::MovePackage),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MoveObject {
+    /// / The type of this object. Immutable
+    #[prost(message, optional, tag = "1")]
+    pub r#type: ::core::option::Option<MoveObjectType>,
+    /// / DEPRECATED this field is no longer used to determine whether a tx can transfer this
+    /// / object. Instead, it is always calculated from the objects type when loaded in execution
+    #[prost(bool, tag = "2")]
+    pub has_public_transfer: bool,
+    /// / Number that increases each time a tx takes this object as a mutable input
+    /// / This is a lamport timestamp, not a sequentially increasing version
+    #[prost(uint64, tag = "3")]
+    pub version: u64,
+    #[prost(bytes = "vec", tag = "4")]
+    pub contents: ::prost::alloc::vec::Vec<u8>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MovePackage {
+    #[prost(message, optional, tag = "1")]
+    pub id: ::core::option::Option<ObjectId>,
+    /// / Most move packages are uniquely identified by their ID (i.e. there is only one version per
+    /// / ID), but the version is still stored because one package may be an upgrade of another (at a
+    /// / different ID), in which case its version will be one greater than the version of the
+    /// / upgraded package.
+    /// /
+    /// / Framework packages are an exception to this rule -- all versions of the framework packages
+    /// / exist at the same ID, at increasing versions.
+    /// /
+    /// / In all cases, packages are referred to by move calls using just their ID, and they are
+    /// / always loaded at their latest version.
+    #[prost(uint64, tag = "2")]
+    pub version: u64,
+    #[prost(map = "string, bytes", tag = "3")]
+    pub module_map: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        ::prost::alloc::vec::Vec<u8>,
+    >,
+    /// / Maps struct/module to a package version where it was first defined, stored as a vector for
+    /// / simple serialization and deserialization.
+    #[prost(message, repeated, tag = "4")]
+    pub type_origin_table: ::prost::alloc::vec::Vec<TypeOrigin>,
+    /// For each dependency, maps original package ID to the info about the (upgraded) dependency
+    /// version that this package is using
+    #[prost(message, repeated, tag = "5")]
+    pub linkage_table: ::prost::alloc::vec::Vec<LinkageTablePair>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LinkageTablePair {
+    #[prost(message, optional, tag = "1")]
+    pub key: ::core::option::Option<ObjectId>,
+    #[prost(message, optional, tag = "2")]
+    pub value: ::core::option::Option<UpgradeInfo>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DynamicFieldInfo {
+    #[prost(message, optional, tag = "1")]
+    pub name: ::core::option::Option<DynamicFieldName>,
+    #[prost(bytes = "vec", tag = "2")]
+    pub bcs_name: ::prost::alloc::vec::Vec<u8>,
+    #[prost(message, optional, tag = "3")]
+    pub r#type: ::core::option::Option<DynamicFieldType>,
+    #[prost(string, tag = "4")]
+    pub object_type: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "5")]
+    pub object_id: ::core::option::Option<ObjectId>,
+    #[prost(uint64, tag = "6")]
+    pub version: u64,
+    #[prost(string, tag = "7")]
+    pub digest: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DynamicFieldName {
+    #[prost(message, optional, tag = "1")]
+    pub r#type: ::core::option::Option<TypeTag>,
+    #[prost(message, optional, tag = "2")]
+    pub value: ::core::option::Option<Value>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DynamicFieldType {
+    #[prost(oneof = "dynamic_field_type::DynamicFieldType", tags = "1, 2")]
+    pub dynamic_field_type: ::core::option::Option<dynamic_field_type::DynamicFieldType>,
+}
+/// Nested message and enum types in `DynamicFieldType`.
+pub mod dynamic_field_type {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum DynamicFieldType {
+        #[prost(uint32, tag = "1")]
+        DynamicField(u32),
+        #[prost(uint32, tag = "2")]
+        DynamicObject(u32),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct IndexedDeletedObject {
+    #[prost(message, optional, tag = "1")]
+    pub object_id: ::core::option::Option<ObjectId>,
+    #[prost(uint64, tag = "2")]
+    pub object_version: u64,
+    #[prost(uint64, tag = "3")]
+    pub checkpoint_sequence_number: u64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct IndexedPackage {
+    #[prost(message, optional, tag = "1")]
+    pub package_id: ::core::option::Option<ObjectId>,
+    #[prost(message, optional, tag = "2")]
+    pub move_package: ::core::option::Option<MovePackage>,
+    #[prost(uint64, tag = "3")]
+    pub checkpoint_sequence_number: u64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Value {
+    #[prost(oneof = "value::Value", tags = "1, 2, 3, 4, 5, 6")]
+    pub value: ::core::option::Option<value::Value>,
+}
+/// Nested message and enum types in `Value`.
+pub mod value {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Value {
+        #[prost(message, tag = "1")]
+        Null(()),
+        #[prost(bool, tag = "2")]
+        Bool(bool),
+        #[prost(string, tag = "3")]
+        Number(::prost::alloc::string::String),
+        #[prost(string, tag = "4")]
+        String(::prost::alloc::string::String),
+        #[prost(message, tag = "5")]
+        Array(super::ListOfValues),
+        #[prost(message, tag = "6")]
+        Object(super::ValueMap),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ValueMap {
+    #[prost(map = "string, message", tag = "6")]
+    pub map: ::std::collections::HashMap<::prost::alloc::string::String, Value>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListOfValues {
+    #[prost(message, repeated, tag = "1")]
+    pub list: ::prost::alloc::vec::Vec<Value>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -96,7 +850,7 @@ pub struct EndOfEpochData {
     /// Therefore next_epoch_committee can be used to pick the last checkpoint of an epoch,
     /// which is often useful to get epoch level summary stats like total gas cost of an epoch,
     /// or the total number of transactions from genesis to the end of an epoch.
-    /// The committee is stored as a vector of validator pub key and stake pairs. The vector
+    /// he committee is stored as a vector of validator pub key and stake pairs. The vector
     /// should be sorted based on the Committee data structure.
     #[prost(message, repeated, tag = "1")]
     pub next_epoch_committee: ::prost::alloc::vec::Vec<NextEpochCommittee>,
@@ -142,72 +896,72 @@ pub struct EcmhLiveObjectSetDigest {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiTransactionBlock {
+pub struct TransactionBlock {
     #[prost(message, optional, tag = "1")]
-    pub data: ::core::option::Option<SuiTransactionBlockData>,
+    pub data: ::core::option::Option<TransactionBlockData>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiTransactionBlockData {
-    #[prost(oneof = "sui_transaction_block_data::SuiTransactionBlockData", tags = "1")]
+pub struct TransactionBlockData {
+    #[prost(oneof = "transaction_block_data::SuiTransactionBlockData", tags = "1")]
     pub sui_transaction_block_data: ::core::option::Option<
-        sui_transaction_block_data::SuiTransactionBlockData,
+        transaction_block_data::SuiTransactionBlockData,
     >,
 }
-/// Nested message and enum types in `SuiTransactionBlockData`.
-pub mod sui_transaction_block_data {
+/// Nested message and enum types in `TransactionBlockData`.
+pub mod transaction_block_data {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum SuiTransactionBlockData {
         #[prost(message, tag = "1")]
-        V1(super::SuiTransactionBlockDataV1),
+        V1(super::TransactionBlockDataV1),
     }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiTransactionBlockDataV1 {
+pub struct TransactionBlockDataV1 {
     #[prost(message, optional, tag = "1")]
-    pub transaction: ::core::option::Option<SuiTransactionBlockKind>,
+    pub transaction: ::core::option::Option<TransactionBlockKind>,
     #[prost(string, tag = "2")]
     pub sender: ::prost::alloc::string::String,
     #[prost(message, optional, tag = "3")]
-    pub gas_data: ::core::option::Option<SuiGasData>,
+    pub gas_data: ::core::option::Option<GasData>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiTransactionBlockKind {
+pub struct TransactionBlockKind {
     #[prost(
-        oneof = "sui_transaction_block_kind::SuiTransactionBlockKind",
+        oneof = "transaction_block_kind::SuiTransactionBlockKind",
         tags = "1, 2, 3, 4"
     )]
     pub sui_transaction_block_kind: ::core::option::Option<
-        sui_transaction_block_kind::SuiTransactionBlockKind,
+        transaction_block_kind::SuiTransactionBlockKind,
     >,
 }
-/// Nested message and enum types in `SuiTransactionBlockKind`.
-pub mod sui_transaction_block_kind {
+/// Nested message and enum types in `TransactionBlockKind`.
+pub mod transaction_block_kind {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum SuiTransactionBlockKind {
         /// A system transaction that will update epoch information on-chain.
         #[prost(message, tag = "1")]
-        ChangeEpoch(super::SuiChangeEpoch),
+        ChangeEpoch(super::ChangeEpoch),
         /// A system transaction used for initializing the initial state of the chain.
         #[prost(message, tag = "2")]
-        Genesis(super::SuiGenesisTransaction),
+        Genesis(super::GenesisTransaction),
         /// A system transaction marking the start of a series of transactions scheduled as part of a checkpoint
         #[prost(message, tag = "3")]
-        ConsensusCommitPrologue(super::SuiConsensusCommitPrologue),
+        ConsensusCommitPrologue(super::ConsensusCommitPrologue),
         /// A series of transactions where the results of one transaction can be used in future transactions
         #[prost(message, tag = "4")]
-        ProgrammableTransaction(super::SuiProgrammableTransactionBlock),
+        ProgrammableTransaction(super::ProgrammableTransaction),
     }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiGasData {
+pub struct GasData {
     #[prost(message, repeated, tag = "1")]
-    pub payment: ::prost::alloc::vec::Vec<SuiObjectRef>,
+    pub payment: ::prost::alloc::vec::Vec<ObjectRef>,
     #[prost(string, tag = "2")]
     pub owner: ::prost::alloc::string::String,
     #[prost(uint64, tag = "3")]
@@ -217,7 +971,7 @@ pub struct SuiGasData {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiObjectRef {
+pub struct ObjectRef {
     /// Hex code as string representing the object id
     #[prost(message, optional, tag = "1")]
     pub object_id: ::core::option::Option<ObjectId>,
@@ -230,7 +984,7 @@ pub struct SuiObjectRef {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiChangeEpoch {
+pub struct ChangeEpoch {
     #[prost(uint64, tag = "1")]
     pub epoch: u64,
     #[prost(uint64, tag = "2")]
@@ -244,7 +998,7 @@ pub struct SuiChangeEpoch {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiGenesisTransaction {
+pub struct GenesisTransaction {
     #[prost(message, repeated, tag = "1")]
     pub objects: ::prost::alloc::vec::Vec<ObjectId>,
 }
@@ -256,7 +1010,7 @@ pub struct ObjectId {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiConsensusCommitPrologue {
+pub struct ConsensusCommitPrologue {
     #[prost(uint64, tag = "1")]
     pub epoch: u64,
     #[prost(uint64, tag = "2")]
@@ -266,7 +1020,7 @@ pub struct SuiConsensusCommitPrologue {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiProgrammableTransactionBlock {
+pub struct ProgrammableTransaction {
     /// Input objects or primitive values
     #[prost(message, repeated, tag = "1")]
     pub inputs: ::prost::alloc::vec::Vec<SuiCallArg>,
@@ -340,7 +1094,7 @@ pub struct SuiPureValue {
     #[prost(message, optional, tag = "1")]
     pub value_type: ::core::option::Option<TypeTag>,
     #[prost(message, optional, tag = "2")]
-    pub value: ::core::option::Option<SuiJsonValue>,
+    pub value: ::core::option::Option<Value>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -394,43 +1148,6 @@ pub struct StructTag {
     pub name: ::prost::alloc::string::String,
     #[prost(message, optional, tag = "4")]
     pub type_params: ::core::option::Option<ListOfTypeTags>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiJsonValue {
-    #[prost(oneof = "sui_json_value::Value", tags = "1, 2, 3, 4, 5, 6")]
-    pub value: ::core::option::Option<sui_json_value::Value>,
-}
-/// Nested message and enum types in `SuiJsonValue`.
-pub mod sui_json_value {
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Value {
-        #[prost(message, tag = "1")]
-        Null(()),
-        #[prost(bool, tag = "2")]
-        Bool(bool),
-        #[prost(string, tag = "3")]
-        Number(::prost::alloc::string::String),
-        #[prost(string, tag = "4")]
-        String(::prost::alloc::string::String),
-        #[prost(message, tag = "5")]
-        Array(super::ListOfJsonValues),
-        #[prost(message, tag = "6")]
-        Object(super::SuiJsonValueMap),
-    }
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiJsonValueMap {
-    #[prost(map = "string, message", tag = "6")]
-    pub map: ::std::collections::HashMap<::prost::alloc::string::String, SuiJsonValue>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ListOfJsonValues {
-    #[prost(message, repeated, tag = "1")]
-    pub list: ::prost::alloc::vec::Vec<SuiJsonValue>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -578,30 +1295,32 @@ pub struct PairOfU32 {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiTransactionBlockEffects {
+pub struct TransactionBlockEffects {
     #[prost(
-        oneof = "sui_transaction_block_effects::SuiTransactionBlockEffects",
-        tags = "1"
+        oneof = "transaction_block_effects::SuiTransactionBlockEffects",
+        tags = "1, 2"
     )]
     pub sui_transaction_block_effects: ::core::option::Option<
-        sui_transaction_block_effects::SuiTransactionBlockEffects,
+        transaction_block_effects::SuiTransactionBlockEffects,
     >,
 }
-/// Nested message and enum types in `SuiTransactionBlockEffects`.
-pub mod sui_transaction_block_effects {
+/// Nested message and enum types in `TransactionBlockEffects`.
+pub mod transaction_block_effects {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum SuiTransactionBlockEffects {
         #[prost(message, tag = "1")]
-        V1(super::SuiTransactionBlockEffectsV1),
+        V1(super::TransactionBlockEffectsV1),
+        #[prost(message, tag = "2")]
+        V2(super::TransactionBlockEffectsV2),
     }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiTransactionBlockEffectsV1 {
+pub struct TransactionBlockEffectsV1 {
     /// The status of the execution
     #[prost(message, optional, tag = "1")]
-    pub status: ::core::option::Option<SuiExecutionStatus>,
+    pub status: ::core::option::Option<ExecutionStatus>,
     /// The epoch when this transaction was executed.
     #[prost(uint64, tag = "2")]
     pub executed_epoch: u64,
@@ -611,11 +1330,11 @@ pub struct SuiTransactionBlockEffectsV1 {
     /// The version that every modified (mutated or deleted) object had before it was modified by this transaction.
     #[prost(message, repeated, tag = "4")]
     pub modified_at_versions: ::prost::alloc::vec::Vec<
-        SuiTransactionBlockEffectsModifiedAtVersions,
+        TransactionBlockEffectsModifiedAtVersions,
     >,
     /// The object references of the shared objects used in this transaction. Empty if no shared objects were used.
     #[prost(message, repeated, tag = "5")]
-    pub shared_objects: ::prost::alloc::vec::Vec<SuiObjectRef>,
+    pub shared_objects: ::prost::alloc::vec::Vec<ObjectRef>,
     /// The transaction digest
     #[prost(string, tag = "6")]
     pub transaction_digest: ::prost::alloc::string::String,
@@ -632,13 +1351,13 @@ pub struct SuiTransactionBlockEffectsV1 {
     pub unwrapped: ::prost::alloc::vec::Vec<OwnedObjectRef>,
     /// Object Refs of objects now deleted (the old refs).
     #[prost(message, repeated, tag = "10")]
-    pub deleted: ::prost::alloc::vec::Vec<SuiObjectRef>,
+    pub deleted: ::prost::alloc::vec::Vec<ObjectRef>,
     /// Object refs of objects previously wrapped in other objects but now deleted.
     #[prost(message, repeated, tag = "11")]
-    pub unwrapped_then_deleted: ::prost::alloc::vec::Vec<SuiObjectRef>,
+    pub unwrapped_then_deleted: ::prost::alloc::vec::Vec<ObjectRef>,
     /// Object refs of objects now wrapped in other objects.
     #[prost(message, repeated, tag = "12")]
-    pub wrapped: ::prost::alloc::vec::Vec<SuiObjectRef>,
+    pub wrapped: ::prost::alloc::vec::Vec<ObjectRef>,
     /// The updated gas object reference. Have a dedicated field for convenient access.
     /// It's also included in mutated.
     #[prost(message, optional, tag = "13")]
@@ -653,11 +1372,195 @@ pub struct SuiTransactionBlockEffectsV1 {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TransactionBlockEffectsV2 {
+    /// The status of the execution
+    #[prost(message, optional, tag = "1")]
+    pub status: ::core::option::Option<ExecutionStatus>,
+    /// The epoch when this transaction was executed.
+    #[prost(uint64, tag = "2")]
+    pub executed_epoch: u64,
+    /// Gas cost summary of the transaction
+    #[prost(message, optional, tag = "3")]
+    pub gas_used: ::core::option::Option<GasCostSummary>,
+    /// The transaction digest
+    #[prost(string, tag = "4")]
+    pub transaction_digest: ::prost::alloc::string::String,
+    /// / The updated gas object reference, as an index into the `changed_objects` vector.
+    /// / Having a dedicated field for convenient access.
+    /// / System transaction that don't require gas will leave this as None.
+    #[prost(uint32, optional, tag = "5")]
+    pub gas_object_index: ::core::option::Option<u32>,
+    /// / The digest of the events emitted during execution,
+    /// / can be None if the transaction does not emit any event.
+    #[prost(string, optional, tag = "6")]
+    pub events_digest: ::core::option::Option<::prost::alloc::string::String>,
+    /// The set of transaction digests this transaction depends on.
+    #[prost(string, repeated, tag = "7")]
+    pub dependencies: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// / The version number of all the written Move objects by this transaction.
+    #[prost(uint64, tag = "8")]
+    pub lamport_version: u64,
+    /// / Objects whose state are changed in the object store.
+    #[prost(message, repeated, tag = "9")]
+    pub changed_objects: ::prost::alloc::vec::Vec<ChangedObjectV2>,
+    /// / Shared objects that are not mutated in this transaction. Unlike owned objects,
+    /// / read-only shared objects' version are not committed in the transaction,
+    /// / and in order for a node to catch up and execute it without consensus sequencing,
+    /// / the version needs to be committed in the effects.
+    #[prost(message, repeated, tag = "10")]
+    pub unchanged_shared_objects: ::prost::alloc::vec::Vec<UnchangedSharedObject>,
+    /// / Auxiliary data that are not protocol-critical, generated as part of the effects but are stored separately.
+    /// / Storing it separately allows us to avoid bloating the effects with data that are not critical.
+    /// / It also provides more flexibility on the format and type of the data.
+    #[prost(string, optional, tag = "11")]
+    pub aux_data_digest: ::core::option::Option<::prost::alloc::string::String>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UnchangedSharedObject {
+    #[prost(oneof = "unchanged_shared_object::UnchangedSharedObject", tags = "1, 2, 3")]
+    pub unchanged_shared_object: ::core::option::Option<
+        unchanged_shared_object::UnchangedSharedObject,
+    >,
+}
+/// Nested message and enum types in `UnchangedSharedObject`.
+pub mod unchanged_shared_object {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum UnchangedSharedObject {
+        /// / Read-only shared objects from the input. We don't really need ObjectDigest
+        /// / for protocol correctness, but it will make it easier to verify untrusted read.
+        #[prost(message, tag = "1")]
+        ReadOnlyRoot(super::VersionDigest),
+        /// / Deleted shared objects that appear mutably/owned in the input.
+        #[prost(string, tag = "2")]
+        MutateDeleted(::prost::alloc::string::String),
+        /// / Deleted shared objects that appear as read-only in the input.
+        #[prost(string, tag = "3")]
+        ReadDeleted(::prost::alloc::string::String),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ChangedObjectV2 {
+    #[prost(message, optional, tag = "1")]
+    pub object_id: ::core::option::Option<ObjectId>,
+    #[prost(message, optional, tag = "2")]
+    pub effects: ::core::option::Option<EffectsObjectChange>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EffectsObjectChange {
+    /// input_state and output_state are the core fields that's required by
+    /// the protocol as it tells how an object changes on-chain.
+    /// / State of the object in the store prior to this transaction.
+    #[prost(message, optional, tag = "1")]
+    pub input_state: ::core::option::Option<ObjectIn>,
+    /// / State of the object in the store after this transaction.
+    #[prost(message, optional, tag = "2")]
+    pub output_state: ::core::option::Option<ObjectOut>,
+    /// / Whether this object ID is created or deleted in this transaction.
+    /// / This information isn't required by the protocol but is useful for providing more detailed
+    /// / semantics on object changes.
+    #[prost(message, optional, tag = "3")]
+    pub id_operation: ::core::option::Option<IdOperation>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct IdOperation {
+    #[prost(oneof = "id_operation::IdoOperation", tags = "1, 2, 3")]
+    pub ido_operation: ::core::option::Option<id_operation::IdoOperation>,
+}
+/// Nested message and enum types in `IDOperation`.
+pub mod id_operation {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum IdoOperation {
+        #[prost(uint32, tag = "1")]
+        None(u32),
+        #[prost(uint32, tag = "2")]
+        Created(u32),
+        #[prost(uint32, tag = "3")]
+        Deleted(u32),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ObjectOut {
+    #[prost(oneof = "object_out::ObjectId", tags = "1, 2")]
+    pub object_id: ::core::option::Option<object_out::ObjectId>,
+}
+/// Nested message and enum types in `ObjectOut`.
+pub mod object_out {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum ObjectId {
+        #[prost(uint32, tag = "1")]
+        NotExist(u32),
+        /// / The old version, digest and owner.
+        #[prost(message, tag = "2")]
+        Exist(super::ObjectInExist),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ObjectIn {
+    #[prost(oneof = "object_in::ObjectId", tags = "1, 2, 3")]
+    pub object_id: ::core::option::Option<object_in::ObjectId>,
+}
+/// Nested message and enum types in `ObjectIn`.
+pub mod object_in {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum ObjectId {
+        #[prost(uint32, tag = "1")]
+        NotExist(u32),
+        /// / Any written object, including all of mutated, created, unwrapped today.
+        #[prost(message, tag = "2")]
+        ObjectWrite(super::ObjectWrite),
+        /// / Packages writes need to be tracked separately with version because
+        /// / we don't use lamport version for package publish and upgrades.
+        #[prost(message, tag = "3")]
+        PackageWrite(super::PackageWrite),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ObjectWrite {
+    #[prost(string, tag = "1")]
+    pub object_digest: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "2")]
+    pub owner: ::core::option::Option<Owner>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PackageWrite {
+    #[prost(message, optional, tag = "1")]
+    pub version_digest: ::core::option::Option<VersionDigest>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ObjectInExist {
+    #[prost(message, optional, tag = "1")]
+    pub version_digest: ::core::option::Option<VersionDigest>,
+    #[prost(message, optional, tag = "2")]
+    pub owner: ::core::option::Option<Owner>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct VersionDigest {
+    #[prost(uint32, tag = "1")]
+    pub sequence_number: u32,
+    #[prost(string, tag = "2")]
+    pub object_digest: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct OwnedObjectRef {
     #[prost(message, optional, tag = "1")]
     pub owner: ::core::option::Option<Owner>,
     #[prost(message, optional, tag = "2")]
-    pub reference: ::core::option::Option<SuiObjectRef>,
+    pub reference: ::core::option::Option<ObjectRef>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -694,14 +1597,14 @@ pub struct Shared {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiExecutionStatus {
-    #[prost(oneof = "sui_execution_status::SuiExecutionStatus", tags = "1, 2")]
+pub struct ExecutionStatus {
+    #[prost(oneof = "execution_status::SuiExecutionStatus", tags = "1, 2")]
     pub sui_execution_status: ::core::option::Option<
-        sui_execution_status::SuiExecutionStatus,
+        execution_status::SuiExecutionStatus,
     >,
 }
-/// Nested message and enum types in `SuiExecutionStatus`.
-pub mod sui_execution_status {
+/// Nested message and enum types in `ExecutionStatus`.
+pub mod execution_status {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum SuiExecutionStatus {
@@ -721,130 +1624,11 @@ pub struct Failure {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiTransactionBlockEffectsModifiedAtVersions {
+pub struct TransactionBlockEffectsModifiedAtVersions {
     #[prost(message, optional, tag = "1")]
     pub object_id: ::core::option::Option<ObjectId>,
     #[prost(uint64, tag = "2")]
     pub sequence_number: u64,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiTransactionBlockEvents {
-    #[prost(message, repeated, tag = "1")]
-    pub data: ::prost::alloc::vec::Vec<SuiEvent>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiEvent {
-    /// Sequential event ID, ie (transaction seq number, event seq number).
-    /// 1) Serves as a unique event ID for each fullnode
-    /// 2) Also serves to sequence events for the purposes of pagination and querying.
-    ///     A higher id is an event seen later by that fullnode.
-    /// This ID is the "cursor" for event querying.
-    #[prost(message, optional, tag = "1")]
-    pub id: ::core::option::Option<EventId>,
-    /// Move package where this event was emitted.
-    #[prost(message, optional, tag = "2")]
-    pub package_id: ::core::option::Option<ObjectId>,
-    /// Move module where this event was emitted.
-    #[prost(string, tag = "3")]
-    pub transaction_module: ::prost::alloc::string::String,
-    /// Sender's Sui address.
-    #[prost(string, tag = "4")]
-    pub sender: ::prost::alloc::string::String,
-    /// Move event type.
-    #[prost(message, optional, tag = "5")]
-    pub r#type: ::core::option::Option<StructTag>,
-    /// Parsed json value of the event
-    #[prost(message, optional, tag = "6")]
-    pub parsed_json: ::core::option::Option<SuiJsonValue>,
-    /// Base 58 encoded bcs bytes of the move event
-    #[prost(string, tag = "7")]
-    pub bcs: ::prost::alloc::string::String,
-    /// UTC timestamp in milliseconds since epoch (1/1/1970)
-    #[prost(uint64, optional, tag = "8")]
-    pub timestamp_ms: ::core::option::Option<u64>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct EventId {
-    #[prost(string, tag = "1")]
-    pub tx_digest: ::prost::alloc::string::String,
-    #[prost(uint64, tag = "2")]
-    pub event_seq: u64,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ChangedObject {
-    #[prost(message, optional, tag = "1")]
-    pub status: ::core::option::Option<ObjectStatus>,
-    #[prost(message, optional, tag = "2")]
-    pub data: ::core::option::Option<SuiObjectData>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ObjectStatus {
-    #[prost(oneof = "object_status::ObjectStatus", tags = "1, 2, 3, 4, 5, 6")]
-    pub object_status: ::core::option::Option<object_status::ObjectStatus>,
-}
-/// Nested message and enum types in `ObjectStatus`.
-pub mod object_status {
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum ObjectStatus {
-        #[prost(message, tag = "1")]
-        Created(()),
-        #[prost(message, tag = "2")]
-        Mutated(()),
-        #[prost(message, tag = "3")]
-        Deleted(()),
-        #[prost(message, tag = "4")]
-        Wrapped(()),
-        #[prost(message, tag = "5")]
-        Unwrapped(()),
-        #[prost(message, tag = "6")]
-        UnwrappedThenDeleted(()),
-    }
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiObjectData {
-    /// Object id
-    #[prost(message, optional, tag = "1")]
-    pub object_id: ::core::option::Option<ObjectId>,
-    /// Object version
-    #[prost(uint64, tag = "2")]
-    pub version: u64,
-    /// Base58 string representing the object digest
-    #[prost(string, tag = "3")]
-    pub digest: ::prost::alloc::string::String,
-    /// The type of the object. Default to be None unless SuiObjectDataOptions.showType is set to true
-    #[prost(message, optional, tag = "4")]
-    pub r#type: ::core::option::Option<ObjectType>,
-    /// Default to be None because otherwise it will be repeated for the getOwnedObjects endpoint
-    /// The owner of this object. Default to be None unless SuiObjectDataOptions.showOwner is set to true
-    #[prost(message, optional, tag = "5")]
-    pub owner: ::core::option::Option<Owner>,
-    /// The digest of the transaction that created or last mutated this object. Default to be None unless
-    /// SuiObjectDataOptions.showPreviousTransaction is set to true
-    #[prost(string, optional, tag = "6")]
-    pub previous_transaction: ::core::option::Option<::prost::alloc::string::String>,
-    /// The amount of SUI we would rebate if this object gets deleted.
-    /// This number is re-calculated each time the object is mutated based on
-    /// the present storage gas price.
-    #[prost(uint64, optional, tag = "7")]
-    pub storage_rebate: ::core::option::Option<u64>,
-    /// The Display metadata for frontend UI rendering, default to be None unless SuiObjectDataOptions.showContent is set to true
-    /// This can also be None if the struct type does not have Display defined
-    /// See more details in <<https://forums.sui.io/t/nft-object-display-proposal/4872>>
-    #[prost(message, optional, tag = "8")]
-    pub display: ::core::option::Option<DisplayFieldsResponse>,
-    /// Move object content or package content, default to be None unless SuiObjectDataOptions.showContent is set to true
-    #[prost(message, optional, tag = "9")]
-    pub content: ::core::option::Option<SuiParsedData>,
-    /// Move object content or package content in BCS, default to be None unless SuiObjectDataOptions.showBcs is set to true
-    #[prost(message, optional, tag = "10")]
-    pub bcs: ::core::option::Option<SuiRawData>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -889,240 +1673,6 @@ pub mod move_object_type {
         #[prost(message, tag = "4")]
         Coin(super::TypeTag),
     }
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct DisplayFieldsResponse {
-    #[prost(map = "string, string", tag = "1")]
-    pub data: ::std::collections::HashMap<
-        ::prost::alloc::string::String,
-        ::prost::alloc::string::String,
-    >,
-    #[prost(message, optional, tag = "2")]
-    pub error: ::core::option::Option<SuiObjectResponseError>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiObjectResponseError {
-    #[prost(
-        oneof = "sui_object_response_error::SuiObjectResponseError",
-        tags = "1, 2, 3, 4, 5"
-    )]
-    pub sui_object_response_error: ::core::option::Option<
-        sui_object_response_error::SuiObjectResponseError,
-    >,
-}
-/// Nested message and enum types in `SuiObjectResponseError`.
-pub mod sui_object_response_error {
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct NotExists {
-        #[prost(message, optional, tag = "1")]
-        pub object_id: ::core::option::Option<super::ObjectId>,
-    }
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct DynamicFieldNotFound {
-        #[prost(message, optional, tag = "1")]
-        pub parent_object_id: ::core::option::Option<super::ObjectId>,
-    }
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct Deleted {
-        #[prost(message, optional, tag = "1")]
-        pub object_id: ::core::option::Option<super::ObjectId>,
-        #[prost(uint64, tag = "2")]
-        pub version: u64,
-        #[prost(string, tag = "3")]
-        pub digest: ::prost::alloc::string::String,
-    }
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct DisplayError {
-        #[prost(string, tag = "1")]
-        pub error: ::prost::alloc::string::String,
-    }
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum SuiObjectResponseError {
-        #[prost(message, tag = "1")]
-        NotExists(NotExists),
-        #[prost(message, tag = "2")]
-        DynamicFieldNotFound(DynamicFieldNotFound),
-        #[prost(message, tag = "3")]
-        Deleted(Deleted),
-        #[prost(message, tag = "4")]
-        Unknown(()),
-        #[prost(message, tag = "5")]
-        DisplayError(DisplayError),
-    }
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiParsedData {
-    #[prost(oneof = "sui_parsed_data::SuiParsedData", tags = "1, 2")]
-    pub sui_parsed_data: ::core::option::Option<sui_parsed_data::SuiParsedData>,
-}
-/// Nested message and enum types in `SuiParsedData`.
-pub mod sui_parsed_data {
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum SuiParsedData {
-        #[prost(message, tag = "1")]
-        MoveObject(super::SuiParsedMoveObject),
-        #[prost(message, tag = "2")]
-        Package(super::SuiMovePackage),
-    }
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiParsedMoveObject {
-    #[prost(message, optional, tag = "1")]
-    pub r#type: ::core::option::Option<StructTag>,
-    #[prost(bool, tag = "2")]
-    pub has_public_transfer: bool,
-    #[prost(message, optional, tag = "3")]
-    pub fields: ::core::option::Option<SuiMoveStruct>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiMoveStruct {
-    #[prost(oneof = "sui_move_struct::SuiMoveStruct", tags = "1, 2, 3")]
-    pub sui_move_struct: ::core::option::Option<sui_move_struct::SuiMoveStruct>,
-}
-/// Nested message and enum types in `SuiMoveStruct`.
-pub mod sui_move_struct {
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum SuiMoveStruct {
-        #[prost(message, tag = "1")]
-        Runtime(super::ListOfSuiMoveValues),
-        #[prost(message, tag = "2")]
-        WithTypes(super::WithTypes),
-        #[prost(message, tag = "3")]
-        WithFields(super::WithFields),
-    }
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ListOfSuiMoveValues {
-    #[prost(message, repeated, tag = "1")]
-    pub list: ::prost::alloc::vec::Vec<SuiMoveValue>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct WithTypes {
-    #[prost(message, optional, tag = "1")]
-    pub r#type: ::core::option::Option<StructTag>,
-    #[prost(map = "string, message", tag = "2")]
-    pub fields: ::std::collections::HashMap<
-        ::prost::alloc::string::String,
-        SuiMoveValue,
-    >,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct WithFields {
-    #[prost(map = "string, message", tag = "2")]
-    pub fields: ::std::collections::HashMap<
-        ::prost::alloc::string::String,
-        SuiMoveValue,
-    >,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiMoveValue {
-    #[prost(oneof = "sui_move_value::SuiMoveValue", tags = "1, 2, 3, 4, 5, 6, 7, 8")]
-    pub sui_move_value: ::core::option::Option<sui_move_value::SuiMoveValue>,
-}
-/// Nested message and enum types in `SuiMoveValue`.
-pub mod sui_move_value {
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum SuiMoveValue {
-        #[prost(uint32, tag = "1")]
-        Number(u32),
-        #[prost(bool, tag = "2")]
-        Bool(bool),
-        #[prost(string, tag = "3")]
-        Address(::prost::alloc::string::String),
-        #[prost(message, tag = "4")]
-        Vector(super::ListOfSuiMoveValues),
-        #[prost(string, tag = "5")]
-        String(::prost::alloc::string::String),
-        #[prost(message, tag = "6")]
-        Uid(super::Uid),
-        #[prost(message, tag = "7")]
-        Struct(super::SuiMoveStruct),
-        #[prost(message, tag = "8")]
-        Option(::prost::alloc::boxed::Box<super::SuiMoveValue>),
-    }
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Uid {
-    #[prost(message, optional, tag = "1")]
-    pub id: ::core::option::Option<ObjectId>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiMovePackage {
-    #[prost(map = "string, message", tag = "1")]
-    pub disassembled: ::std::collections::HashMap<
-        ::prost::alloc::string::String,
-        SuiJsonValue,
-    >,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiRawData {
-    #[prost(oneof = "sui_raw_data::SuiRawData", tags = "1, 2")]
-    pub sui_raw_data: ::core::option::Option<sui_raw_data::SuiRawData>,
-}
-/// Nested message and enum types in `SuiRawData`.
-pub mod sui_raw_data {
-    #[allow(clippy::derive_partial_eq_without_eq)]
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum SuiRawData {
-        #[prost(message, tag = "1")]
-        MoveObject(super::SuiRawMoveObject),
-        #[prost(message, tag = "2")]
-        Package(super::SuiRawMovePackage),
-    }
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiRawMoveObject {
-    #[prost(message, optional, tag = "1")]
-    pub r#type: ::core::option::Option<StructTag>,
-    #[prost(bool, tag = "2")]
-    pub has_public_transfer: bool,
-    #[prost(uint64, tag = "3")]
-    pub version: u64,
-    #[prost(bytes = "vec", tag = "4")]
-    pub bcs_bytes: ::prost::alloc::vec::Vec<u8>,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiRawMovePackage {
-    #[prost(message, optional, tag = "1")]
-    pub id: ::core::option::Option<ObjectId>,
-    #[prost(uint64, tag = "2")]
-    pub version: u64,
-    #[prost(map = "string, bytes", tag = "3")]
-    pub module_map: ::std::collections::HashMap<
-        ::prost::alloc::string::String,
-        ::prost::alloc::vec::Vec<u8>,
-    >,
-    #[prost(message, repeated, tag = "4")]
-    pub type_origin_table: ::prost::alloc::vec::Vec<TypeOrigin>,
-    /// Note the key here is ObjectID, but we cannot use Message as keys in a map thus we covnert it into hex string
-    /// that is key = hex(ObjectId)
-    #[prost(map = "string, message", tag = "5")]
-    pub linkage_table: ::std::collections::HashMap<
-        ::prost::alloc::string::String,
-        UpgradeInfo,
-    >,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
