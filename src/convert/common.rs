@@ -137,7 +137,7 @@ pub fn convert_tx_block_effects_modified_at_versions(
 ) -> pb::SuiTransactionBlockEffectsModifiedAtVersions {
   pb::SuiTransactionBlockEffectsModifiedAtVersions {
     object_id: Some(convert_sui_object(&source.object_id)),
-    sequence_number: source.sequence_number().value(),
+    sequence_number: source.sequence_number.value(),
   }
 }
 
