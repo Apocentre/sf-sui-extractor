@@ -148,7 +148,6 @@ impl FirehoseStreamer {
       handle_checkpoint_sender,
     );
 
-
     Ok(checkpoint_handler)
   }
 

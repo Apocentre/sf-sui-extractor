@@ -21,15 +21,15 @@ prost = "0.11.9"
 prost-types = "0.11.9"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
-mysten-metrics = { path = "../sui/crates/mysten-metrics" }
-move-core-types = { path = "../sui/external-crates/move/crates/move-core-types" }
-move-bytecode-utils = { path = "../sui/external-crates/move/crates/move-bytecode-utils" }
-sui-json-rpc = { path = "../sui/crates/sui-json-rpc" }
-sui-rest-api = { path = "../sui/crates/sui-rest-api" }
-sui-json-rpc-types = { path = "../sui/crates/sui-json-rpc-types" }
-sui-indexer = { path = "../sui/crates/sui-indexer" }
-sui-types = { path = "../sui/crates/sui-types" }
-sui-json = { path = "../sui/crates/sui-json" }
+mysten-metrics = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
+move-core-types = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
+move-bytecode-utils = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
+sui-json-rpc = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
+sui-rest-api = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
+sui-json-rpc-types = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
+sui-indexer = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
+sui-types = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
+sui-json = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
 tokio = { version = "1.27.0", features = ["full"] }
 prometheus = "0.13"
 
