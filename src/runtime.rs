@@ -6,7 +6,7 @@ use mysten_metrics::{
 use sui_indexer::{
   framework::{fetcher::{CheckpointFetcher, CheckpointDownloadData}, Handler},
   handlers::{
-    checkpoint_handler::CheckpointHandler, CheckpointDataToCommit, tx_processor::IndexingPackageBuffer,
+    checkpoint_handler::CheckpointHandler, CheckpointDataToCommit,
   },
   metrics::IndexerMetrics,
 };
@@ -15,15 +15,7 @@ use backoff::{ExponentialBackoff, future::retry};
 // use prost::Message;
 use log::error;
 use prometheus::Registry;
-use tokio::{sync::watch, spawn};
-use crate::{
-  sui::sui_store::SuiStore,
-  // pb::sui::checkpoint,
-  // pb::sui::checkpoint as pb, 
-  // convert::{
-  //   tx::convert_transaction, object::convert_object_change, checkpoint::convert_checkpoint,
-  // },
-};
+use tokio::spawn;
 
 const DOWNLOAD_QUEUE_SIZE: usize = 1000;
 const CHECKPOINT_QUEUE_SIZE: usize = 1000;
@@ -150,14 +142,10 @@ impl FirehoseStreamer {
     }
   }
 
-  async fn create_handler(&self, handle_checkpoint_sender: Sender<CheckpointDataToCommit>) -> Result<CheckpointHandler<SuiStore>> {
-    let (_, rx) = watch::channel(None);
-    
+  async fn create_handler(&self, handle_checkpoint_sender: Sender<CheckpointDataToCommit>) -> Result<CheckpointHandler> {
     let checkpoint_handler = CheckpointHandler::new(
-      SuiStore::new(),
       self.metrics.clone(),
       handle_checkpoint_sender,
-      IndexingPackageBuffer::start(rx),
     );
 
 
