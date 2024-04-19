@@ -7,7 +7,7 @@ import "google/protobuf/empty.proto";
 
 message CheckpointData {
   Checkpoint checkpoint = 1;
-  repeated CheckpointTransactionBlockResponse transactions = 2;
+  repeated Transaction transactions = 2;
   repeated ChangedObject changed_objects = 3;
 }
 
@@ -66,16 +66,172 @@ message GasCostSummary {
   uint64 non_refundable_storage_fee = 4;
 }
 
-message CheckpointTransactionBlockResponse {
-  string digest = 1;
+message Transaction {
+  uint64 sequence_number = 1;
+  string digest = 2;
+  repeated SenderSignedTransaction sender_signed_data = 3;
   // Transaction input data
-  SuiTransactionBlock transaction = 2;
-  bytes raw_transaction = 3;
-  SuiTransactionBlockEffects effects = 4;
-  SuiTransactionBlockEvents events = 5;
+  // TransactionBlock transaction = 2;
+  // bytes raw_transaction = 3;
+  TransactionBlockEffects effects = 4;
+  uint64 checkpoint_sequence_number = 5;
   uint64 timestamp_ms = 6;
-  optional bool confirmed_local_execution = 7;
-  uint64 checkpoint = 8;
+  // TransactionBlockEvents events = 5;
+  // uint64 timestamp_ms = 6;
+  // optional bool confirmed_local_execution = 7;
+  // uint64 checkpoint = 8;
+}
+
+message SenderSignedTransaction {
+  IntentMessage intent_message = 1;
+}
+
+message IntentMessage {
+  Intent intent = 1;
+  TransactionData value = 2;
+}
+
+message Intent {
+  IntentScope scope = 1;
+}
+
+message IntentScope {
+  oneof scope {
+    // Used for a user signature on a transaction data.
+    uint32 transaction_data = 1;
+    // Used for an authority signature on transaction effects.
+    uint32 transaction_effects = 2;
+    // Used for an authority signature on a checkpoint summary.
+    uint32 checkpoint_summary = 3;
+    // Used for a user signature on a personal message.
+    uint32 personal_message = 4;
+    // Used for an authority signature on a user signed transaction.
+    uint32 sender_signed_transaction = 5;
+    // Used as a signature representing an authority's proof of possession of its authority protocol key.
+    uint32 proof_of_possession = 6;
+    // Used for narwhal authority signature on header digest.
+    uint32 header_digest = 7;
+    // for bridge purposes but it's currently not included in messages.
+    uint32 bridge_event_unused = 8;
+    // Used for consensus authority signature on block's digest
+    uint32 consensus_block = 9;
+  };
+}
+
+message TransactionData {
+  oneof tx_data {
+    TransactionDataV1 v1 = 1;
+  }
+}
+
+message TransactionDataV1 {
+  TransactionKind kind = 1;
+  string sender = 2;
+  GasData gas_data = 3;
+  TransactionExpiration expiration = 4;
+}
+
+message TransactionExpiration {
+  oneof tx_expiration {
+    uint32 none = 1;
+    uint64 epoch = 2;
+  }
+}
+
+message TransactionKind {
+  oneof transaction_kind {
+    /// A transaction that allows the interleaving of native commands and Move calls
+    ProgrammableTransaction programmable_tx = 1;
+    ChangeEpoch change_epoch = 2;
+    GenesisTransaction genesis = 3;
+    ConsensusCommitPrologue consensus_commit_prologue = 4;
+    AuthenticatorStateUpdate authenticator_state_update = 5;
+    /// EndOfEpochTransaction replaces ChangeEpoch with a list of transactions that are allowed to
+    /// run at the end of the epoch.
+    EndOfEpochTransaction end_od_epoch_transaction = 6;
+    RandomnessStateUpdate randomness_state_update = 7;
+    // V2 ConsensusCommitPrologue also includes the digest of the current consensus output.
+    ConsensusCommitPrologueV2 consensus_commit_prologue_v2 = 8;
+  }
+}
+
+message ConsensusCommitPrologueV2 {
+    /// Epoch of the commit prologue transaction
+    uint64 epoch = 1;
+    /// Consensus round of the commit
+    uint64 round = 2;
+    /// Unix timestamp from consensus
+    uint64 commit_timestamp_ms = 3;
+    /// Digest of consensus output
+    string consensus_commit_digest = 4;
+}
+
+message RandomnessStateUpdate {
+  /// Epoch of the randomness state update transaction
+  uint64 epoch = 1;
+  /// Randomness round of the update
+  uint64 randomness_round = 2;
+  /// Updated random bytes
+  bytes random_bytes = 3;
+  /// The initial version of the randomness object that it was shared at.
+  uint64 randomness_obj_initial_shared_version = 4;
+}
+
+message EndOfEpochTransaction {
+  repeated EndOfEpochTransactionKind end_od_epoch_transaction_kind = 1;
+}
+
+message EndOfEpochTransactionKind {
+  oneof kind {
+    ChangeEpoch change_epoch = 1;
+    uint32 authenticator_state_create = 2;
+    AuthenticatorStateExpire authenticator_state_expire = 3;
+    uint32 randomness_state_create = 4;
+    uint32 deny_list_state_create = 5;
+  }
+}
+
+message AuthenticatorStateUpdate {
+  /// Epoch of the authenticator state update transaction
+  uint64 epoch = 1;
+  /// Consensus round of the authenticator state update
+  uint64 round = 2;
+  /// newly active jwks
+  repeated ActiveJwk new_active_jwks = 3;
+  /// The initial version of the authenticator object that it was shared at.
+  uint64 authenticator_obj_initial_shared_version = 4;
+}
+
+message ActiveJwk {
+  JwkId jwk_id = 1;
+  JWK jwk = 2;
+  // the most recent epoch in which the jwk was validated
+  uint64 epoch = 3;
+}
+
+message JwkId {
+  /// iss string that identifies the OIDC provider.
+  string iss = 1;
+  /// kid string that identifies the JWK.
+  string kid = 2;
+}
+
+message JWK {
+  /// Key type parameter, https://datatracker.ietf.org/doc/html/rfc7517#section-4.1
+  string kty = 1;
+  /// RSA public exponent, https://datatracker.ietf.org/doc/html/rfc7517#section-9.3
+  string e = 2;
+  /// RSA modulus, https://datatracker.ietf.org/doc/html/rfc7517#section-9.3
+  string n = 3;
+  /// Algorithm parameter, https://datatracker.ietf.org/doc/html/rfc7517#section-4.4
+  string alg = 4;
+}
+
+message AuthenticatorStateExpire {
+  /// expire JWKs that have a lower epoch than this
+  uint64 min_epoch = 1;
+  /// The initial version of the authenticator object that it was shared at.
+  uint64 authenticator_obj_initial_shared_version = 2;
 }
 
 message EndOfEpochData {
@@ -84,7 +240,7 @@ message EndOfEpochData {
   // Therefore next_epoch_committee can be used to pick the last checkpoint of an epoch,
   // which is often useful to get epoch level summary stats like total gas cost of an epoch,
   // or the total number of transactions from genesis to the end of an epoch.
-  // The committee is stored as a vector of validator pub key and stake pairs. The vector
+  // he committee is stored as a vector of validator pub key and stake pairs. The vector
   // should be sorted based on the Committee data structure.
   repeated NextEpochCommittee next_epoch_committee = 1;
   
@@ -112,46 +268,46 @@ message ECMHLiveObjectSetDigest {
   string digest = 1;
 }
 
-message SuiTransactionBlock {
-  SuiTransactionBlockData data = 1;
+message TransactionBlock {
+  TransactionBlockData data = 1;
 }
 
-message SuiTransactionBlockData {
+message TransactionBlockData {
   oneof sui_transaction_block_data {
-    SuiTransactionBlockDataV1 v1 = 1;
+    TransactionBlockDataV1 v1 = 1;
   }
 }
 
-message SuiTransactionBlockDataV1 {
-  SuiTransactionBlockKind transaction = 1;
+message TransactionBlockDataV1 {
+  TransactionBlockKind transaction = 1;
   string sender = 2;
-  SuiGasData gas_data = 3;
+  GasData gas_data = 3;
 }
 
-message SuiTransactionBlockKind {
+message TransactionBlockKind {
   oneof sui_transaction_block_kind {
     // A system transaction that will update epoch information on-chain.
-    SuiChangeEpoch change_epoch = 1;
+    ChangeEpoch change_epoch = 1;
 
     // A system transaction used for initializing the initial state of the chain.
-    SuiGenesisTransaction genesis = 2;
+    GenesisTransaction genesis = 2;
 
     // A system transaction marking the start of a series of transactions scheduled as part of a checkpoint
-    SuiConsensusCommitPrologue consensus_commit_prologue = 3;
+    ConsensusCommitPrologue consensus_commit_prologue = 3;
 
     // A series of transactions where the results of one transaction can be used in future transactions
-    SuiProgrammableTransactionBlock programmable_transaction = 4;
+    ProgrammableTransaction programmable_transaction = 4;
   }
 }
 
-message SuiGasData {
-  repeated SuiObjectRef payment = 1;
+message GasData {
+  repeated ObjectRef payment = 1;
   string owner = 2;
   uint64 price = 3;
   uint64 budget = 4;
 }
 
-message SuiObjectRef {
+message ObjectRef {
   // Hex code as string representing the object id
   ObjectID object_id = 1;
 
@@ -162,7 +318,7 @@ message SuiObjectRef {
   string digest = 3;
 }
 
-message SuiChangeEpoch {
+message ChangeEpoch {
   uint64 epoch = 1;
   uint64 storage_charge = 2;
   uint64 computation_charge = 3;
@@ -170,7 +326,7 @@ message SuiChangeEpoch {
   uint64 epoch_start_timestamp_ms = 5;
 }
 
-message SuiGenesisTransaction {
+message GenesisTransaction {
   repeated ObjectID objects = 1;
 }
 
@@ -178,13 +334,13 @@ message ObjectID {
   string account_address = 1;
 }
 
-message SuiConsensusCommitPrologue {
+message ConsensusCommitPrologue {
   uint64 epoch = 1;
   uint64 round = 2;
   uint64 commit_timestamp_ms = 3;
 }
 
-message SuiProgrammableTransactionBlock {
+message ProgrammableTransaction {
   // Input objects or primitive values
   repeated SuiCallArg inputs = 1;
 
@@ -380,15 +536,16 @@ message PairOfU32 {
   uint32 two = 2;
 }
 
-message SuiTransactionBlockEffects {
+message TransactionBlockEffects {
   oneof sui_transaction_block_effects {
-    SuiTransactionBlockEffectsV1 v1 = 1;
+    TransactionBlockEffectsV1 v1 = 1;
+    TransactionBlockEffectsV2 v2 = 2;
   }
 }
 
-message SuiTransactionBlockEffectsV1 {
+message TransactionBlockEffectsV1 {
   // The status of the execution
-  SuiExecutionStatus status = 1;
+  ExecutionStatus status = 1;
 
   // The epoch when this transaction was executed.
   uint64 executed_epoch = 2;
@@ -397,10 +554,10 @@ message SuiTransactionBlockEffectsV1 {
   GasCostSummary gas_used = 3;
 
   // The version that every modified (mutated or deleted) object had before it was modified by this transaction.
-  repeated SuiTransactionBlockEffectsModifiedAtVersions modified_at_versions = 4;
+  repeated TransactionBlockEffectsModifiedAtVersions modified_at_versions = 4;
 
   // The object references of the shared objects used in this transaction. Empty if no shared objects were used.
-  repeated SuiObjectRef shared_objects = 5;
+  repeated ObjectRef shared_objects = 5;
 
   // The transaction digest
   string transaction_digest = 6;
@@ -417,13 +574,13 @@ message SuiTransactionBlockEffectsV1 {
   repeated OwnedObjectRef unwrapped = 9;
 
   // Object Refs of objects now deleted (the old refs).
-  repeated SuiObjectRef deleted = 10;
+  repeated ObjectRef deleted = 10;
 
   // Object refs of objects previously wrapped in other objects but now deleted.
-  repeated SuiObjectRef unwrapped_then_deleted = 11;
+  repeated ObjectRef unwrapped_then_deleted = 11;
 
   // Object refs of objects now wrapped in other objects.
-  repeated SuiObjectRef wrapped = 12;
+  repeated ObjectRef wrapped = 12;
 
   // The updated gas object reference. Have a dedicated field for convenient access.
   // It's also included in mutated.
@@ -439,7 +596,7 @@ message SuiTransactionBlockEffectsV1 {
 
 message OwnedObjectRef {
   Owner owner = 1;
-  SuiObjectRef reference = 2;
+  ObjectRef reference = 2;
 }
 
 message Owner {
@@ -464,7 +621,7 @@ message Shared {
   uint64 initial_shared_version = 1;
 }
 
-message SuiExecutionStatus {
+message ExecutionStatus {
   oneof sui_execution_status {
     // Gas used in the success case.
     google.protobuf.Empty success = 1;
@@ -478,12 +635,12 @@ message Failure {
   string error = 1;
 }
 
-message SuiTransactionBlockEffectsModifiedAtVersions {
+message TransactionBlockEffectsModifiedAtVersions {
   ObjectID object_id = 1;
   uint64 sequence_number = 2;
 }
 
-message SuiTransactionBlockEvents {
+message TransactionBlockEvents {
   repeated SuiEvent data = 1;
 }
 
