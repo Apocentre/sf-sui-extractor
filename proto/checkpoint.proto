@@ -8,7 +8,13 @@ import "google/protobuf/empty.proto";
 message CheckpointData {
   Checkpoint checkpoint = 1;
   repeated Transaction transactions = 2;
-  repeated ChangedObject changed_objects = 3;
+  repeated IndexedEvent events = 3;
+  repeated TxIndex tx_indices = 4;
+  map<string, StoredDisplay> display_updates = 5;
+  TransactionObjectChange object_changes = 6;
+  TransactionObjectChange object_history_changes = 7;
+  IndexedPackage packages = 8;
+  // repeated ChangedObject changed_objects = 3;
 }
 
 message Checkpoint {
@@ -79,8 +85,15 @@ message Transaction {
   repeated ObjectChange object_changes = 7;
   repeated BalanceChange balance_change = 8;
   repeated Event events = 9;
-  TransactionKind transaction_kind = 10;
+  GenericTransactionKind transaction_kind = 10;
   uint64 successful_tx_num = 11;
+}
+
+message GenericTransactionKind {
+  oneof kind {
+    uint32 system_ransaction = 1;
+    uint32 programmable_transaction = 2;
+  }
 }
 
 message Event {
@@ -313,6 +326,178 @@ message AuthenticatorStateExpire {
   uint64 authenticator_obj_initial_shared_version = 2;
 }
 
+message IndexedEvent {
+  uint64 tx_sequence_number = 1;
+  uint64 event_sequence_number = 2;
+  uint64 checkpoint_sequence_number = 3;
+  string transaction_digest = 4;
+  repeated string senders = 5;
+  ObjectID package = 6;
+  string module = 7;
+  string event_type = 8;
+  bytes bsc = 9;
+  uint64 timestamp_ms = 10;
+}
+
+message TxIndex {
+  uint64 tx_sequence_number = 1;
+  string transaction_digest = 2;
+  uint64 checkpoint_sequence_number = 3;
+  repeated ObjectID input_objects = 4;
+  repeated ObjectID changed_objects = 5;
+  repeated string payers = 6;
+  repeated string senders = 7;
+  repeated string recipients = 8;
+  repeated MoveCallOverview move_calls = 9;
+}
+
+message MoveCallOverview {
+  // The package containing the module and function.
+  ObjectID package = 1;
+
+  // The specific module in the package containing the function.
+  string module = 2;
+
+  // The function to be called.
+  string function = 3;
+}
+
+message StoredDisplay {
+  string object_type = 1;
+  bytes id = 2;
+  int32 version = 3;
+  bytes bcs = 4;
+}
+
+message TransactionObjectChange {
+  repeated IndexedObject changed_objects = 1;
+  repeated IndexedDeletedObject deleted_objects = 2;
+}
+
+message IndexedObject {
+  ObjectID object_id = 1;
+  uint64 object_version = 2;
+  string object_digest = 3;
+  uint64 checkpoint_sequence_number = 4;
+  OwnerType owner_type = 5;
+  optional string owner_id = 6;
+  Object object = 7;
+  optional string coin_type = 8;
+  uint64 coin_balance = 9;
+  DynamicFieldInfo df_info = 10;
+}
+
+message Object {
+  /// The meat of the object
+  Data data = 1;
+  /// The owner that unlocks this object
+  Owner owner = 2;
+  /// The digest of the transaction that created or last mutated this object
+  string previous_transaction = 3;
+  /// The amount of SUI we would rebate if this object gets deleted.
+  /// This number is re-calculated each time the object is mutated based on
+  /// the present storage gas price.
+  uint64 storage_rebate = 4;
+}
+message OwnerType {
+  oneof owner_type {
+    uint32 immutable = 1;
+    uint32 address = 2;
+    uint32 object = 3;
+    uint32 shared = 4;
+  }
+}
+
+message Data {
+  oneof data {
+    MoveObject move = 1;
+    MovePackage package = 2;
+  }
+}
+
+message MoveObject {
+  /// The type of this object. Immutable
+  MoveObjectType type = 1;
+  /// DEPRECATED this field is no longer used to determine whether a tx can transfer this
+  /// object. Instead, it is always calculated from the objects type when loaded in execution
+  bool has_public_transfer = 2;
+  /// Number that increases each time a tx takes this object as a mutable input
+  /// This is a lamport timestamp, not a sequentially increasing version
+  uint64 version = 3;
+  bytes contents = 4;
+}
+
+message MovePackage {
+  ObjectID id = 1;
+  /// Most move packages are uniquely identified by their ID (i.e. there is only one version per
+  /// ID), but the version is still stored because one package may be an upgrade of another (at a
+  /// different ID), in which case its version will be one greater than the version of the
+  /// upgraded package.
+  ///
+  /// Framework packages are an exception to this rule -- all versions of the framework packages
+  /// exist at the same ID, at increasing versions.
+  ///
+  /// In all cases, packages are referred to by move calls using just their ID, and they are
+  /// always loaded at their latest version.
+  uint64 version = 2;
+  map<string, bytes> module_map = 3;
+
+  /// Maps struct/module to a package version where it was first defined, stored as a vector for
+  /// simple serialization and deserialization.
+  repeated TypeOrigin type_origin_table = 4;
+
+  // For each dependency, maps original package ID to the info about the (upgraded) dependency
+  // version that this package is using
+  map<ObjectID, UpgradeInfo> linkage_table = 5;
+}
+
+message DynamicFieldInfo {
+  DynamicFieldName name = 1;
+  bytes bcs_name = 2;
+  DynamicFieldType type = 3;
+  string object_type = 4;
+  ObjectID object_id = 5;
+  uint64 version = 6;
+  string digest = 7;
+}
+
+message DynamicFieldName {
+  TypeTag type = 1;
+  Value value = 2;
+}
+
+message DynamicFieldType {
+  oneof dynamic_field_type {
+    uint32 dynamic_field = 1;
+    uint32 dynamic_object = 2;
+  }
+}
+
+message IndexedDeletedObject {
+  ObjectID object_id = 1;
+  uint64 object_version = 2;
+  uint64 checkpoint_sequence_number = 3;
+}
+
+message Value {
+  oneof value {
+    google.protobuf.Empty null = 1;
+    bool bool = 2;
+    string number = 3;
+    string string = 4;
+    ListOfValues array = 5;
+    ValueMap object = 6;
+  }
+}
+
+message ValueMap {
+  map<string, Value> map = 6;
+}
+
+message ListOfValues {
+  repeated Value list = 1;
+}
+
 message EndOfEpochData {
   // next_epoch_committee is `Some` if and only if the current checkpoint is
   // the last checkpoint of an epoch.
@@ -463,7 +648,7 @@ message SharedObject {
 
 message SuiPureValue {
   optional TypeTag value_type = 1;
-  SuiJsonValue value = 2;
+  Value value = 2;
 }
 
 message TypeTag {
@@ -491,25 +676,6 @@ message StructTag {
   string module = 2;
   string name = 3;
   ListOfTypeTags type_params = 4;
-}
-
-message SuiJsonValue {
-  oneof value {
-    google.protobuf.Empty null = 1;
-    bool bool = 2;
-    string number = 3;
-    string string = 4;
-    ListOfJsonValues array = 5;
-    SuiJsonValueMap object = 6;
-  }
-}
-
-message SuiJsonValueMap {
-  map<string, SuiJsonValue> map = 6;
-}
-
-message ListOfJsonValues {
-  repeated SuiJsonValue list = 1;
 }
 
 message SuiCommand {
@@ -837,13 +1003,6 @@ message SuiObjectResponseError {
   }
 }
 
-message SuiParsedData {
-  oneof sui_parsed_data {
-    SuiParsedMoveObject move_object = 1;
-    SuiMovePackage package = 2;
-  }
-}
-
 message SuiParsedMoveObject {
   StructTag type = 1;
   bool has_public_transfer = 2;
@@ -886,35 +1045,6 @@ message SuiMoveValue {
 
 message UID {
   ObjectID id = 1;
-}
-
-message SuiMovePackage {
-  map<string, SuiJsonValue> disassembled = 1;
-}
-
-message SuiRawData {
-  oneof sui_raw_data {
-    SuiRawMoveObject move_object = 1;
-    SuiRawMovePackage package = 2;
-  }
-}
-
-message SuiRawMoveObject {
-  StructTag type = 1;
-  bool has_public_transfer = 2;
-  uint64 version = 3;
-  bytes bcs_bytes = 4;
-}
-
-message SuiRawMovePackage {
-  ObjectID id = 1;
-  uint64 version = 2;
-  map<string, bytes> module_map = 3;
-  repeated TypeOrigin type_origin_table = 4;
-
-  // Note the key here is ObjectID, but we cannot use Message as keys in a map thus we covnert it into hex string
-  // that is key = hex(ObjectId)
-  map<string, UpgradeInfo> linkage_table = 5;
 }
 
 message TypeOrigin {
