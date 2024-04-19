@@ -15,7 +15,7 @@ use crate::pb::sui::checkpoint::{self as pb};
 
 pub fn convert_sui_object(source: &ObjectID) -> pb::ObjectId {
   pb::ObjectId {
-    account_address: source.to_canonical_string(),
+    account_address: source.to_canonical_string(false),
   }
 }
 
@@ -29,7 +29,7 @@ pub fn convert_type_tag(source: &TypeTag) -> pb::TypeTag {
     TypeTag::Signer => pb::type_tag::TypeTag::Signer(()),
     TypeTag::Vector(type_tag) => pb::type_tag::TypeTag::Vector(Box::new(convert_type_tag(&*type_tag))),
     TypeTag::Struct(source) => pb::type_tag::TypeTag::Struct(pb::StructTag {
-      address: source.address.to_canonical_string(),
+      address: source.address.to_canonical_string(false),
       module: source.module.to_string(),
       name: source.name.to_string(),
       type_params: Some(pb::ListOfTypeTags {
@@ -100,8 +100,9 @@ pub fn convert_sui_execution_status(source: &SuiExecutionStatus) -> pb::SuiExecu
   }
 }
 
-pub fn convert_gas_cost_summary(source: &GasCostSummary) -> pb::GasCostSummary {
+pub fn convert_gas_cost_summary(total_gas_cost: i64, source: &GasCostSummary) -> pb::GasCostSummary {
   pb::GasCostSummary {
+    total_gas_cost,
     computation_cost: source.computation_cost,
     storage_cost: source.storage_cost,
     storage_rebate: source.storage_rebate,
@@ -135,7 +136,7 @@ pub fn convert_tx_block_effects_modified_at_versions(
   source: &SuiTransactionBlockEffectsModifiedAtVersions
 ) -> pb::SuiTransactionBlockEffectsModifiedAtVersions {
   pb::SuiTransactionBlockEffectsModifiedAtVersions {
-    object_id: Some(convert_sui_object(&source.object_id())),
+    object_id: Some(convert_sui_object(&source.object_id)),
     sequence_number: source.sequence_number().value(),
   }
 }
@@ -154,7 +155,7 @@ pub fn convert_tx_block_events(source: &SuiTransactionBlockEvents) -> pb::SuiTra
     transaction_module: e.transaction_module.clone().into_string(),
     sender: hex::encode(e.sender),
     r#type: Some(pb::StructTag {
-      address: e.type_.address.to_canonical_string(),
+      address: e.type_.address.to_canonical_string(false),
       module: e.type_.module.to_string(),
       name: e.type_.name.to_string(),
       type_params: Some(pb::ListOfTypeTags {
@@ -186,7 +187,7 @@ pub fn convert_object_type(source: &ObjectType) -> pb::ObjectType {
 pub fn convert_move_object_type(source: &MoveObjectType) -> pb::MoveObjectType {
   let move_object_type = match source.clone().into_inner() {
     sui_types::base_types::MoveObjectType_::Other(source) => pb::move_object_type::MoveObjectType::Other(pb::StructTag {
-      address: source.address.to_canonical_string(),
+      address: source.address.to_canonical_string(false),
       module: source.module.to_string(),
       name: source.name.to_string(),
       type_params: Some(pb::ListOfTypeTags {
@@ -253,7 +254,7 @@ pub fn convert_sui_parsed_data(source: &SuiParsedData) -> pb::SuiParsedData {
 pub fn convert_sui_parsed_move_object(source: &SuiParsedMoveObject) -> pb::SuiParsedMoveObject {
   pb::SuiParsedMoveObject {
     r#type: Some(pb::StructTag {
-      address: source.type_.address.to_canonical_string(),
+      address: source.type_.address.to_canonical_string(false),
       module: source.type_.module.to_string(),
       name: source.type_.name.to_string(),
       type_params: Some(pb::ListOfTypeTags {
@@ -278,7 +279,7 @@ pub fn convert_sui_move_struct(source: &SuiMoveStruct) -> pb::SuiMoveStruct {
 
       pb::sui_move_struct::SuiMoveStruct::WithTypes(pb::WithTypes {
         r#type: Some(pb::StructTag {
-          address: type_.address.to_canonical_string(),
+          address: type_.address.to_canonical_string(false),
           module: type_.module.to_string(),
           name: type_.name.to_string(),
           type_params: Some(pb::ListOfTypeTags {
@@ -363,7 +364,7 @@ pub fn convert_sui_raw_data(source: &SuiRawData) -> pb::SuiRawData {
 pub fn convert_sui_raw_move_object(source: &SuiRawMoveObject) -> pb::SuiRawMoveObject {
   pb::SuiRawMoveObject {
     r#type: Some(pb::StructTag {
-      address: source.type_.address.to_canonical_string(),
+      address: source.type_.address.to_canonical_string(false),
       module: source.type_.module.to_string(),
       name: source.type_.name.to_string(),
       type_params: Some(pb::ListOfTypeTags {

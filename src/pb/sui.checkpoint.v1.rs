@@ -37,18 +37,15 @@ pub struct Checkpoint {
     /// Present only on the final checkpoint of the epoch.
     #[prost(message, optional, tag = "8")]
     pub end_of_epoch_data: ::core::option::Option<EndOfEpochData>,
-    /// Transaction digests (base58 encoded)
-    #[prost(string, repeated, tag = "9")]
-    pub transactions: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Commitments to checkpoint state
-    #[prost(message, repeated, tag = "10")]
+    #[prost(message, repeated, tag = "9")]
     pub checkpoint_commitments: ::prost::alloc::vec::Vec<CheckpointCommitment>,
     /// Validator Signature (base64  encoded). This is a BLS signature
-    #[prost(bytes = "vec", tag = "11")]
+    #[prost(bytes = "vec", tag = "10")]
     pub validator_signature: ::prost::alloc::vec::Vec<u8>,
-    #[prost(uint64, tag = "12")]
+    #[prost(uint64, tag = "11")]
     pub successful_tx_num: u64,
-    #[prost(bool, tag = "13")]
+    #[prost(bool, tag = "12")]
     pub end_of_epoch: bool,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -114,8 +111,8 @@ pub struct EndOfEpochData {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NextEpochCommittee {
     /// base64 value
-    #[prost(bytes = "vec", tag = "1")]
-    pub authority_name: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "1")]
+    pub authority_name: ::prost::alloc::string::String,
     #[prost(uint64, tag = "2")]
     pub stake_unit: u64,
 }

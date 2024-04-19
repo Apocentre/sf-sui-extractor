@@ -37,18 +37,16 @@ message Checkpoint {
   
   // Present only on the final checkpoint of the epoch.
   optional EndOfEpochData end_of_epoch_data = 8;
-  
-  // Transaction digests (base58 encoded)
-  repeated string transactions = 9;
+
   
   // Commitments to checkpoint state
-  repeated CheckpointCommitment checkpoint_commitments = 10;
+  repeated CheckpointCommitment checkpoint_commitments = 9;
   
   // Validator Signature (base64  encoded). This is a BLS signature
-  bytes validator_signature = 11;
+  bytes validator_signature = 10;
 
-  uint64 successful_tx_num = 12;
-  bool end_of_epoch = 13;
+  uint64 successful_tx_num = 11;
+  bool end_of_epoch = 12;
 }
 
 message GasCostSummary {
@@ -99,7 +97,7 @@ message EndOfEpochData {
 
 message NextEpochCommittee {
   // base64 value
-  bytes authority_name = 1;
+  string authority_name = 1;
   uint64 stake_unit = 2;
 }
 
