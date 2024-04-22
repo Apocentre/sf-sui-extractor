@@ -1175,7 +1175,7 @@ message PackageUpgradeError {
   }
 
   message NotAPackage {
-    ObjectID package_id = 1;
+    ObjectID object_id = 1;
   }
 
   message DigestDoesNotMatch {

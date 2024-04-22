@@ -1,4 +1,4 @@
-use sui_types::execution_status::{CommandArgumentError, ExecutionFailureStatus, ExecutionStatus, MoveLocation, MoveLocationOpt, TypeArgumentError};
+use sui_types::execution_status::{CommandArgumentError, ExecutionFailureStatus, ExecutionStatus, MoveLocation, MoveLocationOpt, PackageUpgradeError, TypeArgumentError};
 use crate::pb::sui::checkpoint::{self as pb, execution_failure_status};
 use super::common::{convert_module_id, convert_sui_object};
 
@@ -87,7 +87,7 @@ fn convert_executaion_failure_status(source: &ExecutionFailureStatus) -> pb::Exe
       })
     },
     ExecutionFailureStatus::TypeArgumentError {argument_idx, kind} => {
-      pb::execution_failure_status::ExecutionFailureStatus::TypeArgumentError(pb::execution_failure_status::TypeArgumentError{
+      pb::execution_failure_status::ExecutionFailureStatus::TypeArgumentError(pb::execution_failure_status::TypeArgumentError {
         argument_idx: *argument_idx as u32,
         kind: Some(convert_type_arg_error(kind)),
     })
@@ -104,7 +104,11 @@ fn convert_executaion_failure_status(source: &ExecutionFailureStatus) -> pb::Exe
     ExecutionFailureStatus::PublishUpgradeDependencyDowngrade => {
       pb::execution_failure_status::ExecutionFailureStatus::PublishUpgradeDependencyDowngrade(())
     },
-    ExecutionFailureStatus::PackageUpgradeError { upgrade_error } => todo!(),
+    ExecutionFailureStatus::PackageUpgradeError {upgrade_error} => {
+      pb::execution_failure_status::ExecutionFailureStatus::PackageUpgradeError(pb::execution_failure_status::PackageUpgradeError {
+        upgrade_error: Some(convert_package_upgrade_error(&upgrade_error)),
+      })
+    },
     ExecutionFailureStatus::WrittenObjectsTooLarge { current_size, max_size } => todo!(),
     ExecutionFailureStatus::CertificateDenied => {
       pb::execution_failure_status::ExecutionFailureStatus::CertificateDenied(())
@@ -122,6 +126,44 @@ fn convert_executaion_failure_status(source: &ExecutionFailureStatus) -> pb::Exe
   pb::ExecutionFailureStatus {
     execution_failure_status: Some(execution_failure_status),
   }
+}
+
+fn convert_package_upgrade_error(upgrade_error: &PackageUpgradeError) -> pb::PackageUpgradeError {
+  let package_upgrade_error = match upgrade_error {
+    PackageUpgradeError::UnableToFetchPackage {package_id} => {
+      pb::package_upgrade_error::PackageUpgradeError::UnableToFetchPackage(pb::package_upgrade_error::UnableToFetchPackage {
+        package_id: Some(convert_sui_object(package_id)),
+      })
+    },
+    PackageUpgradeError::NotAPackage {object_id} => {
+      pb::package_upgrade_error::PackageUpgradeError::NotAPackage(pb::package_upgrade_error::NotAPackage {
+        object_id: Some(convert_sui_object(object_id)),
+      })
+    },
+    PackageUpgradeError::IncompatibleUpgrade => {
+      pb::package_upgrade_error::PackageUpgradeError::IncompatibleUpgrade(())
+    },
+    PackageUpgradeError::DigestDoesNotMatch {digest} => {
+      pb::package_upgrade_error::PackageUpgradeError::DigestDoesNotMatch(pb::package_upgrade_error::DigestDoesNotMatch {
+        digest: digest.clone(),
+      })
+    },
+    PackageUpgradeError::UnknownUpgradePolicy {policy} => {
+      pb::package_upgrade_error::PackageUpgradeError::UnknownUpgradePolicy(pb::package_upgrade_error::UnknownUpgradePolicy {
+        policy: *policy as u32,
+      })
+    },
+    PackageUpgradeError::PackageIDDoesNotMatch {package_id, ticket_id} => {
+      pb::package_upgrade_error::PackageUpgradeError::PackageIdDoesNotMatch(pb::package_upgrade_error::PackageIdDoesNotMatch {
+        package_id: Some(convert_sui_object(package_id)),
+        ticket_id: Some(convert_sui_object(ticket_id)),
+      })
+    },
+  };
+
+  pb::PackageUpgradeError {
+    package_upgrade_error: Some(package_upgrade_error),
+}
 }
 
 fn convert_type_arg_error(kind: &TypeArgumentError) -> pb::TypeArgumentError {

@@ -1965,7 +1965,7 @@ pub mod package_upgrade_error {
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct NotAPackage {
         #[prost(message, optional, tag = "1")]
-        pub package_id: ::core::option::Option<super::ObjectId>,
+        pub object_id: ::core::option::Option<super::ObjectId>,
     }
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Message)]
