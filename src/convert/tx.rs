@@ -54,8 +54,13 @@ fn convert_tx_kind(source: &TransactionKind) -> pb::TransactionKind {
   }
 }
 
-fn convert_commit_prologue_v2(ccp_v2: &ConsensusCommitPrologueV2) -> pb::transaction_kind::TransactionKind {
-  todo!()
+fn convert_commit_prologue_v2(source: &ConsensusCommitPrologueV2) -> pb::transaction_kind::TransactionKind {
+  pb::transaction_kind::TransactionKind::ConsensusCommitPrologueV2(pb::ConsensusCommitPrologueV2 {
+    epoch: source.epoch,
+    round: source.round,
+    commit_timestamp_ms: source.commit_timestamp_ms,
+    consensus_commit_digest: source.consensus_commit_digest.base58_encode(),
+  })
 }
 
 fn convert_randomeness_state_update(source: &RandomnessStateUpdate) -> pb::transaction_kind::TransactionKind {
