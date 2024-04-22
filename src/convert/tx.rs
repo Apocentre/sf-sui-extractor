@@ -353,23 +353,6 @@ fn convert_sender_signed_data(source: &SenderSignedData) -> pb::SenderSignedTran
   }
 }
 
-pub fn convert_transaction(source: &IndexedTransaction) -> pb::Transaction {
-  pb::Transaction {
-    sequence_number: source.tx_sequence_number,
-    digest: source.tx_digest.base58_encode(),
-    // it should only have one item
-    sender_signed_data: vec![convert_sender_signed_data(&source.sender_signed_data)],
-    effects: Some(convert_sui_effects(&source.effects)),
-    checkpoint_sequence_number: source.checkpoint_sequence_number,
-    timestamp_ms: source.timestamp_ms,
-    object_changes: source.object_changes.iter().map(convert_tx_object_change).collect::<Vec<_>>(),
-    balance_change: source.balance_change.iter().map(convert_tx_balance_change).collect::<Vec<_>>(),
-    events: source.events.iter().map(convert_event).collect::<Vec<_>>(),
-    transaction_kind: Some(convert_transaction_kind(&source.transaction_kind)),
-    successful_tx_num: source.successful_tx_num,
-  }
-}
-
 fn convert_transaction_kind(source: &sui_indexer::types::TransactionKind) -> pb::GenericTransactionKind {
   let kind = match source {
     sui_indexer::types::TransactionKind::SystemTransaction => pb::generic_transaction_kind::Kind::SystemTransaction(()),
@@ -386,5 +369,22 @@ pub fn convert_tx_balance_change(source: &sui_json_rpc_types::BalanceChange) -> 
     owner: Some(convert_owner(&source.owner)),
     coin_type: Some(convert_type_tag(&source.coin_type)),
     amount: source.amount.to_string(),
+  }
+}
+
+pub fn convert_transaction(source: &IndexedTransaction) -> pb::Transaction {
+  pb::Transaction {
+    sequence_number: source.tx_sequence_number,
+    digest: source.tx_digest.base58_encode(),
+    // it should only have one item
+    sender_signed_data: vec![convert_sender_signed_data(&source.sender_signed_data)],
+    effects: Some(convert_sui_effects(&source.effects)),
+    checkpoint_sequence_number: source.checkpoint_sequence_number,
+    timestamp_ms: source.timestamp_ms,
+    object_changes: source.object_changes.iter().map(convert_tx_object_change).collect::<Vec<_>>(),
+    balance_change: source.balance_change.iter().map(convert_tx_balance_change).collect::<Vec<_>>(),
+    events: source.events.iter().map(convert_event).collect::<Vec<_>>(),
+    transaction_kind: Some(convert_transaction_kind(&source.transaction_kind)),
+    successful_tx_num: source.successful_tx_num,
   }
 }

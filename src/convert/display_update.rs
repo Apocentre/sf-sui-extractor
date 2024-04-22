@@ -1,5 +1,4 @@
 use sui_indexer::models::display::StoredDisplay;
-
 use crate::pb::sui::checkpoint::{self as pb};
 
 pub fn convert_display_update(source: &StoredDisplay) -> pb::StoredDisplay {
