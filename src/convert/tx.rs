@@ -93,7 +93,7 @@ fn convert_programmable_tx_kind(pt: &ProgrammableTransaction) -> pb::transaction
       Command::MoveCall(mc) => convert_move_call(mc),
       Command::TransferObjects(a, b) => convert_transfer_objects(a, b),
       Command::SplitCoins(a, b) => convert_split_coins(a, b),
-      Command::MergeCoins(_, _) => todo!(),
+      Command::MergeCoins(a, b) => convert_merge_coins(a, b),
       Command::Publish(_, _) => todo!(),
       Command::MakeMoveVec(_, _) => todo!(),
       Command::Upgrade(_, _, _, _) => todo!(),
@@ -112,10 +112,18 @@ fn convert_programmable_tx_kind(pt: &ProgrammableTransaction) -> pb::transaction
 
 fn convert_split_coins(a: &Argument, b: &[Argument]) -> pb::command::SuiCommand {
   pb::command::SuiCommand::SplitCoins(pb::SplitCoinsPair {
-    one: Some(convert_sui_argument(1)),
+    one: Some(convert_sui_argument(a)),
     two: b.iter().map(convert_sui_argument).collect::<Vec<_>>(),
   })
 }
+
+fn convert_merge_coins(a: &Argument, b: &[Argument]) -> pb::command::SuiCommand {
+  pb::command::SuiCommand::MergeCoins(pb::MergeCoinsPair {
+    one: Some(convert_sui_argument(a)),
+    two: b.iter().map(convert_sui_argument).collect::<Vec<_>>(),
+  })
+}
+
 
 fn convert_transfer_objects(a: &[Argument], b: &Argument) -> pb::command::SuiCommand {
   pb::command::SuiCommand::TransferObjects(pb::TransferObjectsPair {
