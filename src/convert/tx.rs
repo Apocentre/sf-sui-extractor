@@ -3,12 +3,10 @@ use sui_indexer::types::IndexedTransaction;
 use sui_types::{
   base_types::ObjectRef, messages_consensus::{ConsensusCommitPrologue, ConsensusCommitPrologueV2}, 
   transaction::{
-    AuthenticatorStateUpdate, CallArg, ChangeEpoch, Command, EndOfEpochTransactionKind, GenesisTransaction, ObjectArg,
-    ProgrammableMoveCall, ProgrammableTransaction, RandomnessStateUpdate, SenderSignedData, TransactionData,
-    TransactionDataAPI, TransactionKind,
+    Argument, AuthenticatorStateUpdate, CallArg, ChangeEpoch, Command, EndOfEpochTransactionKind, GenesisTransaction, ObjectArg, ProgrammableMoveCall, ProgrammableTransaction, RandomnessStateUpdate, SenderSignedData, TransactionData, TransactionDataAPI, TransactionKind
   }
 };
-use crate::pb::sui::checkpoint::{self as pb, command, SuiObjectArg};
+use crate::pb::sui::checkpoint::{self as pb};
 
 use super::common::{convert_sui_argument, convert_sui_object, convert_type_tag};
 
@@ -93,7 +91,7 @@ fn convert_programmable_tx_kind(pt: &ProgrammableTransaction) -> pb::transaction
   let commands = pt.commands.iter().map(|c| {
     let sui_command = match c {
       Command::MoveCall(mc) => convert_move_call(mc),
-      Command::TransferObjects(_, _) => todo!(),
+      Command::TransferObjects(a, b) => convert_transfer_objects(a, b),
       Command::SplitCoins(_, _) => todo!(),
       Command::MergeCoins(_, _) => todo!(),
       Command::Publish(_, _) => todo!(),
@@ -109,6 +107,13 @@ fn convert_programmable_tx_kind(pt: &ProgrammableTransaction) -> pb::transaction
   pb::transaction_kind::TransactionKind::ProgrammableTx(pb::ProgrammableTransaction {
     inputs,
     commands,
+  })
+}
+
+fn convert_transfer_objects(a: &[Argument], b: &Argument) -> pb::command::SuiCommand {
+  pb::command::SuiCommand::TransferObjects(pb::TransferObjectsPair {
+    one: a.iter().map(convert_sui_argument).collect::<Vec<_>>(),
+    two: Some(convert_sui_argument(b)),
   })
 }
 
