@@ -58,13 +58,18 @@ fn convert_commit_prologue_v2(ccp_v2: &ConsensusCommitPrologueV2) -> pb::transac
   todo!()
 }
 
-fn convert_randomeness_state_update(rsu: &RandomnessStateUpdate) -> pb::transaction_kind::TransactionKind {
-  todo!()
+fn convert_randomeness_state_update(source: &RandomnessStateUpdate) -> pb::transaction_kind::TransactionKind {
+  pb::transaction_kind::TransactionKind::RandomnessStateUpdate(pb::RandomnessStateUpdate {
+    epoch: source.epoch,
+    randomness_round: source.randomness_round.0,
+    random_bytes: source.random_bytes,
+    randomness_obj_initial_shared_version: source.randomness_obj_initial_shared_version.value(),
+  })
 }
 
 fn convert_end_of_epoch_transaction(source: &[EndOfEpochTransactionKind]) -> pb::transaction_kind::TransactionKind {
   let end_of_epoch_transaction_kind = source.iter().map(|tk| {
-    match tk {
+    let kind = match tk {
       EndOfEpochTransactionKind::ChangeEpoch(c) => pb::end_of_epoch_transaction_kind::Kind::ChangeEpoch(convert_change_epoch(c)),
       EndOfEpochTransactionKind::AuthenticatorStateCreate => pb::end_of_epoch_transaction_kind::Kind::AuthenticatorStateCreate(1),
       EndOfEpochTransactionKind::AuthenticatorStateExpire(source) =>  pb::end_of_epoch_transaction_kind::Kind::AuthenticatorStateExpire(
@@ -75,6 +80,10 @@ fn convert_end_of_epoch_transaction(source: &[EndOfEpochTransactionKind]) -> pb:
       ),
       EndOfEpochTransactionKind::RandomnessStateCreate => pb::end_of_epoch_transaction_kind::Kind::RandomnessStateCreate(3),
       EndOfEpochTransactionKind::DenyListStateCreate => pb::end_of_epoch_transaction_kind::Kind::DenyListStateCreate(4),
+    };
+
+    pb::EndOfEpochTransactionKind {
+      kind: Some(kind),
     }
   }).collect::<Vec<_>>();
 
