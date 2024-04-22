@@ -1,5 +1,9 @@
 use base58::ToBase58;
-use sui_types::{base_types::ObjectID, effects::{EffectsObjectChange, IDOperation, ObjectIn, ObjectOut, TransactionEffects, TransactionEffectsAPI}};
+use sui_types::{
+  base_types::ObjectID, effects::{
+    EffectsObjectChange, IDOperation, ObjectIn, ObjectOut, TransactionEffects, TransactionEffectsAPI, UnchangedSharedKind
+  },
+};
 use crate::pb::sui::checkpoint as pb;
 use super::common::{
   convert_gas_cost_summary, convert_object_ref, convert_owned_object_ref, convert_owner, convert_sui_execution_status, convert_sui_object, convert_tx_block_effects_modified_at_versions
@@ -37,8 +41,8 @@ pub fn convert_sui_effects(source: &TransactionEffects) -> pb::TransactionBlockE
         dependencies: source.dependencies.iter().map(|v| v.base58_encode()).collect::<Vec<_>>(),
         lamport_version: source.lamport_version.value(),
         changed_objects: source.changed_objects.iter().map(convert_changed_object_v2).collect::<Vec<_>>(),
-        unchanged_shared_objects: todo!(),
-        aux_data_digest: source.aux_data_digest().map(|e| e.clone()),
+        unchanged_shared_objects: source.unchanged_shared_objects.iter().map(convert_unchanged_shared_objects).collect::<Vec<_>>(),
+        aux_data_digest: source.aux_data_digest.map(|e| e.base58_encode()),
     }
     ),
   };
@@ -105,5 +109,29 @@ fn convert_effects_object_change(source: &EffectsObjectChange) -> pb::EffectsObj
     input_state: Some(input_state),
     output_state: Some(output_state),
     id_operation: Some(id_operation),
+  }
+}
+
+fn convert_unchanged_shared_objects(source: &(ObjectID, UnchangedSharedKind)) -> pb::UnchangedSharedObject {
+  let kind = match source.1 {
+    UnchangedSharedKind::ReadOnlyRoot(source) => {
+      pb::unchanged_shared_kind::UnchangedSharedKind::ReadOnlyRoot(pb::VersionDigest {
+        sequence_number: source.0.value(),
+        object_digest: source.1.base58_encode(),
+      })
+    },
+    UnchangedSharedKind::MutateDeleted(source) => {
+      pb::unchanged_shared_kind::UnchangedSharedKind::MutateDeleted(source.value())
+    },
+    UnchangedSharedKind::ReadDeleted(source) => {
+      pb::unchanged_shared_kind::UnchangedSharedKind::ReadDeleted(source.value())
+    }
+  };
+
+  pb::UnchangedSharedObject {
+    object_id: Some(convert_sui_object(&source.0)),
+    kind: Some(pb::UnchangedSharedKind {
+      unchanged_shared_kind: Some(kind),
+    }),
   }
 }

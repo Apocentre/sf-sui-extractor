@@ -1464,26 +1464,34 @@ pub struct TransactionBlockEffectsV2 {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UnchangedSharedObject {
-    #[prost(oneof = "unchanged_shared_object::UnchangedSharedObject", tags = "1, 2, 3")]
-    pub unchanged_shared_object: ::core::option::Option<
-        unchanged_shared_object::UnchangedSharedObject,
+    #[prost(message, optional, tag = "1")]
+    pub object_id: ::core::option::Option<ObjectId>,
+    #[prost(message, optional, tag = "2")]
+    pub kind: ::core::option::Option<UnchangedSharedKind>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UnchangedSharedKind {
+    #[prost(oneof = "unchanged_shared_kind::UnchangedSharedKind", tags = "1, 2, 3")]
+    pub unchanged_shared_kind: ::core::option::Option<
+        unchanged_shared_kind::UnchangedSharedKind,
     >,
 }
-/// Nested message and enum types in `UnchangedSharedObject`.
-pub mod unchanged_shared_object {
+/// Nested message and enum types in `UnchangedSharedKind`.
+pub mod unchanged_shared_kind {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum UnchangedSharedObject {
+    pub enum UnchangedSharedKind {
         /// / Read-only shared objects from the input. We don't really need ObjectDigest
         /// / for protocol correctness, but it will make it easier to verify untrusted read.
         #[prost(message, tag = "1")]
         ReadOnlyRoot(super::VersionDigest),
         /// / Deleted shared objects that appear mutably/owned in the input.
-        #[prost(string, tag = "2")]
-        MutateDeleted(::prost::alloc::string::String),
+        #[prost(uint64, tag = "2")]
+        MutateDeleted(u64),
         /// / Deleted shared objects that appear as read-only in the input.
-        #[prost(string, tag = "3")]
-        ReadDeleted(::prost::alloc::string::String),
+        #[prost(uint64, tag = "3")]
+        ReadDeleted(u64),
     }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]

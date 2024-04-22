@@ -899,14 +899,19 @@ message TransactionBlockEffectsV2 {
 }
 
 message UnchangedSharedObject {
-  oneof unchanged_shared_object {
+  ObjectID object_id = 1;
+  UnchangedSharedKind kind = 2;
+}
+
+message UnchangedSharedKind {
+  oneof unchanged_shared_kind {
     /// Read-only shared objects from the input. We don't really need ObjectDigest
     /// for protocol correctness, but it will make it easier to verify untrusted read.
     VersionDigest read_only_root = 1;
     /// Deleted shared objects that appear mutably/owned in the input.
-    string mutate_deleted = 2;
+    uint64 mutate_deleted = 2;
     /// Deleted shared objects that appear as read-only in the input.
-    string read_deleted = 3;
+    uint64 read_deleted = 3;
   }
 }
 
