@@ -92,7 +92,7 @@ fn convert_programmable_tx_kind(pt: &ProgrammableTransaction) -> pb::transaction
     let sui_command = match c {
       Command::MoveCall(mc) => convert_move_call(mc),
       Command::TransferObjects(a, b) => convert_transfer_objects(a, b),
-      Command::SplitCoins(_, _) => todo!(),
+      Command::SplitCoins(a, b) => convert_split_coins(a, b),
       Command::MergeCoins(_, _) => todo!(),
       Command::Publish(_, _) => todo!(),
       Command::MakeMoveVec(_, _) => todo!(),
@@ -107,6 +107,13 @@ fn convert_programmable_tx_kind(pt: &ProgrammableTransaction) -> pb::transaction
   pb::transaction_kind::TransactionKind::ProgrammableTx(pb::ProgrammableTransaction {
     inputs,
     commands,
+  })
+}
+
+fn convert_split_coins(a: &Argument, b: &[Argument]) -> pb::command::SuiCommand {
+  pb::command::SuiCommand::SplitCoins(pb::SplitCoinsPair {
+    one: Some(convert_sui_argument(1)),
+    two: b.iter().map(convert_sui_argument).collect::<Vec<_>>(),
   })
 }
 
