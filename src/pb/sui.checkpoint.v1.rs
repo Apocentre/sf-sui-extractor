@@ -1012,7 +1012,7 @@ pub struct ObjectRef {
     pub object_id: ::core::option::Option<ObjectId>,
     /// Object version.
     #[prost(uint64, tag = "2")]
-    pub version: u64,
+    pub sequence_number: u64,
     /// Base58 string representing the object digest
     #[prost(string, tag = "3")]
     pub digest: ::prost::alloc::string::String,
@@ -1109,7 +1109,7 @@ pub mod call_arg {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SuiObjectArg {
-    #[prost(oneof = "sui_object_arg::SuiObjectArg", tags = "1, 2")]
+    #[prost(oneof = "sui_object_arg::SuiObjectArg", tags = "1, 2, 3")]
     pub sui_object_arg: ::core::option::Option<sui_object_arg::SuiObjectArg>,
 }
 /// Nested message and enum types in `SuiObjectArg`.
@@ -1119,22 +1119,14 @@ pub mod sui_object_arg {
     pub enum SuiObjectArg {
         /// A Move object, either immutable, or owned mutable.
         #[prost(message, tag = "1")]
-        ImmOrOwnedObject(super::ImmOrOwnedObject),
+        ImmOrOwnedObject(super::ObjectRef),
         /// A Move object that's shared.
         /// SharedObject::mutable controls whether caller asks for a mutable reference to shared object.
         #[prost(message, tag = "2")]
         SharedObject(super::SharedObject),
+        #[prost(message, tag = "3")]
+        Receiving(super::ObjectRef),
     }
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ImmOrOwnedObject {
-    #[prost(message, optional, tag = "1")]
-    pub object_id: ::core::option::Option<ObjectId>,
-    #[prost(uint64, tag = "2")]
-    pub sequence_number: u64,
-    #[prost(string, tag = "3")]
-    pub digest: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

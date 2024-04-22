@@ -1,12 +1,13 @@
 use std::collections::{BTreeMap, HashMap};
 use base58::ToBase58;
+use move_core_types::account_address::AccountAddress;
 use serde_json::Value;
 use sui_json_rpc_types::{
   SuiArgument, SuiObjectRef, SuiExecutionStatus, SuiTransactionBlockEffectsModifiedAtVersions, OwnedObjectRef, SuiMovePackage,
   SuiRawData, SuiRawMoveObject, SuiRawMovePackage,
 };
 use sui_types::{
-  base_types::{AuthorityName, MoveObjectType, ObjectID, ObjectType}, committee::StakeUnit, gas::GasCostSummary,
+  base_types::{AuthorityName, MoveObjectType, ObjectID, ObjectType, SuiAddress}, committee::StakeUnit, gas::GasCostSummary,
   messages_checkpoint::CheckpointCommitment, move_package::{TypeOrigin, UpgradeInfo}, object::{Data, Owner},
   transaction::Argument, TypeTag,
 };
@@ -16,6 +17,10 @@ pub fn convert_sui_object(source: &ObjectID) -> pb::ObjectId {
   pb::ObjectId {
     account_address: source.to_canonical_string(false),
   }
+}
+
+pub fn convert_sui_address(address: &SuiAddress) -> String {
+  address.to_string().replace("0x", "")
 }
 
 pub fn convert_type_tag(source: &TypeTag) -> pb::TypeTag {
@@ -75,14 +80,6 @@ pub fn convert_sui_argument(source: &Argument) -> pb::SuiArgument {
 
   pb::SuiArgument {
     sui_arguments: Some(sui_arguments),
-  }
-}
-
-pub fn convert_sui_object_ref(source: &SuiObjectRef) -> pb::ObjectRef {
-  pb::ObjectRef {
-    object_id: Some(convert_sui_object(&source.object_id)),
-    version: source.version.value(),
-    digest: source.digest.base58_encode(),
   }
 }
 

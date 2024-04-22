@@ -597,7 +597,7 @@ message ObjectRef {
   ObjectID object_id = 1;
 
   // Object version.
-  uint64 version = 2;
+  uint64 sequence_number = 2;
 
   // Base58 string representing the object digest
   string digest = 3;
@@ -658,18 +658,14 @@ message CallArg {
 message SuiObjectArg {
   oneof sui_object_arg {
     // A Move object, either immutable, or owned mutable.
-    ImmOrOwnedObject imm_or_owned_object = 1;
+    ObjectRef imm_or_owned_object = 1;
 
     // A Move object that's shared.
     // SharedObject::mutable controls whether caller asks for a mutable reference to shared object.
     SharedObject shared_object = 2;
-  }
-}
 
-message ImmOrOwnedObject {
-  ObjectID object_id = 1;
-  uint64 sequence_number = 2;
-  string digest = 3;
+    ObjectRef receiving = 3;
+  }
 }
 
 message SharedObject {

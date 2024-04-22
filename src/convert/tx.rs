@@ -10,7 +10,7 @@ use sui_types::{
 use crate::pb::sui::checkpoint::{self as pb};
 
 use super::common::{
-  convert_data, convert_owner, convert_sui_argument, convert_sui_object, convert_type_tag,
+  convert_data, convert_owner, convert_sui_address, convert_sui_argument, convert_sui_object, convert_type_tag
 };
 
 fn convert_intent_message(source: IntentMessage<TransactionData>) -> pb::IntentMessage {
@@ -25,8 +25,8 @@ fn convert_intent_value(source: TransactionData) -> pb::TransactionData {
     TransactionData::V1(tx_data_v1) => {
       pb::transaction_data::TxData::V1(pb::TransactionDataV1 {
         kind: Some(convert_tx_kind(tx_data_v1.kind())),
-        sender: todo!(),
-        gas_data: todo!(),
+        sender: source.sender().clone(),
+        gas_data: Some(convert_gas_data(source.gas_data)),
         expiration: todo!(),
       })
     }
@@ -34,6 +34,15 @@ fn convert_intent_value(source: TransactionData) -> pb::TransactionData {
 
   pb::TransactionData {
     tx_data: Some(tx_data),
+  }
+}
+
+fn convert_gas_data(source: &sui_types::transaction::GasData) -> pb::GasData {
+  pb::GasData {
+    payment: source.payment.iter().map(convert_object_ref).collect::<Vec<_>>(),
+    owner: convert_sui_address(&source.owner),
+    price: source.price,
+    budget: source.budget,
   }
 }
 
@@ -258,26 +267,26 @@ fn convert_move_call_cmd(mc: &ProgrammableMoveCall) -> pb::command::SuiCommand {
 
 fn convert_obj_arg(o: &ObjectArg) -> pb::call_arg::CallArg {
   let sui_object_arg = match o {
-    ObjectArg::ImmOrOwnedObject(obj_ref) => convert_object_ref(obj_ref),
+    ObjectArg::ImmOrOwnedObject(obj_ref) => pb::sui_object_arg::SuiObjectArg::ImmOrOwnedObject(convert_object_ref(obj_ref)),
     ObjectArg::SharedObject {id, initial_shared_version, mutable} => pb::sui_object_arg::SuiObjectArg::SharedObject(pb::SharedObject{
         object_id: Some(convert_sui_object(&id)),
         initial_shared_version: initial_shared_version.value(),
         mutable: *mutable,
     }),
-    ObjectArg::Receiving(obj_ref) => convert_object_ref(obj_ref),
+    ObjectArg::Receiving(obj_ref) => pb::sui_object_arg::SuiObjectArg::Receiving(convert_object_ref(obj_ref)),
   };
 
-  pb::call_arg::CallArg::Object(SuiObjectArg {
+  pb::call_arg::CallArg::Object(pb::SuiObjectArg {
     sui_object_arg: Some(sui_object_arg),
   })
 }
 
-fn convert_object_ref(obj_ref: &ObjectRef) -> pb::sui_object_arg::SuiObjectArg {
-  pb::sui_object_arg::SuiObjectArg::ImmOrOwnedObject(pb::ImmOrOwnedObject {
+fn convert_object_ref(obj_ref: &ObjectRef) -> pb::ObjectRef {
+  pb::ObjectRef {
     object_id: Some(convert_sui_object(&obj_ref.0)),
     sequence_number: obj_ref.1.value(),
     digest: obj_ref.2.base58_encode(),
-  })
+  }
 }
 
 fn convert_intent(source: Intent) -> pb::Intent {
