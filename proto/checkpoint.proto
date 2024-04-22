@@ -715,10 +715,10 @@ message Command {
 
     // Publishes a Move package. It takes the package bytes and a list of the package's transitive
     // dependencies to link against on-chain.
-    ListOfObjects publish = 5;
+    PublishCommand publish = 5;
 
     // Upgrades a Move package
-    CommandUpgrade upgrade = 6;
+    UpgradeComand upgrade = 6;
 
     // `forall T: Vec<T> -> vector<T>`
     // Given n-values of the same type, it constructs a vector. For non objects or an empty vector,
@@ -742,6 +742,11 @@ message MergeCoinsPair {
   repeated SuiArgument two = 2;
 }
 
+message PublishCommand {
+  repeated bytes package_data = 1;
+  repeated ObjectID package = 2;
+}
+
 message ListOfObjects {
   repeated ObjectID list = 1;
 }
@@ -751,7 +756,7 @@ message MakeMoveVecPair {
   repeated SuiArgument two = 2;
 }
 
-message CommandUpgrade {
+message UpgradeComand {
   ListOfObjects one = 1;
   ObjectID two = 2;
   SuiArgument three = 3;

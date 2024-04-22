@@ -1207,10 +1207,10 @@ pub mod command {
         /// Publishes a Move package. It takes the package bytes and a list of the package's transitive
         /// dependencies to link against on-chain.
         #[prost(message, tag = "5")]
-        Publish(super::ListOfObjects),
+        Publish(super::PublishCommand),
         /// Upgrades a Move package
         #[prost(message, tag = "6")]
-        Upgrade(super::CommandUpgrade),
+        Upgrade(super::UpgradeComand),
         /// `forall T: Vec<T> -> vector<T>`
         /// Given n-values of the same type, it constructs a vector. For non objects or an empty vector,
         /// the type tag must be specified.
@@ -1244,6 +1244,14 @@ pub struct MergeCoinsPair {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PublishCommand {
+    #[prost(bytes = "vec", repeated, tag = "1")]
+    pub package_data: ::prost::alloc::vec::Vec<::prost::alloc::vec::Vec<u8>>,
+    #[prost(message, repeated, tag = "2")]
+    pub package: ::prost::alloc::vec::Vec<ObjectId>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListOfObjects {
     #[prost(message, repeated, tag = "1")]
     pub list: ::prost::alloc::vec::Vec<ObjectId>,
@@ -1258,7 +1266,7 @@ pub struct MakeMoveVecPair {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct CommandUpgrade {
+pub struct UpgradeComand {
     #[prost(message, optional, tag = "1")]
     pub one: ::core::option::Option<ListOfObjects>,
     #[prost(message, optional, tag = "2")]

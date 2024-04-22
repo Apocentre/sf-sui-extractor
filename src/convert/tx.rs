@@ -1,7 +1,7 @@
 use shared_crypto::intent::{AppId, Intent, IntentMessage, IntentScope, IntentVersion};
 use sui_indexer::types::IndexedTransaction;
 use sui_types::{
-  base_types::ObjectRef, messages_consensus::{ConsensusCommitPrologue, ConsensusCommitPrologueV2}, 
+  base_types::{ObjectID, ObjectRef}, messages_consensus::{ConsensusCommitPrologue, ConsensusCommitPrologueV2}, 
   transaction::{
     Argument, AuthenticatorStateUpdate, CallArg, ChangeEpoch, Command, EndOfEpochTransactionKind, GenesisTransaction, ObjectArg, ProgrammableMoveCall, ProgrammableTransaction, RandomnessStateUpdate, SenderSignedData, TransactionData, TransactionDataAPI, TransactionKind
   }
@@ -94,7 +94,7 @@ fn convert_programmable_tx_kind(pt: &ProgrammableTransaction) -> pb::transaction
       Command::TransferObjects(a, b) => convert_transfer_objects(a, b),
       Command::SplitCoins(a, b) => convert_split_coins(a, b),
       Command::MergeCoins(a, b) => convert_merge_coins(a, b),
-      Command::Publish(_, _) => todo!(),
+      Command::Publish(a, b) => convert_publish(a, b),
       Command::MakeMoveVec(_, _) => todo!(),
       Command::Upgrade(_, _, _, _) => todo!(),
     };
@@ -107,6 +107,13 @@ fn convert_programmable_tx_kind(pt: &ProgrammableTransaction) -> pb::transaction
   pb::transaction_kind::TransactionKind::ProgrammableTx(pb::ProgrammableTransaction {
     inputs,
     commands,
+  })
+}
+
+fn convert_publish(a: &[Vec<u8>], b: &[ObjectID]) -> pb::command::SuiCommand {
+  pb::command::SuiCommand::Publish(pb::PublishCommand {
+    package_data: a.to_vec(),
+    package: b.iter().map(convert_sui_object).collect::<Vec<_>>(),
   })
 }
 
