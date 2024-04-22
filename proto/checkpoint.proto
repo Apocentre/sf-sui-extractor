@@ -752,7 +752,7 @@ message ListOfObjects {
 }
 
 message MakeMoveVecPair {
-  optional string one = 1;
+  optional TypeTag one = 1;
   repeated SuiArgument two = 2;
 }
 

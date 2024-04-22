@@ -1259,8 +1259,8 @@ pub struct ListOfObjects {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MakeMoveVecPair {
-    #[prost(string, optional, tag = "1")]
-    pub one: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(message, optional, tag = "1")]
+    pub one: ::core::option::Option<TypeTag>,
     #[prost(message, repeated, tag = "2")]
     pub two: ::prost::alloc::vec::Vec<SuiArgument>,
 }

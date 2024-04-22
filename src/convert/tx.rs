@@ -4,7 +4,7 @@ use sui_types::{
   base_types::{ObjectID, ObjectRef}, messages_consensus::{ConsensusCommitPrologue, ConsensusCommitPrologueV2}, 
   transaction::{
     Argument, AuthenticatorStateUpdate, CallArg, ChangeEpoch, Command, EndOfEpochTransactionKind, GenesisTransaction, ObjectArg, ProgrammableMoveCall, ProgrammableTransaction, RandomnessStateUpdate, SenderSignedData, TransactionData, TransactionDataAPI, TransactionKind
-  }
+  }, TypeTag
 };
 use crate::pb::sui::checkpoint::{self as pb};
 
@@ -95,7 +95,7 @@ fn convert_programmable_tx_kind(pt: &ProgrammableTransaction) -> pb::transaction
       Command::SplitCoins(a, b) => convert_split_coins(a, b),
       Command::MergeCoins(a, b) => convert_merge_coins(a, b),
       Command::Publish(a, b) => convert_publish(a, b),
-      Command::MakeMoveVec(_, _) => todo!(),
+      Command::MakeMoveVec(a, b) => convert_make_move_vec(a, b),
       Command::Upgrade(_, _, _, _) => todo!(),
     };
 
@@ -107,6 +107,13 @@ fn convert_programmable_tx_kind(pt: &ProgrammableTransaction) -> pb::transaction
   pb::transaction_kind::TransactionKind::ProgrammableTx(pb::ProgrammableTransaction {
     inputs,
     commands,
+  })
+}
+
+fn convert_make_move_vec(a: &Option<TypeTag>, b: &[Argument]) -> pb::command::SuiCommand {
+  pb::command::SuiCommand::MakeMoveVec(pb::MakeMoveVecPair {
+    one: a.map(|t| convert_type_tag(&t)),
+    two: b.iter().map(convert_sui_argument).collect::<Vec<_>>(),
   })
 }
 
