@@ -1,13 +1,11 @@
 use shared_crypto::intent::{AppId, Intent, IntentMessage, IntentScope, IntentVersion};
 use sui_indexer::types::IndexedTransaction;
 use sui_types::{
-  base_types::{ObjectID, ObjectRef}, messages_consensus::{ConsensusCommitPrologue, ConsensusCommitPrologueV2}, 
-  transaction::{
+  authenticator_state::ActiveJwk, base_types::{ObjectID, ObjectRef}, messages_consensus::{ConsensusCommitPrologue, ConsensusCommitPrologueV2}, transaction::{
     Argument, AuthenticatorStateUpdate, CallArg, ChangeEpoch, Command, EndOfEpochTransactionKind, GenesisObject,
     GenesisTransaction, ObjectArg, ProgrammableMoveCall, ProgrammableTransaction, RandomnessStateUpdate, SenderSignedData,
     TransactionData, TransactionDataAPI, TransactionKind,
-  },
-  TypeTag
+  }, TypeTag
 };
 use crate::pb::sui::checkpoint::{self as pb};
 
@@ -68,8 +66,33 @@ fn convert_end_of_epoch_transaction(eet: &[EndOfEpochTransactionKind]) -> pb::tr
   todo!()
 }
 
-fn convert_authenticator_state_update(asu: &AuthenticatorStateUpdate) -> pb::transaction_kind::TransactionKind {
-  todo!()
+fn convert_authenticator_state_update(source: &AuthenticatorStateUpdate) -> pb::transaction_kind::TransactionKind {
+  pb::transaction_kind::TransactionKind::AuthenticatorStateUpdate(pb::AuthenticatorStateUpdate {
+    epoch: source.epoch,
+    round: source.round,
+    new_active_jwks: source.new_active_jwks.iter().map(convert_active_jwks).collect::<Vec<_>>(),
+    authenticator_obj_initial_shared_version: source.authenticator_obj_initial_shared_version.value(),
+  })
+}
+
+fn convert_active_jwks(source: &ActiveJwk) -> pb::ActiveJwk {
+  let jwk_id = pb::JwkId {
+    iss: source.jwk_id.iss.clone(),
+    kid: source.jwk_id.kid.clone(),
+  };
+
+  let jwk = pb::Jwk {
+    kty: source.jwk.kty.clone(),
+    e: source.jwk.e.clone(),
+    n: source.jwk.n.clone(),
+    alg: source.jwk.alg.clone(),
+  };
+
+  pb::ActiveJwk {
+    jwk_id: Some(jwk_id),
+    jwk: Some(jwk),
+    epoch: source.epoch,
+  }
 }
 
 fn convert_commit_prologue(source: &ConsensusCommitPrologue) -> pb::transaction_kind::TransactionKind {
