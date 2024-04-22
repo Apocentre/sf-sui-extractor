@@ -1348,19 +1348,16 @@ pub struct PairOfU32 {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TransactionBlockEffects {
-    #[prost(
-        oneof = "transaction_block_effects::SuiTransactionBlockEffects",
-        tags = "1, 2"
-    )]
-    pub sui_transaction_block_effects: ::core::option::Option<
-        transaction_block_effects::SuiTransactionBlockEffects,
+    #[prost(oneof = "transaction_block_effects::TransactionBlockEffects", tags = "1, 2")]
+    pub transaction_block_effects: ::core::option::Option<
+        transaction_block_effects::TransactionBlockEffects,
     >,
 }
 /// Nested message and enum types in `TransactionBlockEffects`.
 pub mod transaction_block_effects {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum SuiTransactionBlockEffects {
+    pub enum TransactionBlockEffects {
         #[prost(message, tag = "1")]
         V1(super::TransactionBlockEffectsV1),
         #[prost(message, tag = "2")]
@@ -1669,8 +1666,213 @@ pub mod execution_status {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Failure {
+    #[prost(message, optional, tag = "1")]
+    pub error: ::core::option::Option<ExecutionFailureStatus>,
+    /// / Which command the error occurred
+    #[prost(uint32, optional, tag = "2")]
+    pub command_index: ::core::option::Option<u32>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExecutionFailureStatus {
+    #[prost(
+        oneof = "execution_failure_status::ExecutionFailureStatus",
+        tags = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22"
+    )]
+    pub execution_failure_status: ::core::option::Option<
+        execution_failure_status::ExecutionFailureStatus,
+    >,
+}
+/// Nested message and enum types in `ExecutionFailureStatus`.
+pub mod execution_failure_status {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct MoveObjectTooBig {
+        #[prost(uint64, tag = "1")]
+        pub object_size: u64,
+        #[prost(uint64, tag = "2")]
+        pub max_object_size: u64,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct MovePackageTooBig {
+        #[prost(uint64, tag = "1")]
+        pub object_size: u64,
+        #[prost(uint64, tag = "2")]
+        pub max_object_size: u64,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct CircularObjectOwnership {
+        #[prost(message, optional, tag = "1")]
+        pub object: ::core::option::Option<super::ObjectId>,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct MoveLocationOpt {
+        #[prost(message, optional, tag = "1")]
+        pub move_location: ::core::option::Option<MoveLocation>,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct MoveAbort {
+        #[prost(message, optional, tag = "1")]
+        pub move_location: ::core::option::Option<MoveLocation>,
+        #[prost(uint32, tag = "2")]
+        pub abort_code: u32,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct MoveLocation {
+        #[prost(message, optional, tag = "1")]
+        pub module: ::core::option::Option<super::ModuleId>,
+        #[prost(uint32, tag = "2")]
+        pub function: u32,
+        #[prost(uint32, tag = "3")]
+        pub instruction: u32,
+        #[prost(string, optional, tag = "4")]
+        pub function_name: ::core::option::Option<::prost::alloc::string::String>,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct CommandArgumentError {
+        #[prost(uint32, tag = "1")]
+        pub arg_idx: u32,
+        #[prost(message, optional, tag = "2")]
+        pub kind: ::core::option::Option<super::CommandArgumentError>,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct TypeArgumentError {
+        #[prost(uint32, tag = "1")]
+        pub argument_idx: u32,
+        #[prost(message, optional, tag = "2")]
+        pub kind: ::core::option::Option<super::TypeArgumentError>,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct UnusedValueWithoutDrop {}
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum ExecutionFailureStatus {
+        #[prost(uint32, tag = "1")]
+        InsufficientGas(u32),
+        #[prost(uint32, tag = "2")]
+        InvalidGasObject(u32),
+        #[prost(uint32, tag = "3")]
+        InvariantViolation(u32),
+        #[prost(uint32, tag = "4")]
+        FeatureNotYetSupported(u32),
+        #[prost(message, tag = "5")]
+        MoveObjectTooBig(MoveObjectTooBig),
+        #[prost(message, tag = "6")]
+        MovePackageTooBig(MovePackageTooBig),
+        #[prost(message, tag = "7")]
+        CircularObjectOwnership(CircularObjectOwnership),
+        #[prost(uint32, tag = "8")]
+        InsufficientCoinBalance(u32),
+        #[prost(uint32, tag = "9")]
+        CoinBalanceOverflow(u32),
+        #[prost(uint32, tag = "10")]
+        PublishErrorNonZeroAddress(u32),
+        #[prost(uint32, tag = "11")]
+        SuiMoveVerificationError(u32),
+        #[prost(message, tag = "12")]
+        MovePrimitiveRuntimeError(MoveLocationOpt),
+        #[prost(message, tag = "13")]
+        MoveAbort(MoveAbort),
+        #[prost(uint32, tag = "14")]
+        VmVerificationOrDeserializationError(u32),
+        #[prost(uint32, tag = "15")]
+        VmInvariantViolation(u32),
+        #[prost(uint32, tag = "16")]
+        FunctionNotFound(u32),
+        #[prost(uint32, tag = "17")]
+        ArityMismatch(u32),
+        #[prost(uint32, tag = "18")]
+        TypeArityMismatch(u32),
+        #[prost(uint32, tag = "19")]
+        NonEntryFunctionInvoked(u32),
+        #[prost(message, tag = "20")]
+        CommandArgError(CommandArgumentError),
+        #[prost(message, tag = "21")]
+        TypeArgumentError(TypeArgumentError),
+        #[prost(message, tag = "22")]
+        UnusedValueWithoutDrop(UnusedValueWithoutDrop),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CommandArgumentError {
+    #[prost(uint32, tag = "1")]
+    pub type_mismatch: u32,
+    #[prost(uint32, tag = "2")]
+    pub invalid_bcs_bytes: u32,
+    #[prost(uint32, tag = "3")]
+    pub invalid_usage_of_pure_arg: u32,
+    #[prost(uint32, tag = "4")]
+    pub invalid_argument_to_private_entry_function: u32,
+    #[prost(message, optional, tag = "5")]
+    pub index_out_of_bounds: ::core::option::Option<
+        command_argument_error::IndexOutOfBounds,
+    >,
+    #[prost(message, optional, tag = "6")]
+    pub secondary_index_out_of_bounds: ::core::option::Option<
+        command_argument_error::SecondaryIndexOutOfBounds,
+    >,
+    #[prost(message, optional, tag = "7")]
+    pub invalid_result_arity: ::core::option::Option<
+        command_argument_error::InvalidResultArity,
+    >,
+    #[prost(uint32, tag = "8")]
+    pub invalid_gas_coin_usage: u32,
+    #[prost(uint32, tag = "9")]
+    pub invalid_value_usage: u32,
+    #[prost(uint32, tag = "10")]
+    pub invalid_object_by_value: u32,
+    #[prost(uint32, tag = "11")]
+    pub invalid_object_by_mut_ref: u32,
+    #[prost(uint32, tag = "12")]
+    pub shared_object_operation_not_allowed: u32,
+}
+/// Nested message and enum types in `CommandArgumentError`.
+pub mod command_argument_error {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct IndexOutOfBounds {
+        #[prost(uint32, tag = "1")]
+        pub idx: u32,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SecondaryIndexOutOfBounds {
+        #[prost(uint32, tag = "1")]
+        pub result_idx: u32,
+        #[prost(uint32, tag = "2")]
+        pub secondary_idx: u32,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct InvalidResultArity {
+        #[prost(uint32, tag = "1")]
+        pub result_idx: u32,
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TypeArgumentError {
+    #[prost(uint32, tag = "1")]
+    pub type_not_found: u32,
+    #[prost(uint32, tag = "2")]
+    pub constraint_not_satisfied: u32,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ModuleId {
     #[prost(string, tag = "1")]
-    pub error: ::prost::alloc::string::String,
+    pub address: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

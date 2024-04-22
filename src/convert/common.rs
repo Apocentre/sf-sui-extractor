@@ -7,9 +7,7 @@ use sui_json_rpc_types::{
   SuiRawData, SuiRawMoveObject, SuiRawMovePackage,
 };
 use sui_types::{
-  base_types::{AuthorityName, MoveObjectType, ObjectID, ObjectType, SuiAddress}, committee::StakeUnit, gas::GasCostSummary,
-  messages_checkpoint::CheckpointCommitment, move_package::{TypeOrigin, UpgradeInfo}, object::{Data, Owner},
-  transaction::Argument, TypeTag,
+  base_types::{AuthorityName, MoveObjectType, ObjectID, ObjectRef, ObjectType, SuiAddress}, committee::StakeUnit, execution_status::ExecutionStatus, gas::GasCostSummary, messages_checkpoint::CheckpointCommitment, move_package::{TypeOrigin, UpgradeInfo}, object::{Data, Owner}, transaction::Argument, TypeTag
 };
 use crate::pb::sui::checkpoint::{self as pb};
 
@@ -21,6 +19,14 @@ pub fn convert_sui_object(source: &ObjectID) -> pb::ObjectId {
 
 pub fn convert_sui_address(address: &SuiAddress) -> String {
   address.to_string().replace("0x", "")
+}
+
+pub fn convert_object_ref(obj_ref: &ObjectRef) -> pb::ObjectRef {
+  pb::ObjectRef {
+    object_id: Some(convert_sui_object(&obj_ref.0)),
+    sequence_number: obj_ref.1.value(),
+    digest: obj_ref.2.base58_encode(),
+  }
 }
 
 pub fn convert_type_tag(source: &TypeTag) -> pb::TypeTag {
@@ -83,10 +89,10 @@ pub fn convert_sui_argument(source: &Argument) -> pb::SuiArgument {
   }
 }
 
-pub fn convert_sui_execution_status(source: &SuiExecutionStatus) -> pb::ExecutionStatus {
+pub fn convert_sui_execution_status(source: &ExecutionStatus) -> pb::ExecutionStatus {
   let execution_status = match source {
-    SuiExecutionStatus::Success => pb::execution_status::ExecutionStatus::Success(()),
-    SuiExecutionStatus::Failure {error} => pb::execution_status::ExecutionStatus::Failure(pb::Failure {
+    ExecutionStatus::Success => pb::execution_status::ExecutionStatus::Success(()),
+    ExecutionStatus::Failure {error, command} => pb::execution_status::ExecutionStatus::Failure(pb::Failure {
       error: error.clone(),
     })
   };
@@ -166,10 +172,10 @@ fn convert_module_map(module_map: &BTreeMap<String, Vec<u8>>) -> HashMap<String,
   map
 }
 
-pub fn convert_owned_object_ref(source: &OwnedObjectRef) -> pb::OwnedObjectRef {
+pub fn convert_owned_object_ref(source: &(ObjectRef, Owner)) -> pb::OwnedObjectRef {
   pb::OwnedObjectRef {
-    owner: Some(convert_owner(&source.owner)),
-    reference: Some(convert_sui_object_ref(&source.reference)),
+    owner: Some(convert_owner(&source.1)),
+    reference: Some(convert_object_ref(&source.0)),
   }
 }
 

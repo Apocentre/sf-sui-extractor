@@ -1,14 +1,19 @@
 use shared_crypto::intent::{AppId, Intent, IntentMessage, IntentScope, IntentVersion};
 use sui_indexer::types::IndexedTransaction;
 use sui_types::{
-  authenticator_state::ActiveJwk, base_types::{ObjectID, ObjectRef}, messages_consensus::{ConsensusCommitPrologue, ConsensusCommitPrologueV2}, transaction::{
-    Argument, AuthenticatorStateUpdate, CallArg, ChangeEpoch, Command, EndOfEpochTransactionKind, GasData, GenesisObject, GenesisTransaction, ObjectArg, ProgrammableMoveCall, ProgrammableTransaction, RandomnessStateUpdate, SenderSignedData, TransactionData, TransactionDataAPI, TransactionExpiration, TransactionKind
+  authenticator_state::ActiveJwk, base_types::ObjectID,
+  messages_consensus::{ConsensusCommitPrologue, ConsensusCommitPrologueV2},
+  transaction::{
+    Argument, AuthenticatorStateUpdate, CallArg, ChangeEpoch, Command, EndOfEpochTransactionKind, GasData, GenesisObject,
+    GenesisTransaction, ObjectArg, ProgrammableMoveCall, ProgrammableTransaction, RandomnessStateUpdate, SenderSignedData,
+    TransactionData, TransactionDataAPI, TransactionExpiration, TransactionKind,
   }, TypeTag
 };
 use crate::pb::sui::checkpoint::{self as pb};
 
 use super::common::{
-  convert_data, convert_owner, convert_sui_address, convert_sui_argument, convert_sui_object, convert_type_tag
+  convert_data, convert_owner, convert_sui_address, convert_sui_argument, convert_sui_object, convert_type_tag,
+  convert_object_ref,
 };
 
 fn convert_intent_message(source: IntentMessage<TransactionData>) -> pb::IntentMessage {
@@ -36,7 +41,7 @@ fn convert_intent_value(source: TransactionData) -> pb::TransactionData {
 }
 
 fn convert_tx_expiration(source: &TransactionExpiration) -> pb::TransactionExpiration {
-  let tx_expiration = match source {
+  let tx_expiration = match *source {
     TransactionExpiration::None => pb::transaction_expiration::TxExpiration::None(0),
     TransactionExpiration::Epoch(epoch_id) => pb::transaction_expiration::TxExpiration::Epoch(epoch_id),
   };
@@ -290,14 +295,6 @@ fn convert_obj_arg(o: &ObjectArg) -> pb::call_arg::CallArg {
   })
 }
 
-fn convert_object_ref(obj_ref: &ObjectRef) -> pb::ObjectRef {
-  pb::ObjectRef {
-    object_id: Some(convert_sui_object(&obj_ref.0)),
-    sequence_number: obj_ref.1.value(),
-    digest: obj_ref.2.base58_encode(),
-  }
-}
-
 fn convert_intent(source: Intent) -> pb::Intent {
   pb::Intent {
     scope: Some(convert_intent_scope(source.scope)),
@@ -346,22 +343,23 @@ fn convert_intent_scope(source: IntentScope) -> pb::IntentScope {
   }
 }
 
-fn convert_sender_signed_data(source: SenderSignedData) -> pb::SenderSignedTransaction {
+fn convert_sender_signed_data(source: &SenderSignedData) -> pb::SenderSignedTransaction {
   let sender_signed_tx = source.inner();
 
   pb::SenderSignedTransaction {
-    intent_message: convert_intent_message(sender_signed_tx.intent_message)
+    intent_message: Some(convert_intent_message(sender_signed_tx.intent_message)),
   }
 }
 
 pub fn convert_transaction(source: &IndexedTransaction) -> pb::Transaction {
   pb::Transaction {
-    sequence_number: source.sequence_number,
-    digest: source.digest.base58_encode(),
-    sender_signed_data: convert_sender_signed_data(source.senders_signed_data),
+    sequence_number: source.tx_sequence_number,
+    digest: source.tx_digest.base58_encode(),
+    // it should only have one item
+    sender_signed_data: vec![convert_sender_signed_data(&source.sender_signed_data)],
+    effects: Some(convert_sui_effects(&source.effects)),
     // transaction: convert_sui_tx_block(&source.transaction),
     // raw_transaction: source.raw_transaction.clone(),
-    // effects: Some(convert_sui_effects(&source.effects)),
     // events: Some(convert_tx_block_events(&source.events)),
     // timestamp_ms: source.timestamp_ms,
     // confirmed_local_execution: source.confirmed_local_execution,
