@@ -15,7 +15,6 @@ fn convert_end_of_epoch_data(source: &EndOfEpochData) -> pb::EndOfEpochData {
 
 pub fn convert_checkpoint(source: &IndexedCheckpoint) -> pb::Checkpoint {
   let gas_cost_summary = pb::GasCostSummary {
-    total_gas_cost: source.total_gas_cost,
     computation_cost: source.computation_cost,
     storage_cost: source.storage_cost,
     storage_rebate: source.storage_rebate,

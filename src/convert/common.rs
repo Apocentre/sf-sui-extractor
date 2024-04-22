@@ -1,13 +1,10 @@
 use std::collections::{BTreeMap, HashMap};
 use base58::ToBase58;
-use move_core_types::language_storage::StructTag;
+use move_core_types::language_storage::{ModuleId, StructTag};
 use serde_json::Value;
-use sui_json_rpc_types::{
-  SuiMovePackage, SuiRawData, SuiRawMoveObject, SuiRawMovePackage,
-};
 use sui_types::{
-  base_types::{AuthorityName, MoveObjectType, ObjectID, ObjectRef, ObjectType, SuiAddress, SequenceNumber},
-  committee::StakeUnit, execution_status::ExecutionStatus, gas::GasCostSummary, messages_checkpoint::CheckpointCommitment,
+  base_types::{AuthorityName, MoveObjectType, ObjectID, ObjectRef, SuiAddress, SequenceNumber},
+  committee::StakeUnit, gas::GasCostSummary, messages_checkpoint::CheckpointCommitment,
   move_package::{TypeOrigin, UpgradeInfo}, object::{Data, Owner}, transaction::Argument, TypeTag,
 };
 use crate::pb::sui::checkpoint::{self as pb};
@@ -94,19 +91,6 @@ pub fn convert_sui_argument(source: &Argument) -> pb::SuiArgument {
   }
 }
 
-pub fn convert_sui_execution_status(source: &ExecutionStatus) -> pb::ExecutionStatus {
-  let execution_status = match source {
-    ExecutionStatus::Success => pb::execution_status::ExecutionStatus::Success(()),
-    ExecutionStatus::Failure {error, command} => pb::execution_status::ExecutionStatus::Failure(pb::Failure {
-      error: error.clone(),
-    })
-  };
-  
-  pb::ExecutionStatus {
-    execution_status: Some(execution_status),
-  }
-}
-
 pub fn convert_gas_cost_summary(source: &GasCostSummary) -> pb::GasCostSummary {
   pb::GasCostSummary {
     computation_cost: source.computation_cost,
@@ -189,50 +173,6 @@ pub fn convert_tx_block_effects_modified_at_versions(source: &(ObjectID, Sequenc
     sequence_number: source.1.value(),
   }
 }
-
-// pub fn convert_event_id(source: &EventID) -> pb::EventId {
-//   pb::EventId {
-//     tx_digest: source.tx_digest.base58_encode(),
-//     event_seq: source.event_seq,
-//   }
-// }
-
-// pub fn convert_tx_block_events(source: &SuiTransactionBlockEvents) -> pb::TransactionBlockEvents {
-//   let data = source.data.iter().map(|e| pb::Event {
-//     id: Some(convert_event_id(&e.id)),
-//     package_id: Some(convert_sui_object(&e.package_id)),
-//     transaction_module: e.transaction_module.clone().into_string(),
-//     sender: hex::encode(e.sender),
-//     r#type: Some(pb::StructTag {
-//       address: e.type_.address.to_canonical_string(false),
-//       module: e.type_.module.to_string(),
-//       name: e.type_.name.to_string(),
-//       type_params: Some(pb::ListOfTypeTags {
-//         list: e.type_.type_params.iter().map(convert_type_tag).collect(),
-//       }),
-//     }),
-//     parsed_json: Some(convert_sui_json_value(&e.parsed_json)),
-//     bcs: e.bcs.to_base58(),
-//     timestamp_ms: e.timestamp_ms,
-//   })
-//   .collect();
-
-//   pb::SuiTransactionBlockEvents {
-//     data,
-//   }
-// }
-
-pub fn convert_object_type(source: &ObjectType) -> pb::ObjectType {
-  let object_type = match source {
-    ObjectType::Package => pb::object_type::ObjectType::Package(()),
-    ObjectType::Struct(source) => pb::object_type::ObjectType::Struct(convert_move_object_type(&source))
-  };
-  
-  pb::ObjectType {
-    object_type: Some(object_type)
-  }
-}
-
 pub fn convert_move_object_type(source: &MoveObjectType) -> pb::MoveObjectType {
   let move_object_type = match source.clone().into_inner() {
     sui_types::base_types::MoveObjectType_::Other(source) => pb::move_object_type::MoveObjectType::Other(pb::StructTag {
@@ -250,102 +190,6 @@ pub fn convert_move_object_type(source: &MoveObjectType) -> pb::MoveObjectType {
   
   pb::MoveObjectType {
     move_object_type: Some(move_object_type)
-  }
-}
-
-// pub fn convert_sui_parsed_data(source: &SuiParsedData) -> pb::SuiParsedData {
-//   let sui_parsed_data = match source {
-//     SuiParsedData::MoveObject(source) => pb::sui_parsed_data::SuiParsedData::MoveObject(
-//       convert_sui_parsed_move_object(source)
-//     ),
-//     SuiParsedData::Package(source) => pb::sui_parsed_data::SuiParsedData::Package(
-//       convert_sui_move_package(source)
-//     ),
-//   };
-
-//   pb::SuiParsedData {
-//     sui_parsed_data: Some(sui_parsed_data),
-//   }
-// }
-
-// pub fn convert_sui_move_value(source: &SuiMoveValue) -> pb::MoveValue {
-//   let sui_move_value = match source {
-//     SuiMoveValue::Number(source) => pb::sui_move_value::SuiMoveValue::Number(*source),
-//     SuiMoveValue::Bool(source) => pb::sui_move_value::SuiMoveValue::Bool(*source),
-//     SuiMoveValue::Address(source) => pb::sui_move_value::SuiMoveValue::Address(hex::encode(source)),
-//     SuiMoveValue::Vector(source) => pb::sui_move_value::SuiMoveValue::Vector(pb::ListOfSuiMoveValues {
-//       list: source.iter().map(convert_sui_move_value).collect(),
-//     }),
-//     SuiMoveValue::String(source) => pb::sui_move_value::SuiMoveValue::String(source.clone()),
-//     SuiMoveValue::UID {id} => pb::sui_move_value::SuiMoveValue::Uid(pb::Uid {
-//       id: Some(convert_sui_object(id)),
-//     }),
-//     SuiMoveValue::Struct(source) => pb::sui_move_value::SuiMoveValue::Struct(convert_move_struct(source)),
-//     SuiMoveValue::Option(source) => pb::sui_move_value::SuiMoveValue::Option(
-//       Box::new(source.clone().map(|o| convert_sui_move_value(&o)).unwrap()),
-//     ),
-//   };
-
-//   pb::SuiMoveValue {
-//     sui_move_value: Some(sui_move_value),
-//   }
-// }
-
-pub fn convert_sui_move_package(source: &SuiMovePackage) -> pb::MovePackage {
-  let mut disassembled = HashMap::new();
-  for (k, v) in source.disassembled.clone() {
-    disassembled.insert(k, convert_sui_json_value(&v));
-  }
-
-  pb::MovePackage {
-    disassembled,
-  }
-}
-
-pub fn convert_sui_raw_data(source: &SuiRawData) -> pb::SuiRawData {
-  let sui_raw_data = match source {
-    SuiRawData::MoveObject(source) => pb::sui_raw_data::SuiRawData::MoveObject(
-      convert_sui_raw_move_object(source),
-    ),
-    SuiRawData::Package(source) => pb::sui_raw_data::SuiRawData::Package(
-      convert_sui_raw_move_package(source),
-    ),
-  };
-
-  pb::SuiRawData {
-    sui_raw_data: Some(sui_raw_data),
-  }
-}
-
-pub fn convert_sui_raw_move_object(source: &SuiRawMoveObject) -> pb::SuiRawMoveObject {
-  pb::SuiRawMoveObject {
-    r#type: Some(pb::StructTag {
-      address: source.type_.address.to_canonical_string(false),
-      module: source.type_.module.to_string(),
-      name: source.type_.name.to_string(),
-      type_params: Some(pb::ListOfTypeTags {
-        list: source.type_.type_params.iter().map(convert_type_tag).collect(),
-      }),
-    }),
-    has_public_transfer: source.has_public_transfer,
-    version: source.version.value(),
-    bcs_bytes: source.bcs_bytes.clone(),
-  }
-}
-
-pub fn convert_sui_raw_move_package(source: &SuiRawMovePackage) -> pb::SuiRawMovePackage {
-  let mut linkage_table = HashMap::new();
-  for (k, v) in source.linkage_table.clone() {
-    // Note the key here is ObjectID, but we cannot use Message as keys in a map thus we covnert it into hex string
-    // that is key = ObjectId.to_hex_uncompressed
-    linkage_table.insert(k.to_hex_uncompressed(), convert_upgrade_info(&v));
-  }
-  pb::SuiRawMovePackage {
-    id: Some(convert_sui_object(&source.id)),
-    version: source.version.value(),
-    module_map: source.module_map.clone().into_iter().collect::<HashMap<String, Vec<u8>>>(),
-    type_origin_table: source.type_origin_table.iter().map(convert_type_origin).collect(),
-    linkage_table,
   }
 }
 
@@ -382,5 +226,12 @@ pub fn convert_next_epoch_committee(source: &(AuthorityName, StakeUnit)) -> pb::
   pb::NextEpochCommittee {
     authority_name: base64::encode(source.0.as_ref()),
     stake_unit: source.1,
+  }
+}
+
+pub fn convert_module_id(source: &ModuleId) -> pb::ModuleId {
+  pb::ModuleId {
+    address: source.address().to_canonical_string(false),
+    name: source.name().to_string(),
   }
 }

@@ -157,8 +157,8 @@ impl FirehoseStreamer {
       Self::print_checkpoint_overview(&convert_checkpoint(&checkpoint_data.checkpoint));
 
       for tx in &checkpoint_data.transactions {
-        let txn_proto = convert_transaction(&tx);
-        Self::print_transaction(&txn_proto);
+        let _txn_proto = convert_transaction(&tx);
+        // Self::print_transaction(&txn_proto);
       }
 
 

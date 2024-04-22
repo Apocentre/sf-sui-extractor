@@ -5,8 +5,11 @@ use sui_types::{
   },
 };
 use crate::pb::sui::checkpoint as pb;
-use super::common::{
-  convert_gas_cost_summary, convert_object_ref, convert_owned_object_ref, convert_owner, convert_sui_execution_status, convert_sui_object, convert_tx_block_effects_modified_at_versions
+use super::{
+  common::{
+    convert_gas_cost_summary, convert_object_ref, convert_owned_object_ref, convert_owner, convert_sui_object, convert_tx_block_effects_modified_at_versions
+  },
+  execution_status::convert_sui_execution_status,
 };
 
 pub fn convert_sui_effects(source: &TransactionEffects) -> pb::TransactionBlockEffects {
@@ -61,7 +64,7 @@ fn convert_changed_object_v2(source: &(ObjectID, EffectsObjectChange)) -> pb::Ch
 
 fn convert_effects_object_change(source: &EffectsObjectChange) -> pb::EffectsObjectChange {
   let object_in = match source.input_state {
-    ObjectIn::NotExist => pb::object_in::ObjectIn::NotExist(0),
+    ObjectIn::NotExist => pb::object_in::ObjectIn::NotExist(()),
     ObjectIn::Exist(source) => pb::object_in::ObjectIn::Exist(pb::ObjectInExist {
         version_digest: Some(pb::VersionDigest {
           sequence_number: source.0.0.value(),
@@ -76,7 +79,7 @@ fn convert_effects_object_change(source: &EffectsObjectChange) -> pb::EffectsObj
   };
 
   let object_out = match source.output_state {
-    ObjectOut::NotExist =>  pb::object_out::ObjectOut::NotExist(0),
+    ObjectOut::NotExist =>  pb::object_out::ObjectOut::NotExist(()),
     ObjectOut::ObjectWrite(source) => {
       pb::object_out::ObjectOut::ObjectWrite(pb::ObjectWrite {
         object_digest: source.0.base58_encode(),
@@ -99,9 +102,9 @@ fn convert_effects_object_change(source: &EffectsObjectChange) -> pb::EffectsObj
 
   let id_operation = pb::IdOperation {
     id_operation: match source.id_operation {
-      IDOperation::None => Some(pb::id_operation::IdOperation::None(0)),
-      IDOperation::Created => Some(pb::id_operation::IdOperation::Created(1)),
-      IDOperation::Deleted => Some(pb::id_operation::IdOperation::Deleted(2)),
+      IDOperation::None => Some(pb::id_operation::IdOperation::None(())),
+      IDOperation::Created => Some(pb::id_operation::IdOperation::Created(())),
+      IDOperation::Deleted => Some(pb::id_operation::IdOperation::Deleted(())),
     }
   };
 

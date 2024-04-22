@@ -44,7 +44,7 @@ fn convert_intent_value(source: TransactionData) -> pb::TransactionData {
 
 fn convert_tx_expiration(source: &TransactionExpiration) -> pb::TransactionExpiration {
   let tx_expiration = match *source {
-    TransactionExpiration::None => pb::transaction_expiration::TxExpiration::None(0),
+    TransactionExpiration::None => pb::transaction_expiration::TxExpiration::None(()),
     TransactionExpiration::Epoch(epoch_id) => pb::transaction_expiration::TxExpiration::Epoch(epoch_id),
   };
 
@@ -101,15 +101,15 @@ fn convert_end_of_epoch_transaction(source: &[EndOfEpochTransactionKind]) -> pb:
   let end_of_epoch_transaction_kind = source.iter().map(|tk| {
     let kind = match tk {
       EndOfEpochTransactionKind::ChangeEpoch(c) => pb::end_of_epoch_transaction_kind::Kind::ChangeEpoch(convert_change_epoch(c)),
-      EndOfEpochTransactionKind::AuthenticatorStateCreate => pb::end_of_epoch_transaction_kind::Kind::AuthenticatorStateCreate(1),
+      EndOfEpochTransactionKind::AuthenticatorStateCreate => pb::end_of_epoch_transaction_kind::Kind::AuthenticatorStateCreate(()),
       EndOfEpochTransactionKind::AuthenticatorStateExpire(source) =>  pb::end_of_epoch_transaction_kind::Kind::AuthenticatorStateExpire(
         pb::AuthenticatorStateExpire {
             min_epoch: source.min_epoch,
             authenticator_obj_initial_shared_version: source.authenticator_obj_initial_shared_version.value(),
         }
       ),
-      EndOfEpochTransactionKind::RandomnessStateCreate => pb::end_of_epoch_transaction_kind::Kind::RandomnessStateCreate(3),
-      EndOfEpochTransactionKind::DenyListStateCreate => pb::end_of_epoch_transaction_kind::Kind::DenyListStateCreate(4),
+      EndOfEpochTransactionKind::RandomnessStateCreate => pb::end_of_epoch_transaction_kind::Kind::RandomnessStateCreate(()),
+      EndOfEpochTransactionKind::DenyListStateCreate => pb::end_of_epoch_transaction_kind::Kind::DenyListStateCreate(()),
     };
 
     pb::EndOfEpochTransactionKind {
@@ -307,9 +307,9 @@ fn convert_intent(source: Intent) -> pb::Intent {
 
 fn convert_app_id(source: AppId) -> pb::AppId {
   let app_id = match source {
-    AppId::Sui => pb::app_id::AppId::Sui(0),
-    AppId::Narwhal => pb::app_id::AppId::Narwhal(1),
-    AppId::Consensus => pb::app_id::AppId::Consensus(2),
+    AppId::Sui => pb::app_id::AppId::Sui(()),
+    AppId::Narwhal => pb::app_id::AppId::Narwhal(()),
+    AppId::Consensus => pb::app_id::AppId::Consensus(()),
   };
 
   pb::AppId {
@@ -319,7 +319,7 @@ fn convert_app_id(source: AppId) -> pb::AppId {
 
 fn convert_version(source: IntentVersion) -> pb::IntentVersion {
   let intent_version = match source {
-    IntentVersion::V0 => pb::intent_version::IntentVersion::V0(0),
+    IntentVersion::V0 => pb::intent_version::IntentVersion::V0(()),
   };
 
   pb::IntentVersion {
@@ -329,15 +329,15 @@ fn convert_version(source: IntentVersion) -> pb::IntentVersion {
 
 fn convert_intent_scope(source: IntentScope) -> pb::IntentScope {
   let intent_scope = match source {
-    IntentScope::TransactionData => pb::intent_scope::IntentScope::TransactionData(0),
-    IntentScope::TransactionEffects => pb::intent_scope::IntentScope::TransactionEffects(1),
-    IntentScope::CheckpointSummary => pb::intent_scope::IntentScope::CheckpointSummary(2),
-    IntentScope::PersonalMessage => pb::intent_scope::IntentScope::PersonalMessage(3),
-    IntentScope::SenderSignedTransaction => pb::intent_scope::IntentScope::SenderSignedTransaction(4),
-    IntentScope::ProofOfPossession => pb::intent_scope::IntentScope::ProofOfPossession(5),
-    IntentScope::HeaderDigest => pb::intent_scope::IntentScope::HeaderDigest(6),
-    IntentScope::BridgeEventUnused => pb::intent_scope::IntentScope::BridgeEventUnused(7),
-    IntentScope::ConsensusBlock => pb::intent_scope::IntentScope::ConsensusBlock(8),
+    IntentScope::TransactionData => pb::intent_scope::IntentScope::TransactionData(()),
+    IntentScope::TransactionEffects => pb::intent_scope::IntentScope::TransactionEffects(()),
+    IntentScope::CheckpointSummary => pb::intent_scope::IntentScope::CheckpointSummary(()),
+    IntentScope::PersonalMessage => pb::intent_scope::IntentScope::PersonalMessage(()),
+    IntentScope::SenderSignedTransaction => pb::intent_scope::IntentScope::SenderSignedTransaction(()),
+    IntentScope::ProofOfPossession => pb::intent_scope::IntentScope::ProofOfPossession(()),
+    IntentScope::HeaderDigest => pb::intent_scope::IntentScope::HeaderDigest(()),
+    IntentScope::BridgeEventUnused => pb::intent_scope::IntentScope::BridgeEventUnused(()),
+    IntentScope::ConsensusBlock => pb::intent_scope::IntentScope::ConsensusBlock(()),
   };
 
   pb::IntentScope {
@@ -372,8 +372,8 @@ pub fn convert_transaction(source: &IndexedTransaction) -> pb::Transaction {
 
 fn convert_transaction_kind(source: sui_indexer::types::TransactionKind) -> pb::GenericTransactionKind {
   let kind = match source {
-    sui_indexer::types::TransactionKind::SystemTransaction => pb::generic_transaction_kind::Kind::system_transaction(0),
-    sui_indexer::types::TransactionKind::ProgrammableTransaction => pb::generic_transaction_kind::Kind::ProgrammableTransaction(1),
+    sui_indexer::types::TransactionKind::SystemTransaction => pb::generic_transaction_kind::Kind::SystemTransaction(()),
+    sui_indexer::types::TransactionKind::ProgrammableTransaction => pb::generic_transaction_kind::Kind::ProgrammableTransaction(()),
   };
 
   pb::GenericTransactionKind {

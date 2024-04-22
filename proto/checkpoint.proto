@@ -82,8 +82,8 @@ message Transaction {
 
 message GenericTransactionKind {
   oneof kind {
-    uint32 system_transaction = 1;
-    uint32 programmable_transaction = 2;
+    google.protobuf.Empty system_transaction = 1;
+    google.protobuf.Empty programmable_transaction = 2;
   }
 }
 
@@ -182,38 +182,38 @@ message Intent {
 
 message IntentVersion {
   oneof intent_version {
-    uint32 v0 = 1;
+    google.protobuf.Empty  v0 = 1;
   }
 }
 
 message AppId {
   oneof app_id {
-    uint32 sui = 1;
-    uint32 narwhal = 2;
-    uint32 consensus = 3;
+    google.protobuf.Empty sui = 1;
+    google.protobuf.Empty narwhal = 2;
+    google.protobuf.Empty consensus = 3;
   }
 }
 
 message IntentScope {
   oneof intent_scope {
     // Used for a user signature on a transaction data.
-    uint32 transaction_data = 1;
+    google.protobuf.Empty transaction_data = 1;
     // Used for an authority signature on transaction effects.
-    uint32 transaction_effects = 2;
+    google.protobuf.Empty transaction_effects = 2;
     // Used for an authority signature on a checkpoint summary.
-    uint32 checkpoint_summary = 3;
+    google.protobuf.Empty checkpoint_summary = 3;
     // Used for a user signature on a personal message.
-    uint32 personal_message = 4;
+    google.protobuf.Empty personal_message = 4;
     // Used for an authority signature on a user signed transaction.
-    uint32 sender_signed_transaction = 5;
+    google.protobuf.Empty sender_signed_transaction = 5;
     // Used as a signature representing an authority's proof of possession of its authority protocol key.
-    uint32 proof_of_possession = 6;
+    google.protobuf.Empty proof_of_possession = 6;
     // Used for narwhal authority signature on header digest.
-    uint32 header_digest = 7;
+    google.protobuf.Empty header_digest = 7;
     // for bridge purposes but it's currently not included in messages.
-    uint32 bridge_event_unused = 8;
+    google.protobuf.Empty bridge_event_unused = 8;
     // Used for consensus authority signature on block's digest
-    uint32 consensus_block = 9;
+    google.protobuf.Empty consensus_block = 9;
   };
 }
 
@@ -232,7 +232,7 @@ message TransactionDataV1 {
 
 message TransactionExpiration {
   oneof tx_expiration {
-    uint32 none = 1;
+    google.protobuf.Empty none = 1;
     uint64 epoch = 2;
   }
 }
@@ -283,10 +283,10 @@ message EndOfEpochTransaction {
 message EndOfEpochTransactionKind {
   oneof kind {
     ChangeEpoch change_epoch = 1;
-    uint32 authenticator_state_create = 2;
+    google.protobuf.Empty authenticator_state_create = 2;
     AuthenticatorStateExpire authenticator_state_expire = 3;
-    uint32 randomness_state_create = 4;
-    uint32 deny_list_state_create = 5;
+    google.protobuf.Empty  randomness_state_create = 4;
+    google.protobuf.Empty  deny_list_state_create = 5;
   }
 }
 
@@ -408,10 +408,10 @@ message Object {
 }
 message OwnerType {
   oneof owner_type {
-    uint32 immutable = 1;
-    uint32 address = 2;
-    uint32 object = 3;
-    uint32 shared = 4;
+    google.protobuf.Empty immutable = 1;
+    google.protobuf.Empty address = 2;
+    google.protobuf.Empty object = 3;
+    google.protobuf.Empty shared = 4;
   }
 }
 
@@ -480,8 +480,8 @@ message DynamicFieldName {
 
 message DynamicFieldType {
   oneof dynamic_field_type {
-    uint32 dynamic_field = 1;
-    uint32 dynamic_object = 2;
+    google.protobuf.Empty dynamic_field = 1;
+    google.protobuf.Empty dynamic_object = 2;
   }
 }
 
@@ -935,15 +935,15 @@ message EffectsObjectChange {
 
 message IDOperation {
   oneof id_operation {
-    uint32 none = 1;
-    uint32 created = 2;
-    uint32 deleted = 3;
+    google.protobuf.Empty none = 1;
+    google.protobuf.Empty created = 2;
+    google.protobuf.Empty deleted = 3;
   }
 }
 
 message ObjectIn {
   oneof object_in {
-    uint32 not_exist = 1;
+    google.protobuf.Empty not_exist = 1;
     /// The old version, digest and owner.
     ObjectInExist exist = 2;
   }
@@ -951,7 +951,7 @@ message ObjectIn {
 
 message ObjectOut {
   oneof object_out {
-    uint32 not_exist = 1;
+    google.protobuf.Empty not_exist = 1;
     /// Any written object, including all of mutated, created, unwrapped today.
     ObjectWrite object_write = 2;
     /// Packages writes need to be tracked separately with version because
@@ -1024,39 +1024,39 @@ message Failure {
 
 message ExecutionFailureStatus {
   oneof execution_failure_status {
-    uint32 insufficient_gas = 1;
-    uint32 invalid_gas_object = 2;
-    uint32 invariant_violation = 3;
-    uint32 feature_not_yet_supported = 4;
+    google.protobuf.Empty insufficient_gas = 1;
+    google.protobuf.Empty invalid_gas_object = 2;
+    google.protobuf.Empty invariant_violation = 3;
+    google.protobuf.Empty feature_not_yet_supported = 4;
     MoveObjectTooBig move_object_too_big = 5;
     MovePackageTooBig move_package_too_big = 6;
     CircularObjectOwnership circular_object_ownership = 7;
-    uint32 insufficient_coin_balance = 8;
-    uint32 coin_balance_overflow = 9;
-    uint32 publish_error_non_zero_address = 10;
-    uint32 sui_move_verification_error = 11;
+    google.protobuf.Empty insufficient_coin_balance = 8;
+    google.protobuf.Empty coin_balance_overflow = 9;
+    google.protobuf.Empty publish_error_non_zero_address = 10;
+    google.protobuf.Empty sui_move_verification_error = 11;
     MoveLocationOpt move_primitive_runtime_error = 12;
     MoveAbort move_abort = 13;
-    uint32 vm_verification_or_deserialization_error = 14;
-    uint32 vm_invariant_violation = 15;
-    uint32 function_not_found = 16;
-    uint32 arity_mismatch = 17;
-    uint32 type_arity_mismatch = 18;
-    uint32 non_entry_function_invoked = 19;
+    google.protobuf.Empty vm_verification_or_deserialization_error = 14;
+    google.protobuf.Empty vm_invariant_violation = 15;
+    google.protobuf.Empty function_not_found = 16;
+    google.protobuf.Empty arity_mismatch = 17;
+    google.protobuf.Empty type_arity_mismatch = 18;
+    google.protobuf.Empty non_entry_function_invoked = 19;
     CommandArgumentError_ command_arg_error = 20;
     TypeArgumentError_ type_argument_error = 21;
     UnusedValueWithoutDrop unused_value_without_drop = 22;
     InvalidPublicFunctionReturnType invalid_public_function_return_type = 23;
-    uint32 invalid_transfer_object = 24;
+    google.protobuf.Empty invalid_transfer_object = 24;
     EffectsTooLarge effects_too_large = 25;
-    uint32 publish_upgrade_missing_dependency = 26;
-    uint32 publish_upgrade_dependency_downgrade = 27;
+    google.protobuf.Empty publish_upgrade_missing_dependency = 26;
+    google.protobuf.Empty publish_upgrade_dependency_downgrade = 27;
     PackageUpgradeError_ package_upgrade_error = 28;
     WrittenObjectsTooLarge written_objects_too_large = 29;
-    uint32 certificate_denied = 30;
-    uint32 sui_move_verification_timedout = 31;
-    uint32 shared_object_operation_not_allowed = 32;
-    uint32 Input_object_deleted = 33;
+    google.protobuf.Empty certificate_denied = 30;
+    google.protobuf.Empty sui_move_verification_timedout = 31;
+    google.protobuf.Empty shared_object_operation_not_allowed = 32;
+    google.protobuf.Empty Input_object_deleted = 33;
   }
 
   message MoveObjectTooBig {
@@ -1125,18 +1125,18 @@ message ExecutionFailureStatus {
 
 message CommandArgumentError {
   oneof command_argument_error {
-    uint32 type_mismatch = 1;
-    uint32 invalid_bcs_bytes = 2;
-    uint32 invalid_usage_of_pure_arg = 3;
-    uint32 invalid_argument_to_private_entry_function = 4;
+    google.protobuf.Empty type_mismatch = 1;
+    google.protobuf.Empty invalid_bcs_bytes = 2;
+    google.protobuf.Empty invalid_usage_of_pure_arg = 3;
+    google.protobuf.Empty invalid_argument_to_private_entry_function = 4;
     IndexOutOfBounds index_out_of_bounds = 5;
     SecondaryIndexOutOfBounds secondary_index_out_of_bounds = 6;
     InvalidResultArity invalid_result_arity = 7;
-    uint32 invalid_gas_coin_usage = 8;
-    uint32 invalid_value_usage = 9;
-    uint32 invalid_object_by_value = 10;
-    uint32 invalid_object_by_mut_ref = 11;
-    uint32 shared_object_operation_not_allowed = 12;
+    google.protobuf.Empty invalid_gas_coin_usage = 8;
+    google.protobuf.Empty invalid_value_usage = 9;
+    google.protobuf.Empty invalid_object_by_value = 10;
+    google.protobuf.Empty invalid_object_by_mut_ref = 11;
+    google.protobuf.Empty shared_object_operation_not_allowed = 12;
   }
 
   message IndexOutOfBounds {
@@ -1155,8 +1155,8 @@ message CommandArgumentError {
 
 message TypeArgumentError {
   oneof type_argument_error {
-    uint32 type_not_found = 1;
-    uint32 constraint_not_satisfied = 2;
+    google.protobuf.Empty type_not_found = 1;
+    google.protobuf.Empty constraint_not_satisfied = 2;
   }
 }
 
@@ -1164,7 +1164,7 @@ message PackageUpgradeError {
   oneof package_upgrade_error {
     UnableToFetchPackage unable_to_fetch_package = 1;
     NotAPackage not_a_package = 2;
-    uint32 incompatible_upgrade = 3;
+    google.protobuf.Empty incompatible_upgrade = 3;
     DigestDoesNotMatch digest_does_not_match = 4;
     UnknownUpgradePolicy unknown_upgrade_policy = 5;
     PackageIDDoesNotMatch package_id_does_not_match = 6;

@@ -110,10 +110,10 @@ pub mod generic_transaction_kind {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Kind {
-        #[prost(uint32, tag = "1")]
-        SystemTransaction(u32),
-        #[prost(uint32, tag = "2")]
-        ProgrammableTransaction(u32),
+        #[prost(message, tag = "1")]
+        SystemTransaction(()),
+        #[prost(message, tag = "2")]
+        ProgrammableTransaction(()),
     }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -290,8 +290,8 @@ pub mod intent_version {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum IntentVersion {
-        #[prost(uint32, tag = "1")]
-        V0(u32),
+        #[prost(message, tag = "1")]
+        V0(()),
     }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -305,12 +305,12 @@ pub mod app_id {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum AppId {
-        #[prost(uint32, tag = "1")]
-        Sui(u32),
-        #[prost(uint32, tag = "2")]
-        Narwhal(u32),
-        #[prost(uint32, tag = "3")]
-        Consensus(u32),
+        #[prost(message, tag = "1")]
+        Sui(()),
+        #[prost(message, tag = "2")]
+        Narwhal(()),
+        #[prost(message, tag = "3")]
+        Consensus(()),
     }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -325,32 +325,32 @@ pub mod intent_scope {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum IntentScope {
         /// Used for a user signature on a transaction data.
-        #[prost(uint32, tag = "1")]
-        TransactionData(u32),
+        #[prost(message, tag = "1")]
+        TransactionData(()),
         /// Used for an authority signature on transaction effects.
-        #[prost(uint32, tag = "2")]
-        TransactionEffects(u32),
+        #[prost(message, tag = "2")]
+        TransactionEffects(()),
         /// Used for an authority signature on a checkpoint summary.
-        #[prost(uint32, tag = "3")]
-        CheckpointSummary(u32),
+        #[prost(message, tag = "3")]
+        CheckpointSummary(()),
         /// Used for a user signature on a personal message.
-        #[prost(uint32, tag = "4")]
-        PersonalMessage(u32),
+        #[prost(message, tag = "4")]
+        PersonalMessage(()),
         /// Used for an authority signature on a user signed transaction.
-        #[prost(uint32, tag = "5")]
-        SenderSignedTransaction(u32),
+        #[prost(message, tag = "5")]
+        SenderSignedTransaction(()),
         /// Used as a signature representing an authority's proof of possession of its authority protocol key.
-        #[prost(uint32, tag = "6")]
-        ProofOfPossession(u32),
+        #[prost(message, tag = "6")]
+        ProofOfPossession(()),
         /// Used for narwhal authority signature on header digest.
-        #[prost(uint32, tag = "7")]
-        HeaderDigest(u32),
+        #[prost(message, tag = "7")]
+        HeaderDigest(()),
         /// for bridge purposes but it's currently not included in messages.
-        #[prost(uint32, tag = "8")]
-        BridgeEventUnused(u32),
+        #[prost(message, tag = "8")]
+        BridgeEventUnused(()),
         /// Used for consensus authority signature on block's digest
-        #[prost(uint32, tag = "9")]
-        ConsensusBlock(u32),
+        #[prost(message, tag = "9")]
+        ConsensusBlock(()),
     }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -391,8 +391,8 @@ pub mod transaction_expiration {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum TxExpiration {
-        #[prost(uint32, tag = "1")]
-        None(u32),
+        #[prost(message, tag = "1")]
+        None(()),
         #[prost(uint64, tag = "2")]
         Epoch(u64),
     }
@@ -486,14 +486,14 @@ pub mod end_of_epoch_transaction_kind {
     pub enum Kind {
         #[prost(message, tag = "1")]
         ChangeEpoch(super::ChangeEpoch),
-        #[prost(uint32, tag = "2")]
-        AuthenticatorStateCreate(u32),
+        #[prost(message, tag = "2")]
+        AuthenticatorStateCreate(()),
         #[prost(message, tag = "3")]
         AuthenticatorStateExpire(super::AuthenticatorStateExpire),
-        #[prost(uint32, tag = "4")]
-        RandomnessStateCreate(u32),
-        #[prost(uint32, tag = "5")]
-        DenyListStateCreate(u32),
+        #[prost(message, tag = "4")]
+        RandomnessStateCreate(()),
+        #[prost(message, tag = "5")]
+        DenyListStateCreate(()),
     }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -691,14 +691,14 @@ pub mod owner_type {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum OwnerType {
-        #[prost(uint32, tag = "1")]
-        Immutable(u32),
-        #[prost(uint32, tag = "2")]
-        Address(u32),
-        #[prost(uint32, tag = "3")]
-        Object(u32),
-        #[prost(uint32, tag = "4")]
-        Shared(u32),
+        #[prost(message, tag = "1")]
+        Immutable(()),
+        #[prost(message, tag = "2")]
+        Address(()),
+        #[prost(message, tag = "3")]
+        Object(()),
+        #[prost(message, tag = "4")]
+        Shared(()),
     }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -811,10 +811,10 @@ pub mod dynamic_field_type {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum DynamicFieldType {
-        #[prost(uint32, tag = "1")]
-        DynamicField(u32),
-        #[prost(uint32, tag = "2")]
-        DynamicObject(u32),
+        #[prost(message, tag = "1")]
+        DynamicField(()),
+        #[prost(message, tag = "2")]
+        DynamicObject(()),
     }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1530,12 +1530,12 @@ pub mod id_operation {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum IdOperation {
-        #[prost(uint32, tag = "1")]
-        None(u32),
-        #[prost(uint32, tag = "2")]
-        Created(u32),
-        #[prost(uint32, tag = "3")]
-        Deleted(u32),
+        #[prost(message, tag = "1")]
+        None(()),
+        #[prost(message, tag = "2")]
+        Created(()),
+        #[prost(message, tag = "3")]
+        Deleted(()),
     }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1549,8 +1549,8 @@ pub mod object_in {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum ObjectIn {
-        #[prost(uint32, tag = "1")]
-        NotExist(u32),
+        #[prost(message, tag = "1")]
+        NotExist(()),
         /// / The old version, digest and owner.
         #[prost(message, tag = "2")]
         Exist(super::ObjectInExist),
@@ -1567,8 +1567,8 @@ pub mod object_out {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum ObjectOut {
-        #[prost(uint32, tag = "1")]
-        NotExist(u32),
+        #[prost(message, tag = "1")]
+        NotExist(()),
         /// / Any written object, including all of mutated, created, unwrapped today.
         #[prost(message, tag = "2")]
         ObjectWrite(super::ObjectWrite),
@@ -1793,44 +1793,44 @@ pub mod execution_failure_status {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum ExecutionFailureStatus {
-        #[prost(uint32, tag = "1")]
-        InsufficientGas(u32),
-        #[prost(uint32, tag = "2")]
-        InvalidGasObject(u32),
-        #[prost(uint32, tag = "3")]
-        InvariantViolation(u32),
-        #[prost(uint32, tag = "4")]
-        FeatureNotYetSupported(u32),
+        #[prost(message, tag = "1")]
+        InsufficientGas(()),
+        #[prost(message, tag = "2")]
+        InvalidGasObject(()),
+        #[prost(message, tag = "3")]
+        InvariantViolation(()),
+        #[prost(message, tag = "4")]
+        FeatureNotYetSupported(()),
         #[prost(message, tag = "5")]
         MoveObjectTooBig(MoveObjectTooBig),
         #[prost(message, tag = "6")]
         MovePackageTooBig(MovePackageTooBig),
         #[prost(message, tag = "7")]
         CircularObjectOwnership(CircularObjectOwnership),
-        #[prost(uint32, tag = "8")]
-        InsufficientCoinBalance(u32),
-        #[prost(uint32, tag = "9")]
-        CoinBalanceOverflow(u32),
-        #[prost(uint32, tag = "10")]
-        PublishErrorNonZeroAddress(u32),
-        #[prost(uint32, tag = "11")]
-        SuiMoveVerificationError(u32),
+        #[prost(message, tag = "8")]
+        InsufficientCoinBalance(()),
+        #[prost(message, tag = "9")]
+        CoinBalanceOverflow(()),
+        #[prost(message, tag = "10")]
+        PublishErrorNonZeroAddress(()),
+        #[prost(message, tag = "11")]
+        SuiMoveVerificationError(()),
         #[prost(message, tag = "12")]
         MovePrimitiveRuntimeError(MoveLocationOpt),
         #[prost(message, tag = "13")]
         MoveAbort(MoveAbort),
-        #[prost(uint32, tag = "14")]
-        VmVerificationOrDeserializationError(u32),
-        #[prost(uint32, tag = "15")]
-        VmInvariantViolation(u32),
-        #[prost(uint32, tag = "16")]
-        FunctionNotFound(u32),
-        #[prost(uint32, tag = "17")]
-        ArityMismatch(u32),
-        #[prost(uint32, tag = "18")]
-        TypeArityMismatch(u32),
-        #[prost(uint32, tag = "19")]
-        NonEntryFunctionInvoked(u32),
+        #[prost(message, tag = "14")]
+        VmVerificationOrDeserializationError(()),
+        #[prost(message, tag = "15")]
+        VmInvariantViolation(()),
+        #[prost(message, tag = "16")]
+        FunctionNotFound(()),
+        #[prost(message, tag = "17")]
+        ArityMismatch(()),
+        #[prost(message, tag = "18")]
+        TypeArityMismatch(()),
+        #[prost(message, tag = "19")]
+        NonEntryFunctionInvoked(()),
         #[prost(message, tag = "20")]
         CommandArgError(CommandArgumentError),
         #[prost(message, tag = "21")]
@@ -1839,26 +1839,26 @@ pub mod execution_failure_status {
         UnusedValueWithoutDrop(UnusedValueWithoutDrop),
         #[prost(message, tag = "23")]
         InvalidPublicFunctionReturnType(InvalidPublicFunctionReturnType),
-        #[prost(uint32, tag = "24")]
-        InvalidTransferObject(u32),
+        #[prost(message, tag = "24")]
+        InvalidTransferObject(()),
         #[prost(message, tag = "25")]
         EffectsTooLarge(EffectsTooLarge),
-        #[prost(uint32, tag = "26")]
-        PublishUpgradeMissingDependency(u32),
-        #[prost(uint32, tag = "27")]
-        PublishUpgradeDependencyDowngrade(u32),
+        #[prost(message, tag = "26")]
+        PublishUpgradeMissingDependency(()),
+        #[prost(message, tag = "27")]
+        PublishUpgradeDependencyDowngrade(()),
         #[prost(message, tag = "28")]
         PackageUpgradeError(PackageUpgradeError),
         #[prost(message, tag = "29")]
         WrittenObjectsTooLarge(WrittenObjectsTooLarge),
-        #[prost(uint32, tag = "30")]
-        CertificateDenied(u32),
-        #[prost(uint32, tag = "31")]
-        SuiMoveVerificationTimedout(u32),
-        #[prost(uint32, tag = "32")]
-        SharedObjectOperationNotAllowed(u32),
-        #[prost(uint32, tag = "33")]
-        InputObjectDeleted(u32),
+        #[prost(message, tag = "30")]
+        CertificateDenied(()),
+        #[prost(message, tag = "31")]
+        SuiMoveVerificationTimedout(()),
+        #[prost(message, tag = "32")]
+        SharedObjectOperationNotAllowed(()),
+        #[prost(message, tag = "33")]
+        InputObjectDeleted(()),
     }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1897,30 +1897,30 @@ pub mod command_argument_error {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum CommandArgumentError {
-        #[prost(uint32, tag = "1")]
-        TypeMismatch(u32),
-        #[prost(uint32, tag = "2")]
-        InvalidBcsBytes(u32),
-        #[prost(uint32, tag = "3")]
-        InvalidUsageOfPureArg(u32),
-        #[prost(uint32, tag = "4")]
-        InvalidArgumentToPrivateEntryFunction(u32),
+        #[prost(message, tag = "1")]
+        TypeMismatch(()),
+        #[prost(message, tag = "2")]
+        InvalidBcsBytes(()),
+        #[prost(message, tag = "3")]
+        InvalidUsageOfPureArg(()),
+        #[prost(message, tag = "4")]
+        InvalidArgumentToPrivateEntryFunction(()),
         #[prost(message, tag = "5")]
         IndexOutOfBounds(IndexOutOfBounds),
         #[prost(message, tag = "6")]
         SecondaryIndexOutOfBounds(SecondaryIndexOutOfBounds),
         #[prost(message, tag = "7")]
         InvalidResultArity(InvalidResultArity),
-        #[prost(uint32, tag = "8")]
-        InvalidGasCoinUsage(u32),
-        #[prost(uint32, tag = "9")]
-        InvalidValueUsage(u32),
-        #[prost(uint32, tag = "10")]
-        InvalidObjectByValue(u32),
-        #[prost(uint32, tag = "11")]
-        InvalidObjectByMutRef(u32),
-        #[prost(uint32, tag = "12")]
-        SharedObjectOperationNotAllowed(u32),
+        #[prost(message, tag = "8")]
+        InvalidGasCoinUsage(()),
+        #[prost(message, tag = "9")]
+        InvalidValueUsage(()),
+        #[prost(message, tag = "10")]
+        InvalidObjectByValue(()),
+        #[prost(message, tag = "11")]
+        InvalidObjectByMutRef(()),
+        #[prost(message, tag = "12")]
+        SharedObjectOperationNotAllowed(()),
     }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1936,10 +1936,10 @@ pub mod type_argument_error {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum TypeArgumentError {
-        #[prost(uint32, tag = "1")]
-        TypeNotFound(u32),
-        #[prost(uint32, tag = "2")]
-        ConstraintNotSatisfied(u32),
+        #[prost(message, tag = "1")]
+        TypeNotFound(()),
+        #[prost(message, tag = "2")]
+        ConstraintNotSatisfied(()),
     }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1994,8 +1994,8 @@ pub mod package_upgrade_error {
         UnableToFetchPackage(UnableToFetchPackage),
         #[prost(message, tag = "2")]
         NotAPackage(NotAPackage),
-        #[prost(uint32, tag = "3")]
-        IncompatibleUpgrade(u32),
+        #[prost(message, tag = "3")]
+        IncompatibleUpgrade(()),
         #[prost(message, tag = "4")]
         DigestDoesNotMatch(DigestDoesNotMatch),
         #[prost(message, tag = "5")]
