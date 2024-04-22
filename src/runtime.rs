@@ -17,10 +17,9 @@ use log::{debug, error};
 use prometheus::Registry;
 use tokio::spawn;
 use crate::{
-  pb::sui::checkpoint as pb,
   convert::{
-    checkpoint::convert_checkpoint, tx::convert_transaction,
-  },
+    checkpoint::convert_checkpoint, sui_event::convert_indexed_event, tx::convert_transaction
+  }, pb::sui::checkpoint as pb
 };
 
 const DOWNLOAD_QUEUE_SIZE: usize = 1000;
@@ -161,6 +160,12 @@ impl FirehoseStreamer {
         Self::print_transaction(&txn_proto);
       }
 
+      // Not that the transaction data does also include event data but here we explicitely log
+      // events if one is interested in just that
+      for event in &checkpoint_data.events {
+        let event_proto = convert_indexed_event(event);
+        Self::print_event(&event_proto);
+      }
 
       println!("\nFIRE BLOCK_END {}", self.current_checkpoint_seq);
       self.current_checkpoint_seq += 1;
@@ -208,7 +213,20 @@ impl FirehoseStreamer {
         transaction
       )
     });
+
     println!("\nFIRE TRX {}", base64::encode(buf));
+  }
+
+  fn print_event(event: &pb::IndexedEvent) {
+    let mut buf = vec![];
+    event.encode(&mut buf).unwrap_or_else(|_| {
+      panic!(
+        "Could not convert protobuf event to bytes '{:?}'",
+        event
+      )
+    });
+
+    println!("\nFIRE EVT {}", base64::encode(buf));
   }
   
   // pub async fn convert_next_block(&mut self) -> Result<()> {
