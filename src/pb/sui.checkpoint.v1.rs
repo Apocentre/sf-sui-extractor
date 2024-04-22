@@ -60,9 +60,6 @@ pub struct Checkpoint {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GasCostSummary {
-    /// total gas cost could be negative
-    #[prost(int64, tag = "12")]
-    pub total_gas_cost: i64,
     /// Cost of computation/execution
     #[prost(uint64, tag = "1")]
     pub computation_cost: u64,
@@ -1677,7 +1674,7 @@ pub struct Failure {
 pub struct ExecutionFailureStatus {
     #[prost(
         oneof = "execution_failure_status::ExecutionFailureStatus",
-        tags = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22"
+        tags = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33"
     )]
     pub execution_failure_status: ::core::option::Option<
         execution_failure_status::ExecutionFailureStatus,
@@ -1751,7 +1748,40 @@ pub mod execution_failure_status {
     }
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct UnusedValueWithoutDrop {}
+    pub struct UnusedValueWithoutDrop {
+        #[prost(uint32, tag = "1")]
+        pub result_idx: u32,
+        #[prost(uint32, tag = "2")]
+        pub secondary_idx: u32,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct InvalidPublicFunctionReturnType {
+        #[prost(uint32, tag = "1")]
+        pub idx: u32,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct EffectsTooLarge {
+        #[prost(uint32, tag = "1")]
+        pub current_size: u32,
+        #[prost(uint32, tag = "2")]
+        pub max_size: u32,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct PackageUpgradeError {
+        #[prost(message, optional, tag = "1")]
+        pub upgrade_error: ::core::option::Option<super::PackageUpgradeError>,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct WrittenObjectsTooLarge {
+        #[prost(uint32, tag = "1")]
+        pub current_size: u32,
+        #[prost(uint32, tag = "2")]
+        pub max_size: u32,
+    }
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum ExecutionFailureStatus {
@@ -1799,41 +1829,40 @@ pub mod execution_failure_status {
         TypeArgumentError(TypeArgumentError),
         #[prost(message, tag = "22")]
         UnusedValueWithoutDrop(UnusedValueWithoutDrop),
+        #[prost(message, tag = "23")]
+        InvalidPublicFunctionReturnType(InvalidPublicFunctionReturnType),
+        #[prost(uint32, tag = "24")]
+        InvalidTransferObject(u32),
+        #[prost(message, tag = "25")]
+        EffectsTooLarge(EffectsTooLarge),
+        #[prost(uint32, tag = "26")]
+        PublishUpgradeMissingDependency(u32),
+        #[prost(uint32, tag = "27")]
+        PublishUpgradeDependencyDowngrade(u32),
+        #[prost(message, tag = "28")]
+        PackageUpgradeError(PackageUpgradeError),
+        #[prost(message, tag = "29")]
+        WrittenObjectsTooLarge(WrittenObjectsTooLarge),
+        #[prost(uint32, tag = "30")]
+        CertificateDenied(u32),
+        #[prost(uint32, tag = "31")]
+        SuiMoveVerificationTimedout(u32),
+        #[prost(uint32, tag = "32")]
+        SharedObjectOperationNotAllowed(u32),
+        #[prost(uint32, tag = "33")]
+        InputObjectDeleted(u32),
     }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CommandArgumentError {
-    #[prost(uint32, tag = "1")]
-    pub type_mismatch: u32,
-    #[prost(uint32, tag = "2")]
-    pub invalid_bcs_bytes: u32,
-    #[prost(uint32, tag = "3")]
-    pub invalid_usage_of_pure_arg: u32,
-    #[prost(uint32, tag = "4")]
-    pub invalid_argument_to_private_entry_function: u32,
-    #[prost(message, optional, tag = "5")]
-    pub index_out_of_bounds: ::core::option::Option<
-        command_argument_error::IndexOutOfBounds,
+    #[prost(
+        oneof = "command_argument_error::CommandArgumentError",
+        tags = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12"
+    )]
+    pub command_argument_error: ::core::option::Option<
+        command_argument_error::CommandArgumentError,
     >,
-    #[prost(message, optional, tag = "6")]
-    pub secondary_index_out_of_bounds: ::core::option::Option<
-        command_argument_error::SecondaryIndexOutOfBounds,
-    >,
-    #[prost(message, optional, tag = "7")]
-    pub invalid_result_arity: ::core::option::Option<
-        command_argument_error::InvalidResultArity,
-    >,
-    #[prost(uint32, tag = "8")]
-    pub invalid_gas_coin_usage: u32,
-    #[prost(uint32, tag = "9")]
-    pub invalid_value_usage: u32,
-    #[prost(uint32, tag = "10")]
-    pub invalid_object_by_value: u32,
-    #[prost(uint32, tag = "11")]
-    pub invalid_object_by_mut_ref: u32,
-    #[prost(uint32, tag = "12")]
-    pub shared_object_operation_not_allowed: u32,
 }
 /// Nested message and enum types in `CommandArgumentError`.
 pub mod command_argument_error {
@@ -1857,14 +1886,115 @@ pub mod command_argument_error {
         #[prost(uint32, tag = "1")]
         pub result_idx: u32,
     }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum CommandArgumentError {
+        #[prost(uint32, tag = "1")]
+        TypeMismatch(u32),
+        #[prost(uint32, tag = "2")]
+        InvalidBcsBytes(u32),
+        #[prost(uint32, tag = "3")]
+        InvalidUsageOfPureArg(u32),
+        #[prost(uint32, tag = "4")]
+        InvalidArgumentToPrivateEntryFunction(u32),
+        #[prost(message, tag = "5")]
+        IndexOutOfBounds(IndexOutOfBounds),
+        #[prost(message, tag = "6")]
+        SecondaryIndexOutOfBounds(SecondaryIndexOutOfBounds),
+        #[prost(message, tag = "7")]
+        InvalidResultArity(InvalidResultArity),
+        #[prost(uint32, tag = "8")]
+        InvalidGasCoinUsage(u32),
+        #[prost(uint32, tag = "9")]
+        InvalidValueUsage(u32),
+        #[prost(uint32, tag = "10")]
+        InvalidObjectByValue(u32),
+        #[prost(uint32, tag = "11")]
+        InvalidObjectByMutRef(u32),
+        #[prost(uint32, tag = "12")]
+        SharedObjectOperationNotAllowed(u32),
+    }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TypeArgumentError {
-    #[prost(uint32, tag = "1")]
-    pub type_not_found: u32,
-    #[prost(uint32, tag = "2")]
-    pub constraint_not_satisfied: u32,
+    #[prost(oneof = "type_argument_error::TypeArgumentError", tags = "1, 2")]
+    pub type_argument_error: ::core::option::Option<
+        type_argument_error::TypeArgumentError,
+    >,
+}
+/// Nested message and enum types in `TypeArgumentError`.
+pub mod type_argument_error {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum TypeArgumentError {
+        #[prost(uint32, tag = "1")]
+        TypeNotFound(u32),
+        #[prost(uint32, tag = "2")]
+        ConstraintNotSatisfied(u32),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PackageUpgradeError {
+    #[prost(
+        oneof = "package_upgrade_error::PackageUpgradeError",
+        tags = "1, 2, 3, 4, 5, 6"
+    )]
+    pub package_upgrade_error: ::core::option::Option<
+        package_upgrade_error::PackageUpgradeError,
+    >,
+}
+/// Nested message and enum types in `PackageUpgradeError`.
+pub mod package_upgrade_error {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct UnableToFetchPackage {
+        #[prost(message, optional, tag = "1")]
+        pub package_id: ::core::option::Option<super::ObjectId>,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct NotAPackage {
+        #[prost(message, optional, tag = "1")]
+        pub package_id: ::core::option::Option<super::ObjectId>,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct DigestDoesNotMatch {
+        #[prost(bytes = "vec", tag = "1")]
+        pub digest: ::prost::alloc::vec::Vec<u8>,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct UnknownUpgradePolicy {
+        #[prost(uint32, tag = "1")]
+        pub policy: u32,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct PackageIdDoesNotMatch {
+        #[prost(message, optional, tag = "1")]
+        pub package_id: ::core::option::Option<super::ObjectId>,
+        #[prost(message, optional, tag = "2")]
+        pub ticket_id: ::core::option::Option<super::ObjectId>,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum PackageUpgradeError {
+        #[prost(message, tag = "1")]
+        UnableToFetchPackage(UnableToFetchPackage),
+        #[prost(message, tag = "2")]
+        NotAPackage(NotAPackage),
+        #[prost(uint32, tag = "3")]
+        IncompatibleUpgrade(u32),
+        #[prost(message, tag = "4")]
+        DigestDoesNotMatch(DigestDoesNotMatch),
+        #[prost(message, tag = "5")]
+        UnknownUpgradePolicy(UnknownUpgradePolicy),
+        #[prost(message, tag = "6")]
+        PackageIdDoesNotMatch(PackageIdDoesNotMatch),
+    }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

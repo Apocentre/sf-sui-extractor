@@ -1,13 +1,13 @@
 use std::collections::{BTreeMap, HashMap};
 use base58::ToBase58;
-use move_core_types::account_address::AccountAddress;
 use serde_json::Value;
 use sui_json_rpc_types::{
-  SuiArgument, SuiObjectRef, SuiExecutionStatus, SuiTransactionBlockEffectsModifiedAtVersions, OwnedObjectRef, SuiMovePackage,
-  SuiRawData, SuiRawMoveObject, SuiRawMovePackage,
+  SuiMovePackage, SuiRawData, SuiRawMoveObject, SuiRawMovePackage,
 };
 use sui_types::{
-  base_types::{AuthorityName, MoveObjectType, ObjectID, ObjectRef, ObjectType, SuiAddress}, committee::StakeUnit, execution_status::ExecutionStatus, gas::GasCostSummary, messages_checkpoint::CheckpointCommitment, move_package::{TypeOrigin, UpgradeInfo}, object::{Data, Owner}, transaction::Argument, TypeTag
+  base_types::{AuthorityName, MoveObjectType, ObjectID, ObjectRef, ObjectType, SuiAddress, SequenceNumber},
+  committee::StakeUnit, execution_status::ExecutionStatus, gas::GasCostSummary, messages_checkpoint::CheckpointCommitment,
+  move_package::{TypeOrigin, UpgradeInfo}, object::{Data, Owner}, transaction::Argument, TypeTag,
 };
 use crate::pb::sui::checkpoint::{self as pb};
 
@@ -102,9 +102,8 @@ pub fn convert_sui_execution_status(source: &ExecutionStatus) -> pb::ExecutionSt
   }
 }
 
-pub fn convert_gas_cost_summary(total_gas_cost: i64, source: &GasCostSummary) -> pb::GasCostSummary {
+pub fn convert_gas_cost_summary(source: &GasCostSummary) -> pb::GasCostSummary {
   pb::GasCostSummary {
-    total_gas_cost,
     computation_cost: source.computation_cost,
     storage_cost: source.storage_cost,
     storage_rebate: source.storage_rebate,
@@ -179,12 +178,10 @@ pub fn convert_owned_object_ref(source: &(ObjectRef, Owner)) -> pb::OwnedObjectR
   }
 }
 
-pub fn convert_tx_block_effects_modified_at_versions(
-  source: &SuiTransactionBlockEffectsModifiedAtVersions
-) -> pb::TransactionBlockEffectsModifiedAtVersions {
+pub fn convert_tx_block_effects_modified_at_versions(source: &(ObjectID, SequenceNumber)) -> pb::TransactionBlockEffectsModifiedAtVersions {
   pb::TransactionBlockEffectsModifiedAtVersions {
-    object_id: Some(convert_sui_object(&source.object_id)),
-    sequence_number: source.sequence_number.value(),
+    object_id: Some(convert_sui_object(&source.0)),
+    sequence_number: source.1.value(),
   }
 }
 

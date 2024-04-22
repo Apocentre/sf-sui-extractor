@@ -11,10 +11,9 @@ use sui_types::{
 };
 use crate::pb::sui::checkpoint::{self as pb};
 
-use super::common::{
-  convert_data, convert_owner, convert_sui_address, convert_sui_argument, convert_sui_object, convert_type_tag,
-  convert_object_ref,
-};
+use super::{common::{
+  convert_data, convert_object_ref, convert_owner, convert_sui_address, convert_sui_argument, convert_sui_object, convert_type_tag
+}, sui_effects::convert_sui_effects};
 
 fn convert_intent_message(source: IntentMessage<TransactionData>) -> pb::IntentMessage {
   pb::IntentMessage {
