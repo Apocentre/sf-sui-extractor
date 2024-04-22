@@ -15,7 +15,7 @@ use super::{
   common::{
     convert_data, convert_object_ref, convert_owner, convert_sui_address, convert_sui_argument, convert_sui_object,
     convert_type_tag,
-  }, object::convert_tx_object_change, sui_effects::convert_sui_effects
+  }, sui_effects::convert_sui_effects, sui_event::convert_event, sui_object::convert_tx_object_change
 };
 
 fn convert_intent_message(source: IntentMessage<TransactionData>) -> pb::IntentMessage {
@@ -364,7 +364,7 @@ pub fn convert_transaction(source: &IndexedTransaction) -> pb::Transaction {
     timestamp_ms: source.timestamp_ms,
     object_changes: source.object_changes.iter().map(convert_tx_object_change).collect::<Vec<_>>(),
     balance_change: source.balance_change.iter().map(convert_tx_balance_change).collect::<Vec<_>>(),
-    // pub object_changes: Vec<IndexedObjectChange>,
+    events: source.events.iter().map(convert_event).collect::<Vec<_>>(),
     // pub balance_change: Vec<sui_json_rpc_types::BalanceChange>,
     // pub events: Vec<sui_types::event::Event>,
     // pub transaction_kind: TransactionKind,

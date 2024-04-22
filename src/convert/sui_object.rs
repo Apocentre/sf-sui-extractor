@@ -1,6 +1,6 @@
 use sui_indexer::types::IndexedObjectChange;
 use crate::pb::sui::checkpoint::{self as pb};
-use super::common::{convert_owner, convert_stuct_tag, convert_sui_address, convert_sui_object};
+use super::common::{convert_owner, convert_struct_tag, convert_sui_address, convert_sui_object};
 
 pub fn convert_tx_object_change(source: &IndexedObjectChange) -> pb::ObjectChange {
   let object_change = match source {
@@ -16,7 +16,7 @@ pub fn convert_tx_object_change(source: &IndexedObjectChange) -> pb::ObjectChang
       pb::object_change::ObjectChange::Transferred(pb::Transferred {
         sender: convert_sui_address(&sender),
         recipient: Some(convert_owner(&recipient)),
-        object_type: Some(convert_stuct_tag(&object_type)),
+        object_type: Some(convert_struct_tag(&object_type)),
         object_id: Some(convert_sui_object(&object_id)),
         version: version.value(),
         digest: digest.base58_encode(),
@@ -26,7 +26,7 @@ pub fn convert_tx_object_change(source: &IndexedObjectChange) -> pb::ObjectChang
       pb::object_change::ObjectChange::Mutated(pb::Mutated {
         sender: convert_sui_address(&sender),
         owner: Some(convert_owner(&owner)),
-        object_type: Some(convert_stuct_tag(&object_type)),
+        object_type: Some(convert_struct_tag(&object_type)),
         object_id: Some(convert_sui_object(&object_id)),
         version: version.value(),
         previous_version: previous_version.value(),
@@ -36,7 +36,7 @@ pub fn convert_tx_object_change(source: &IndexedObjectChange) -> pb::ObjectChang
     IndexedObjectChange::Deleted {sender, object_type, object_id, version} => {
       pb::object_change::ObjectChange::Deleted(pb::Deleted {
         sender: convert_sui_address(&sender),
-        object_type: Some(convert_stuct_tag(&object_type)),
+        object_type: Some(convert_struct_tag(&object_type)),
         object_id: Some(convert_sui_object(&object_id)),
         version: version.value(),
       })
@@ -44,7 +44,7 @@ pub fn convert_tx_object_change(source: &IndexedObjectChange) -> pb::ObjectChang
     IndexedObjectChange::Wrapped {sender, object_type, object_id, version} => {
       pb::object_change::ObjectChange::Wrapped(pb::Wrapped {
         sender: convert_sui_address(&sender),
-        object_type: Some(convert_stuct_tag(&object_type)),
+        object_type: Some(convert_struct_tag(&object_type)),
         object_id: Some(convert_sui_object(&object_id)),
         version: version.value(),
       })
@@ -53,7 +53,7 @@ pub fn convert_tx_object_change(source: &IndexedObjectChange) -> pb::ObjectChang
       pb::object_change::ObjectChange::Created(pb::Created {
         sender: convert_sui_address(&sender),
         owner: Some(convert_owner(&owner)),
-        object_type: Some(convert_stuct_tag(&object_type)),
+        object_type: Some(convert_struct_tag(&object_type)),
         object_id: Some(convert_sui_object(&object_id)),
         version: version.value(),
         digest: digest.base58_encode(),
