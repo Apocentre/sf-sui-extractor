@@ -72,18 +72,22 @@ fn convert_authenticator_state_update(asu: &AuthenticatorStateUpdate) -> pb::tra
   todo!()
 }
 
-fn convert_commit_prologue(ccp: &ConsensusCommitPrologue) -> pb::transaction_kind::TransactionKind {
-  todo!()
-}
-
-fn convert_genesis(g: &GenesisTransaction) -> pb::transaction_kind::TransactionKind {
-  pb::transaction_kind::TransactionKind::Genesis(pb::GenesisTransaction {
-    objects: g.objects.iter().map(convert_genesis_obj).collect::<Vec<_>>(),
+fn convert_commit_prologue(source: &ConsensusCommitPrologue) -> pb::transaction_kind::TransactionKind {
+  pb::transaction_kind::TransactionKind::ConsensusCommitPrologue(pb::ConsensusCommitPrologue {
+    epoch: source.epoch,
+    round: source.round,
+    commit_timestamp_ms: source.commit_timestamp_ms,
   })
 }
 
-fn convert_genesis_obj(genesis_obj: &GenesisObject) -> pb::GenesisObject {
-  let genesis_obj = match genesis_obj {
+fn convert_genesis(source: &GenesisTransaction) -> pb::transaction_kind::TransactionKind {
+  pb::transaction_kind::TransactionKind::Genesis(pb::GenesisTransaction {
+    objects: source.objects.iter().map(convert_genesis_obj).collect::<Vec<_>>(),
+  })
+}
+
+fn convert_genesis_obj(source: &GenesisObject) -> pb::GenesisObject {
+  let genesis_obj = match source {
     GenesisObject::RawObject {data, owner} => pb::genesis_object::GenesisObject::RawObject(pb::genesis_object::RawObject {
       owner: Some(convert_owner(owner)),
       data: Some(convert_data(data)),
@@ -95,18 +99,18 @@ fn convert_genesis_obj(genesis_obj: &GenesisObject) -> pb::GenesisObject {
   } 
 }
 
-fn convert_change_epoch(ce: &ChangeEpoch) -> pb::transaction_kind::TransactionKind {
+fn convert_change_epoch(source: &ChangeEpoch) -> pb::transaction_kind::TransactionKind {
   pb::transaction_kind::TransactionKind::ChangeEpoch(pb::ChangeEpoch {
-    epoch: ce.epoch,
-    storage_charge: ce.storage_charge,
-    computation_charge: ce.computation_charge,
-    storage_rebate: ce.storage_rebate,
-    epoch_start_timestamp_ms: ce.epoch_start_timestamp_ms,
+    epoch: source.epoch,
+    storage_charge: source.storage_charge,
+    computation_charge: source.computation_charge,
+    storage_rebate: source.storage_rebate,
+    epoch_start_timestamp_ms: source.epoch_start_timestamp_ms,
   })
 }
 
-fn convert_programmable_tx_kind(pt: &ProgrammableTransaction) -> pb::transaction_kind::TransactionKind {
-  let inputs = pt.inputs.iter().map(|c| {
+fn convert_programmable_tx_kind(source: &ProgrammableTransaction) -> pb::transaction_kind::TransactionKind {
+  let inputs = source.inputs.iter().map(|c| {
     let call_arg = match c {
       CallArg::Pure(p) => pb::call_arg::CallArg::Pure(p.clone()),
       CallArg::Object(o) => convert_obj_arg(o),
@@ -117,7 +121,7 @@ fn convert_programmable_tx_kind(pt: &ProgrammableTransaction) -> pb::transaction
     }
   }).collect::<Vec<_>>();
 
-  let commands = pt.commands.iter().map(|c| {
+  let commands = source.commands.iter().map(|c| {
     let sui_command = match c {
       Command::MoveCall(mc) => convert_move_call_cmd(mc),
       Command::TransferObjects(a, b) => convert_transfer_objects_cmd(a, b),
