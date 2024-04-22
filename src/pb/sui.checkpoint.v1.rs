@@ -1771,10 +1771,10 @@ pub mod execution_failure_status {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct EffectsTooLarge {
-        #[prost(uint32, tag = "1")]
-        pub current_size: u32,
-        #[prost(uint32, tag = "2")]
-        pub max_size: u32,
+        #[prost(uint64, tag = "1")]
+        pub current_size: u64,
+        #[prost(uint64, tag = "2")]
+        pub max_size: u64,
     }
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1785,10 +1785,10 @@ pub mod execution_failure_status {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct WrittenObjectsTooLarge {
-        #[prost(uint32, tag = "1")]
-        pub current_size: u32,
-        #[prost(uint32, tag = "2")]
-        pub max_size: u32,
+        #[prost(uint64, tag = "1")]
+        pub current_size: u64,
+        #[prost(uint64, tag = "2")]
+        pub max_size: u64,
     }
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]

@@ -18,14 +18,14 @@ use super::{
   }, sui_effects::convert_sui_effects, sui_event::convert_event, sui_object::convert_tx_object_change
 };
 
-fn convert_intent_message(source: IntentMessage<TransactionData>) -> pb::IntentMessage {
+fn convert_intent_message(source: &IntentMessage<TransactionData>) -> pb::IntentMessage {
   pb::IntentMessage {
-    intent: Some(convert_intent(source.intent)),
-    value: Some(convert_intent_value(source.value)),
+    intent: Some(convert_intent(&source.intent)),
+    value: Some(convert_intent_value(&source.value)),
   }
 }
 
-fn convert_intent_value(source: TransactionData) -> pb::TransactionData {
+fn convert_intent_value(source: &TransactionData) -> pb::TransactionData {
   let tx_data = match source {
     TransactionData::V1(tx_data_v1) => {
       pb::transaction_data::TxData::V1(pb::TransactionDataV1 {
@@ -92,7 +92,7 @@ fn convert_randomeness_state_update(source: &RandomnessStateUpdate) -> pb::trans
   pb::transaction_kind::TransactionKind::RandomnessStateUpdate(pb::RandomnessStateUpdate {
     epoch: source.epoch,
     randomness_round: source.randomness_round.0,
-    random_bytes: source.random_bytes,
+    random_bytes: source.random_bytes.clone(),
     randomness_obj_initial_shared_version: source.randomness_obj_initial_shared_version.value(),
   })
 }
@@ -237,7 +237,7 @@ fn convert_upgrade_cmd(a: &[Vec<u8>], b: &[ObjectID], c: &ObjectID, d: &Argument
 
 fn convert_make_move_vec_cmd(a: &Option<TypeTag>, b: &[Argument]) -> pb::command::SuiCommand {
   pb::command::SuiCommand::MakeMoveVec(pb::MakeMoveVecPair {
-    one: a.map(|t| convert_type_tag(&t)),
+    one: a.as_ref().map(convert_type_tag),
     two: b.iter().map(convert_sui_argument).collect::<Vec<_>>(),
   })
 }
@@ -274,8 +274,8 @@ fn convert_transfer_objects_cmd(a: &[Argument], b: &Argument) -> pb::command::Su
 fn convert_move_call_cmd(mc: &ProgrammableMoveCall) -> pb::command::SuiCommand {
   pb::command::SuiCommand::MoveCall(pb::SuiProgrammableMoveCall {
     package: Some(convert_sui_object(&mc.package)),
-    module: mc.module.into_string(),
-    function: mc.function.into_string(),
+    module: mc.module.clone().into_string(),
+    function: mc.function.clone().into_string(),
     type_arguments: mc.type_arguments.iter().map(convert_type_tag).collect::<Vec<_>>(),
     arguments: mc.arguments.iter().map(convert_sui_argument).collect::<Vec<_>>(),
   })
@@ -297,7 +297,7 @@ fn convert_obj_arg(o: &ObjectArg) -> pb::call_arg::CallArg {
   })
 }
 
-fn convert_intent(source: Intent) -> pb::Intent {
+fn convert_intent(source: &Intent) -> pb::Intent {
   pb::Intent {
     scope: Some(convert_intent_scope(source.scope)),
     version: Some(convert_version(source.version)),
@@ -349,7 +349,7 @@ fn convert_sender_signed_data(source: &SenderSignedData) -> pb::SenderSignedTran
   let sender_signed_tx = source.inner();
 
   pb::SenderSignedTransaction {
-    intent_message: Some(convert_intent_message(sender_signed_tx.intent_message)),
+    intent_message: Some(convert_intent_message(&sender_signed_tx.intent_message)),
   }
 }
 
@@ -365,12 +365,12 @@ pub fn convert_transaction(source: &IndexedTransaction) -> pb::Transaction {
     object_changes: source.object_changes.iter().map(convert_tx_object_change).collect::<Vec<_>>(),
     balance_change: source.balance_change.iter().map(convert_tx_balance_change).collect::<Vec<_>>(),
     events: source.events.iter().map(convert_event).collect::<Vec<_>>(),
-    transaction_kind: Some(convert_transaction_kind(source.transaction_kind)),
+    transaction_kind: Some(convert_transaction_kind(&source.transaction_kind)),
     successful_tx_num: source.successful_tx_num,
   }
 }
 
-fn convert_transaction_kind(source: sui_indexer::types::TransactionKind) -> pb::GenericTransactionKind {
+fn convert_transaction_kind(source: &sui_indexer::types::TransactionKind) -> pb::GenericTransactionKind {
   let kind = match source {
     sui_indexer::types::TransactionKind::SystemTransaction => pb::generic_transaction_kind::Kind::SystemTransaction(()),
     sui_indexer::types::TransactionKind::ProgrammableTransaction => pb::generic_transaction_kind::Kind::ProgrammableTransaction(()),

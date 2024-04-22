@@ -92,12 +92,26 @@ fn convert_executaion_failure_status(source: &ExecutionFailureStatus) -> pb::Exe
         kind: Some(convert_type_arg_error(kind)),
     })
     },
-    ExecutionFailureStatus::UnusedValueWithoutDrop { result_idx, secondary_idx } => todo!(),
-    ExecutionFailureStatus::InvalidPublicFunctionReturnType { idx } => todo!(),
+    ExecutionFailureStatus::UnusedValueWithoutDrop {result_idx, secondary_idx} => {
+      pb::execution_failure_status::ExecutionFailureStatus::UnusedValueWithoutDrop(pb::execution_failure_status::UnusedValueWithoutDrop {
+        result_idx: *result_idx as u32,
+        secondary_idx: *secondary_idx as u32,
+      })
+    },
+    ExecutionFailureStatus::InvalidPublicFunctionReturnType {idx} => {
+      pb::execution_failure_status::ExecutionFailureStatus::InvalidPublicFunctionReturnType(pb::execution_failure_status::InvalidPublicFunctionReturnType {
+        idx: *idx as u32,
+      })
+    },
     ExecutionFailureStatus::InvalidTransferObject => {
       pb::execution_failure_status::ExecutionFailureStatus::InvalidTransferObject(())
     },
-    ExecutionFailureStatus::EffectsTooLarge { current_size, max_size } => todo!(),
+    ExecutionFailureStatus::EffectsTooLarge {current_size, max_size} => {
+      pb::execution_failure_status::ExecutionFailureStatus::EffectsTooLarge(pb::execution_failure_status::EffectsTooLarge {
+        current_size: *current_size,
+        max_size: *max_size,
+      })
+    },
     ExecutionFailureStatus::PublishUpgradeMissingDependency => {
       pb::execution_failure_status::ExecutionFailureStatus::PublishUpgradeMissingDependency(())
     },
@@ -109,7 +123,12 @@ fn convert_executaion_failure_status(source: &ExecutionFailureStatus) -> pb::Exe
         upgrade_error: Some(convert_package_upgrade_error(&upgrade_error)),
       })
     },
-    ExecutionFailureStatus::WrittenObjectsTooLarge { current_size, max_size } => todo!(),
+    ExecutionFailureStatus::WrittenObjectsTooLarge {current_size, max_size} => {
+      pb::execution_failure_status::ExecutionFailureStatus::WrittenObjectsTooLarge(pb::execution_failure_status::WrittenObjectsTooLarge {
+        current_size: *current_size,
+        max_size: *max_size,
+      })
+    },
     ExecutionFailureStatus::CertificateDenied => {
       pb::execution_failure_status::ExecutionFailureStatus::CertificateDenied(())
     },
@@ -239,6 +258,6 @@ fn convert_move_location(source: &MoveLocation) -> execution_failure_status::Mov
 }
 
 fn convert_move_location_opt(source: &MoveLocationOpt) -> Option<execution_failure_status::MoveLocation> {
-  source.0.map(|source| convert_move_location(&source))
+  source.0.as_ref().map(convert_move_location)
 }
 

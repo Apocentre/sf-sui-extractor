@@ -1109,8 +1109,8 @@ message ExecutionFailureStatus {
   }
 
   message EffectsTooLarge {
-    uint32 current_size = 1;
-    uint32 max_size = 2;
+    uint64 current_size = 1;
+    uint64 max_size = 2;
   }
 
   message PackageUpgradeError_ {
@@ -1118,8 +1118,8 @@ message ExecutionFailureStatus {
   }
 
   message WrittenObjectsTooLarge {
-    uint32 current_size = 1;
-    uint32 max_size = 2;
+    uint64 current_size = 1;
+    uint64 max_size = 2;
   }
 }
 
