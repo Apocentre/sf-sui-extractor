@@ -12,10 +12,14 @@ use sui_indexer::{
 };
 use sui_rest_api::Client;
 use backoff::{ExponentialBackoff, future::retry};
-// use prost::Message;
-use log::error;
+use prost::Message;
+use log::{debug, error};
 use prometheus::Registry;
 use tokio::spawn;
+use crate::{
+  pb::sui::checkpoint as pb,
+  convert::checkpoint::convert_checkpoint,
+};
 
 const DOWNLOAD_QUEUE_SIZE: usize = 1000;
 const CHECKPOINT_QUEUE_SIZE: usize = 1000;
@@ -73,7 +77,7 @@ impl FirehoseStreamer {
     );
     
     self.spawn_checkpoint_handler(handle_checkpoint_sender, downloaded_checkpoint_data_receiver).await?;
-    Self::commit_checkpoint_data(handle_checkpoint_receiver).await;
+    self.commit_checkpoint_data(handle_checkpoint_receiver).await;
 
     Ok(())
   }
@@ -95,7 +99,6 @@ impl FirehoseStreamer {
       self.metrics.clone(),
     );
 
-    
     spawn(async move {
       checkpoint_fetcher.run().await;
     });
@@ -122,19 +125,38 @@ impl FirehoseStreamer {
     Ok(())
   }
 
-  async fn commit_checkpoint_data(handle_checkpoint_receiver: Receiver<CheckpointDataToCommit>) {
+  async fn commit_checkpoint_data(&mut self, handle_checkpoint_receiver: Receiver<CheckpointDataToCommit>) {
     let mut stream = ReceiverStream::new(handle_checkpoint_receiver);
 
     while let Some(checkpoint_data) = stream.next().await {
-      // TODO: convert and log data to the stdout
+      // Convert and log data to the stdout
       // We would need to ignore the following fields from CheckpointDataToCommit:
       // 1. epoch
-      // 2. object_changes.changed_objects[].df_info
+      // 2. object_changes
+      // 3. object_history_changes
       //
       // These fields are computed and rely on state being stored which we don't want to do here.
       //
       // We will have to update the proto buf models and thus all convertsion logic that exist in the
       // convert module.
+      assert!(self.current_checkpoint_seq == checkpoint_data.checkpoint.sequence_number, "sequence number mismatch");
+      println!("\nFIRE BLOCK_START {}", self.current_checkpoint_seq);
+
+      if checkpoint_data.transactions.is_empty() {
+        debug!("[fh-stream] no transactions to send");
+      }
+
+      debug!(
+        "[fh-stream] got {} transactions from  {}",
+        checkpoint_data.transactions.len(),
+        self.current_checkpoint_seq,
+      );
+
+      Self::print_checkpoint_overview(&convert_checkpoint(&checkpoint_data.checkpoint));
+
+      println!("\nFIRE BLOCK_END {}", self.current_checkpoint_seq);
+      self.current_checkpoint_seq += 1;
+
       println!(
         "Block {} -----> Tx count {:?}",
         checkpoint_data.checkpoint.sequence_number, checkpoint_data.transactions.len(),
@@ -158,6 +180,18 @@ impl FirehoseStreamer {
     Ok(rest_client)
   }
 
+  fn print_checkpoint_overview(checkpoint: &pb::Checkpoint) {
+    let mut buf = vec![];
+    checkpoint.encode(&mut buf).unwrap_or_else(|_| {
+      panic!(
+        "Could not convert protobuf checkpoint to bytes '{:?}'",
+        checkpoint
+      )
+    });
+
+    println!("\nFIRE CHECKPOINT {}", base64::encode(buf));
+  }
+  
   // pub async fn convert_next_block(&mut self) -> Result<()> {
   //   let checkpoint_handler = self.checkpoint_handler.as_ref().expect("Checkpoint handler should be created");
   //   let checkpoint_data = retry(ExponentialBackoff::default(), || async {
@@ -195,17 +229,6 @@ impl FirehoseStreamer {
   //   self.current_checkpoint_seq += 1;
 
   //   Ok(())
-  // }
-
-  // fn print_checkpoint_overview(checkpoint: &pb::Checkpoint) {
-  //   let mut buf = vec![];
-  //   checkpoint.encode(&mut buf).unwrap_or_else(|_| {
-  //     panic!(
-  //       "Could not convert protobuf checkpoint to bytes '{:?}'",
-  //       checkpoint
-  //     )
-  //   });
-  //   println!("\nFIRE CHECKPOINT {}", base64::encode(buf));
   // }
 
   // fn print_transaction(transaction: &pb::CheckpointTransactionBlockResponse) {
