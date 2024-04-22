@@ -1,4 +1,4 @@
-use sui_types::execution_status::{CommandArgumentError, ExecutionFailureStatus, ExecutionStatus, MoveLocation, MoveLocationOpt};
+use sui_types::execution_status::{CommandArgumentError, ExecutionFailureStatus, ExecutionStatus, MoveLocation, MoveLocationOpt, TypeArgumentError};
 use crate::pb::sui::checkpoint::{self as pb, execution_failure_status};
 use super::common::{convert_module_id, convert_sui_object};
 
@@ -86,7 +86,12 @@ fn convert_executaion_failure_status(source: &ExecutionFailureStatus) -> pb::Exe
         kind: Some(convert_command_arg_error(kind)),
       })
     },
-    ExecutionFailureStatus::TypeArgumentError { argument_idx, kind } => todo!(),
+    ExecutionFailureStatus::TypeArgumentError {argument_idx, kind} => {
+      pb::execution_failure_status::ExecutionFailureStatus::TypeArgumentError(pb::execution_failure_status::TypeArgumentError{
+        argument_idx: *argument_idx as u32,
+        kind: Some(convert_type_arg_error(kind)),
+    })
+    },
     ExecutionFailureStatus::UnusedValueWithoutDrop { result_idx, secondary_idx } => todo!(),
     ExecutionFailureStatus::InvalidPublicFunctionReturnType { idx } => todo!(),
     ExecutionFailureStatus::InvalidTransferObject => {
@@ -117,6 +122,17 @@ fn convert_executaion_failure_status(source: &ExecutionFailureStatus) -> pb::Exe
   pb::ExecutionFailureStatus {
     execution_failure_status: Some(execution_failure_status),
   }
+}
+
+fn convert_type_arg_error(kind: &TypeArgumentError) -> pb::TypeArgumentError {
+  let type_argument_error = match kind {
+    TypeArgumentError::TypeNotFound => pb::type_argument_error::TypeArgumentError::TypeNotFound(()),
+    TypeArgumentError::ConstraintNotSatisfied => pb::type_argument_error::TypeArgumentError::ConstraintNotSatisfied(()),
+  };
+
+  pb::TypeArgumentError {
+    type_argument_error: Some(type_argument_error),
+}
 }
 
 fn convert_command_arg_error(kind: &CommandArgumentError) -> pb::CommandArgumentError {
