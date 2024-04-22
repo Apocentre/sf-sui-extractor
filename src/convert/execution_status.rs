@@ -1,4 +1,4 @@
-use sui_types::execution_status::{ExecutionFailureStatus, ExecutionStatus, MoveLocationOpt};
+use sui_types::execution_status::{CommandArgumentError, ExecutionFailureStatus, ExecutionStatus, MoveLocation, MoveLocationOpt};
 use crate::pb::sui::checkpoint::{self as pb, execution_failure_status};
 use super::common::{convert_module_id, convert_sui_object};
 
@@ -52,11 +52,16 @@ fn convert_executaion_failure_status(source: &ExecutionFailureStatus) -> pb::Exe
       pb::execution_failure_status::ExecutionFailureStatus::SuiMoveVerificationError(())
     },
     ExecutionFailureStatus::MovePrimitiveRuntimeError(source) => {
-      pb::execution_failure_status::ExecutionFailureStatus::MovePrimitiveRuntimeError(pb::execution_failure_status::MoveLocationOpt{
-        move_location: convert_move_location(source),
+      pb::execution_failure_status::ExecutionFailureStatus::MovePrimitiveRuntimeError(pb::execution_failure_status::MoveLocationOpt {
+        move_location: convert_move_location_opt(source),
       })
     },
-    ExecutionFailureStatus::MoveAbort(_, _) => todo!(),
+    ExecutionFailureStatus::MoveAbort(loc, abort_code) => {
+      pb::execution_failure_status::ExecutionFailureStatus::MoveAbort(pb::execution_failure_status::MoveAbort {
+        move_location: Some(convert_move_location(loc)),
+        abort_code: *abort_code,
+    })
+    },
     ExecutionFailureStatus::VMVerificationOrDeserializationError => {
       pb::execution_failure_status::ExecutionFailureStatus::VmVerificationOrDeserializationError(())
     },
@@ -75,7 +80,12 @@ fn convert_executaion_failure_status(source: &ExecutionFailureStatus) -> pb::Exe
     ExecutionFailureStatus::NonEntryFunctionInvoked => {
       pb::execution_failure_status::ExecutionFailureStatus::NonEntryFunctionInvoked(())
     },
-    ExecutionFailureStatus::CommandArgumentError { arg_idx, kind } => todo!(),
+    ExecutionFailureStatus::CommandArgumentError {arg_idx, kind} => {
+      pb::execution_failure_status::ExecutionFailureStatus::CommandArgError(pb::execution_failure_status::CommandArgumentError{
+        arg_idx: *arg_idx as u32,
+        kind: Some(convert_command_arg_error(kind)),
+      })
+    },
     ExecutionFailureStatus::TypeArgumentError { argument_idx, kind } => todo!(),
     ExecutionFailureStatus::UnusedValueWithoutDrop { result_idx, secondary_idx } => todo!(),
     ExecutionFailureStatus::InvalidPublicFunctionReturnType { idx } => todo!(),
@@ -109,14 +119,68 @@ fn convert_executaion_failure_status(source: &ExecutionFailureStatus) -> pb::Exe
   }
 }
 
-fn convert_move_location(source: &MoveLocationOpt) -> Option<execution_failure_status::MoveLocation> {
-  source.0.map(|source| {
-    execution_failure_status::MoveLocation {
-      module: Some(convert_module_id(&source.module)),
-      function: source.function as u32,
-      instruction: source.instruction as u32,
-      function_name: source.function_name,
-    }
-  })
+fn convert_command_arg_error(kind: &CommandArgumentError) -> pb::CommandArgumentError {
+  let command_argument_error = match kind {
+    CommandArgumentError::TypeMismatch => {
+      pb::command_argument_error::CommandArgumentError::TypeMismatch(())
+    },
+    CommandArgumentError::InvalidBCSBytes => {
+      pb::command_argument_error::CommandArgumentError::InvalidBcsBytes(())
+    },
+    CommandArgumentError::InvalidUsageOfPureArg => {
+      pb::command_argument_error::CommandArgumentError::InvalidUsageOfPureArg(())
+    },
+    CommandArgumentError::InvalidArgumentToPrivateEntryFunction => {
+      pb::command_argument_error::CommandArgumentError::InvalidArgumentToPrivateEntryFunction(())
+    },
+    CommandArgumentError::IndexOutOfBounds {idx} => {
+      pb::command_argument_error::CommandArgumentError::IndexOutOfBounds(pb::command_argument_error::IndexOutOfBounds {
+        idx: *idx as u32,
+      })
+    },
+    CommandArgumentError::SecondaryIndexOutOfBounds {result_idx, secondary_idx} => {
+      pb::command_argument_error::CommandArgumentError::SecondaryIndexOutOfBounds(pb::command_argument_error::SecondaryIndexOutOfBounds {
+        result_idx: *result_idx as u32,
+        secondary_idx: *secondary_idx as u32,
+    })
+    },
+    CommandArgumentError::InvalidResultArity {result_idx} => {
+      pb::command_argument_error::CommandArgumentError::InvalidResultArity(pb::command_argument_error::InvalidResultArity {
+        result_idx: *result_idx as u32,
+      })
+    },
+    CommandArgumentError::InvalidGasCoinUsage => {
+      pb::command_argument_error::CommandArgumentError::InvalidGasCoinUsage(())
+    },
+    CommandArgumentError::InvalidValueUsage => {
+      pb::command_argument_error::CommandArgumentError::InvalidValueUsage(())
+    },
+    CommandArgumentError::InvalidObjectByValue => {
+      pb::command_argument_error::CommandArgumentError::InvalidObjectByValue(())
+    },
+    CommandArgumentError::InvalidObjectByMutRef => {
+      pb::command_argument_error::CommandArgumentError::InvalidObjectByMutRef(())
+    },
+    CommandArgumentError::SharedObjectOperationNotAllowed => {
+      pb::command_argument_error::CommandArgumentError::SharedObjectOperationNotAllowed(())
+    },
+  };
+
+  pb::CommandArgumentError {
+    command_argument_error: Some(command_argument_error),
+}
+}
+
+fn convert_move_location(source: &MoveLocation) -> execution_failure_status::MoveLocation {
+  execution_failure_status::MoveLocation {
+    module: Some(convert_module_id(&source.module)),
+    function: source.function as u32,
+    instruction: source.instruction as u32,
+    function_name: source.function_name.clone(),
+  }
+}
+
+fn convert_move_location_opt(source: &MoveLocationOpt) -> Option<execution_failure_status::MoveLocation> {
+  source.0.map(|source| convert_move_location(&source))
 }
 

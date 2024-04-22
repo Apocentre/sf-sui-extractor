@@ -1079,7 +1079,7 @@ message ExecutionFailureStatus {
 
   message MoveAbort {
     MoveLocation move_location = 1;
-    uint32 abort_code = 2;
+    uint64 abort_code = 2;
   }
 
   message MoveLocation {

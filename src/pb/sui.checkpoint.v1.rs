@@ -1723,8 +1723,8 @@ pub mod execution_failure_status {
     pub struct MoveAbort {
         #[prost(message, optional, tag = "1")]
         pub move_location: ::core::option::Option<MoveLocation>,
-        #[prost(uint32, tag = "2")]
-        pub abort_code: u32,
+        #[prost(uint64, tag = "2")]
+        pub abort_code: u64,
     }
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Message)]
