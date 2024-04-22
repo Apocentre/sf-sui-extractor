@@ -111,7 +111,7 @@ pub mod generic_transaction_kind {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Kind {
         #[prost(uint32, tag = "1")]
-        SystemRansaction(u32),
+        SystemTransaction(u32),
         #[prost(uint32, tag = "2")]
         ProgrammableTransaction(u32),
     }

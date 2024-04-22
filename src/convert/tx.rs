@@ -365,11 +365,19 @@ pub fn convert_transaction(source: &IndexedTransaction) -> pb::Transaction {
     object_changes: source.object_changes.iter().map(convert_tx_object_change).collect::<Vec<_>>(),
     balance_change: source.balance_change.iter().map(convert_tx_balance_change).collect::<Vec<_>>(),
     events: source.events.iter().map(convert_event).collect::<Vec<_>>(),
-    // pub balance_change: Vec<sui_json_rpc_types::BalanceChange>,
-    // pub events: Vec<sui_types::event::Event>,
-    // pub transaction_kind: TransactionKind,
-
+    transaction_kind: Some(convert_transaction_kind(source.transaction_kind)),
     successful_tx_num: source.successful_tx_num,
+  }
+}
+
+fn convert_transaction_kind(source: sui_indexer::types::TransactionKind) -> pb::GenericTransactionKind {
+  let kind = match source {
+    sui_indexer::types::TransactionKind::SystemTransaction => pb::generic_transaction_kind::Kind::system_transaction(0),
+    sui_indexer::types::TransactionKind::ProgrammableTransaction => pb::generic_transaction_kind::Kind::ProgrammableTransaction(1),
+  };
+
+  pb::GenericTransactionKind {
+    kind: Some(kind),
   }
 }
 

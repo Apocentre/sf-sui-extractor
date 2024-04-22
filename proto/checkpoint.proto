@@ -82,7 +82,7 @@ message Transaction {
 
 message GenericTransactionKind {
   oneof kind {
-    uint32 system_ransaction = 1;
+    uint32 system_transaction = 1;
     uint32 programmable_transaction = 2;
   }
 }
