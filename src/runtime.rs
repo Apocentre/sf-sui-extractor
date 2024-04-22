@@ -18,8 +18,10 @@ use prometheus::Registry;
 use tokio::spawn;
 use crate::{
   convert::{
-    checkpoint::convert_checkpoint, display_update::convert_display_update, sui_event::convert_indexed_event, tx::convert_transaction
-  }, pb::sui::checkpoint as pb
+    checkpoint::convert_checkpoint, display_update::convert_display_update, sui_event::convert_indexed_event,
+    tx::convert_transaction,
+  },
+  pb::sui::checkpoint as pb,
 };
 
 const DOWNLOAD_QUEUE_SIZE: usize = 1000;
