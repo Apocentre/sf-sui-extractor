@@ -11,7 +11,9 @@ use sui_types::{
 };
 use crate::pb::sui::checkpoint::{self as pb};
 
-use super::common::{convert_owner, convert_sui_argument, convert_sui_object, convert_type_tag};
+use super::common::{
+  convert_data, convert_owner, convert_sui_argument, convert_sui_object, convert_type_tag,
+};
 
 fn convert_intent_message(source: IntentMessage<TransactionData>) -> pb::IntentMessage {
   pb::IntentMessage {
@@ -82,10 +84,10 @@ fn convert_genesis(g: &GenesisTransaction) -> pb::transaction_kind::TransactionK
 
 fn convert_genesis_obj(genesis_obj: &GenesisObject) -> pb::GenesisObject {
   let genesis_obj = match genesis_obj {
-    GenesisObject::RawObject {data, owner} => pb::genesis_object::GenesisObject {
-      data: convert_data(data),
-      data: convert_owner(owner),
-    },
+    GenesisObject::RawObject {data, owner} => pb::genesis_object::GenesisObject::RawObject(pb::genesis_object::RawObject {
+      owner: Some(convert_owner(owner)),
+      data: Some(convert_data(data)),
+    }),
   };
 
   pb::GenesisObject {
