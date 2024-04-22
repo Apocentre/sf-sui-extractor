@@ -2,9 +2,7 @@ use shared_crypto::intent::{AppId, Intent, IntentMessage, IntentScope, IntentVer
 use sui_indexer::types::IndexedTransaction;
 use sui_types::{
   authenticator_state::ActiveJwk, base_types::{ObjectID, ObjectRef}, messages_consensus::{ConsensusCommitPrologue, ConsensusCommitPrologueV2}, transaction::{
-    Argument, AuthenticatorStateUpdate, CallArg, ChangeEpoch, Command, EndOfEpochTransactionKind, GenesisObject,
-    GenesisTransaction, ObjectArg, ProgrammableMoveCall, ProgrammableTransaction, RandomnessStateUpdate, SenderSignedData,
-    TransactionData, TransactionDataAPI, TransactionKind,
+    Argument, AuthenticatorStateUpdate, CallArg, ChangeEpoch, Command, EndOfEpochTransactionKind, GasData, GenesisObject, GenesisTransaction, ObjectArg, ProgrammableMoveCall, ProgrammableTransaction, RandomnessStateUpdate, SenderSignedData, TransactionData, TransactionDataAPI, TransactionExpiration, TransactionKind
   }, TypeTag
 };
 use crate::pb::sui::checkpoint::{self as pb};
@@ -25,9 +23,9 @@ fn convert_intent_value(source: TransactionData) -> pb::TransactionData {
     TransactionData::V1(tx_data_v1) => {
       pb::transaction_data::TxData::V1(pb::TransactionDataV1 {
         kind: Some(convert_tx_kind(tx_data_v1.kind())),
-        sender: source.sender().clone(),
-        gas_data: Some(convert_gas_data(source.gas_data)),
-        expiration: todo!(),
+        sender: convert_sui_address(&tx_data_v1.sender()),
+        gas_data: Some(convert_gas_data(&tx_data_v1.gas_data)),
+        expiration: Some(convert_tx_expiration(&tx_data_v1.expiration)),
       })
     }
   };
@@ -37,7 +35,18 @@ fn convert_intent_value(source: TransactionData) -> pb::TransactionData {
   }
 }
 
-fn convert_gas_data(source: &sui_types::transaction::GasData) -> pb::GasData {
+fn convert_tx_expiration(source: &TransactionExpiration) -> pb::TransactionExpiration {
+  let tx_expiration = match source {
+    TransactionExpiration::None => pb::transaction_expiration::TxExpiration::None(0),
+    TransactionExpiration::Epoch(epoch_id) => pb::transaction_expiration::TxExpiration::Epoch(epoch_id),
+  };
+
+  pb::TransactionExpiration {
+    tx_expiration: Some(tx_expiration),
+  }
+}
+
+fn convert_gas_data(source: &GasData) -> pb::GasData {
   pb::GasData {
     payment: source.payment.iter().map(convert_object_ref).collect::<Vec<_>>(),
     owner: convert_sui_address(&source.owner),
