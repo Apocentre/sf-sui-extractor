@@ -3,12 +3,15 @@ use sui_indexer::types::IndexedTransaction;
 use sui_types::{
   base_types::{ObjectID, ObjectRef}, messages_consensus::{ConsensusCommitPrologue, ConsensusCommitPrologueV2}, 
   transaction::{
-    Argument, AuthenticatorStateUpdate, CallArg, ChangeEpoch, Command, EndOfEpochTransactionKind, GenesisTransaction, ObjectArg, ProgrammableMoveCall, ProgrammableTransaction, RandomnessStateUpdate, SenderSignedData, TransactionData, TransactionDataAPI, TransactionKind
-  }, TypeTag
+    Argument, AuthenticatorStateUpdate, CallArg, ChangeEpoch, Command, EndOfEpochTransactionKind, GenesisObject,
+    GenesisTransaction, ObjectArg, ProgrammableMoveCall, ProgrammableTransaction, RandomnessStateUpdate, SenderSignedData,
+    TransactionData, TransactionDataAPI, TransactionKind,
+  },
+  TypeTag
 };
 use crate::pb::sui::checkpoint::{self as pb};
 
-use super::common::{convert_sui_argument, convert_sui_object, convert_type_tag};
+use super::common::{convert_owner, convert_sui_argument, convert_sui_object, convert_type_tag};
 
 fn convert_intent_message(source: IntentMessage<TransactionData>) -> pb::IntentMessage {
   pb::IntentMessage {
@@ -72,7 +75,22 @@ fn convert_commit_prologue(ccp: &ConsensusCommitPrologue) -> pb::transaction_kin
 }
 
 fn convert_genesis(g: &GenesisTransaction) -> pb::transaction_kind::TransactionKind {
-  todo!()
+  pb::transaction_kind::TransactionKind::Genesis(pb::GenesisTransaction {
+    objects: g.objects.iter().map(convert_genesis_obj).collect::<Vec<_>>(),
+  })
+}
+
+fn convert_genesis_obj(genesis_obj: &GenesisObject) -> pb::GenesisObject {
+  let genesis_obj = match genesis_obj {
+    GenesisObject::RawObject {data, owner} => pb::genesis_object::GenesisObject {
+      data: convert_data(data),
+      data: convert_owner(owner),
+    },
+  };
+
+  pb::GenesisObject {
+    genesis_object: Some(genesis_obj)
+  } 
 }
 
 fn convert_change_epoch(ce: &ChangeEpoch) -> pb::transaction_kind::TransactionKind {

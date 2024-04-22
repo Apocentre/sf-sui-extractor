@@ -1035,7 +1035,30 @@ pub struct ChangeEpoch {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenesisTransaction {
     #[prost(message, repeated, tag = "1")]
-    pub objects: ::prost::alloc::vec::Vec<ObjectId>,
+    pub objects: ::prost::alloc::vec::Vec<GenesisObject>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GenesisObject {
+    #[prost(oneof = "genesis_object::GenesisObject", tags = "1")]
+    pub genesis_object: ::core::option::Option<genesis_object::GenesisObject>,
+}
+/// Nested message and enum types in `GenesisObject`.
+pub mod genesis_object {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct RawObject {
+        #[prost(message, optional, tag = "1")]
+        pub data: ::core::option::Option<super::Data>,
+        #[prost(message, optional, tag = "2")]
+        pub owner: ::core::option::Option<super::Owner>,
+    }
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum GenesisObject {
+        #[prost(message, tag = "1")]
+        RawObject(RawObject),
+    }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

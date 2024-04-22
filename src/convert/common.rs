@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use base58::ToBase58;
 use serde_json::Value;
 use sui_json_rpc_types::{
@@ -6,7 +6,9 @@ use sui_json_rpc_types::{
   SuiRawData, SuiRawMoveObject, SuiRawMovePackage,
 };
 use sui_types::{
-  base_types::{AuthorityName, MoveObjectType, ObjectID, ObjectType}, committee::StakeUnit, gas::GasCostSummary, messages_checkpoint::CheckpointCommitment, move_package::{TypeOrigin, UpgradeInfo}, object::Owner, transaction::Argument, TypeTag
+  base_types::{AuthorityName, MoveObjectType, ObjectID, ObjectType}, committee::StakeUnit, gas::GasCostSummary,
+  messages_checkpoint::CheckpointCommitment, move_package::{TypeOrigin, UpgradeInfo}, object::{Data, Owner},
+  transaction::Argument, TypeTag,
 };
 use crate::pb::sui::checkpoint::{self as pb};
 
@@ -120,6 +122,51 @@ pub fn convert_owner(source: &Owner) -> pb::Owner {
   pb::Owner{
     owner: Some(owner)
   }
+}
+
+pub fn convert_data(data: &Data) -> pb::Data {
+  let data = match data {
+    Data::Move(m) => pb::data::Data::Move(pb::MoveObject {
+      r#type: Some(convert_move_object_type(m.type_())),
+      has_public_transfer: m.has_public_transfer(),
+      version: m.version().value(),
+      contents: m.contents().to_vec(),
+    }),
+    Data::Package(p) => pb::data::Data::Package(pb::MovePackage {
+      id: Some(convert_sui_object(&p.id())),
+      version: p.version().value(),
+      type_origin_table: p.type_origin_table().iter().map(convert_type_origin).collect::<Vec<_>>(),
+      module_map: convert_module_map(&p.serialized_module_map()),
+      linkage_table: convert_linkage_table(p.linkage_table()),
+    }),
+  };
+  
+  pb::Data {
+    data: Some(data),
+  }
+}
+
+fn convert_linkage_table(linkage_table: &BTreeMap<ObjectID, UpgradeInfo>) -> Vec<pb::LinkageTablePair> {
+  let mut result = Vec::new();
+
+  for (k, v) in linkage_table.iter() {
+    result.push(pb::LinkageTablePair {
+      key: Some(convert_sui_object(k)),
+      value: Some(convert_upgrade_info(v)),
+    });
+  }
+
+  result
+}
+
+fn convert_module_map(module_map: &BTreeMap<String, Vec<u8>>) -> HashMap<String, Vec<u8>> {
+  let mut map = HashMap::new();
+
+  for (k, v) in module_map.iter() {
+    map.insert(k.clone(), v.clone());
+  }
+
+  map
 }
 
 pub fn convert_owned_object_ref(source: &OwnedObjectRef) -> pb::OwnedObjectRef {

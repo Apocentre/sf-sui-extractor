@@ -612,7 +612,18 @@ message ChangeEpoch {
 }
 
 message GenesisTransaction {
-  repeated ObjectID objects = 1;
+  repeated GenesisObject objects = 1;
+}
+
+message GenesisObject {
+  message RawObject {
+    Data data = 1;
+    Owner owner = 2;
+  }
+
+  oneof genesis_object {
+    RawObject raw_object = 1;
+  }
 }
 
 message ObjectID {
