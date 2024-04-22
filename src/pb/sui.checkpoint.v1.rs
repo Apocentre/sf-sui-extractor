@@ -9,11 +9,8 @@ pub struct CheckpointData {
     pub events: ::prost::alloc::vec::Vec<IndexedEvent>,
     #[prost(message, repeated, tag = "4")]
     pub tx_indices: ::prost::alloc::vec::Vec<TxIndex>,
-    #[prost(map = "string, message", tag = "5")]
-    pub display_updates: ::std::collections::HashMap<
-        ::prost::alloc::string::String,
-        StoredDisplay,
-    >,
+    #[prost(message, repeated, tag = "5")]
+    pub display_updates: ::prost::alloc::vec::Vec<StoredDisplay>,
     #[prost(message, optional, tag = "6")]
     pub packages: ::core::option::Option<IndexedPackage>,
 }

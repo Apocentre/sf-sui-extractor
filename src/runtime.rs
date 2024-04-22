@@ -18,7 +18,7 @@ use prometheus::Registry;
 use tokio::spawn;
 use crate::{
   convert::{
-    checkpoint::convert_checkpoint, sui_event::convert_indexed_event, tx::convert_transaction
+    checkpoint::convert_checkpoint, display_update::convert_display_update, sui_event::convert_indexed_event, tx::convert_transaction
   }, pb::sui::checkpoint as pb
 };
 
@@ -167,6 +167,11 @@ impl FirehoseStreamer {
         Self::print_event(&event_proto);
       }
 
+      for (_, store_display) in &checkpoint_data.display_updates {
+        let store_display_proto = convert_display_update(store_display);
+        Self::print_display_update(&store_display_proto);
+      }
+
       println!("\nFIRE BLOCK_END {}", self.current_checkpoint_seq);
       self.current_checkpoint_seq += 1;
 
@@ -227,6 +232,18 @@ impl FirehoseStreamer {
     });
 
     println!("\nFIRE EVT {}", base64::encode(buf));
+  }
+
+  fn print_display_update(display_update: &pb::StoredDisplay) {
+    let mut buf = vec![];
+    display_update.encode(&mut buf).unwrap_or_else(|_| {
+      panic!(
+        "Could not convert protobuf display update to bytes '{:?}'",
+        display_update
+      )
+    });
+
+    println!("\nFIRE DSP_UPDATE {}", base64::encode(buf));
   }
   
   // pub async fn convert_next_block(&mut self) -> Result<()> {

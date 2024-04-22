@@ -10,7 +10,7 @@ message CheckpointData {
   repeated Transaction transactions = 2;
   repeated IndexedEvent events = 3;
   repeated TxIndex tx_indices = 4;
-  map<string, StoredDisplay> display_updates = 5;
+  repeated StoredDisplay display_updates = 5;
   IndexedPackage packages = 6;
 }
 

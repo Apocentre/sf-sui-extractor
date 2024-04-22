@@ -1,8 +1,6 @@
 use sui_indexer::types::IndexedEvent;
 use sui_types::event::Event;
-
 use crate::pb::sui::checkpoint::{self as pb};
-
 use super::common::{convert_struct_tag, convert_sui_address, convert_sui_object};
 
 pub fn convert_event(source: &Event) -> pb::Event {
