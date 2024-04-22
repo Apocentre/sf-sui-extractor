@@ -90,13 +90,13 @@ fn convert_programmable_tx_kind(pt: &ProgrammableTransaction) -> pb::transaction
 
   let commands = pt.commands.iter().map(|c| {
     let sui_command = match c {
-      Command::MoveCall(mc) => convert_move_call(mc),
-      Command::TransferObjects(a, b) => convert_transfer_objects(a, b),
-      Command::SplitCoins(a, b) => convert_split_coins(a, b),
-      Command::MergeCoins(a, b) => convert_merge_coins(a, b),
-      Command::Publish(a, b) => convert_publish(a, b),
-      Command::MakeMoveVec(a, b) => convert_make_move_vec(a, b),
-      Command::Upgrade(_, _, _, _) => todo!(),
+      Command::MoveCall(mc) => convert_move_call_cmd(mc),
+      Command::TransferObjects(a, b) => convert_transfer_objects_cmd(a, b),
+      Command::SplitCoins(a, b) => convert_split_coins_cmd(a, b),
+      Command::MergeCoins(a, b) => convert_merge_coins_cmd(a, b),
+      Command::Publish(a, b) => convert_publish_cmd(a, b),
+      Command::MakeMoveVec(a, b) => convert_make_move_vec_cmd(a, b),
+      Command::Upgrade(a, b, c, d) => convert_upgrade_cmd(a, b, c, d),
     };
 
     pb::Command {
@@ -110,28 +110,37 @@ fn convert_programmable_tx_kind(pt: &ProgrammableTransaction) -> pb::transaction
   })
 }
 
-fn convert_make_move_vec(a: &Option<TypeTag>, b: &[Argument]) -> pb::command::SuiCommand {
+fn convert_upgrade_cmd(a: &[Vec<u8>], b: &[ObjectID], c: &ObjectID, d: &Argument) -> pb::command::SuiCommand {
+  pb::command::SuiCommand::Upgrade(pb::UpgradeComand {
+    one: a.to_vec(),
+    two: b.iter().map(convert_sui_object).collect::<Vec<_>>(),
+    three: Some(convert_sui_object(c)),
+    four: Some(convert_sui_argument(d)),
+  })
+}
+
+fn convert_make_move_vec_cmd(a: &Option<TypeTag>, b: &[Argument]) -> pb::command::SuiCommand {
   pb::command::SuiCommand::MakeMoveVec(pb::MakeMoveVecPair {
     one: a.map(|t| convert_type_tag(&t)),
     two: b.iter().map(convert_sui_argument).collect::<Vec<_>>(),
   })
 }
 
-fn convert_publish(a: &[Vec<u8>], b: &[ObjectID]) -> pb::command::SuiCommand {
+fn convert_publish_cmd(a: &[Vec<u8>], b: &[ObjectID]) -> pb::command::SuiCommand {
   pb::command::SuiCommand::Publish(pb::PublishCommand {
     package_data: a.to_vec(),
     package: b.iter().map(convert_sui_object).collect::<Vec<_>>(),
   })
 }
 
-fn convert_split_coins(a: &Argument, b: &[Argument]) -> pb::command::SuiCommand {
+fn convert_split_coins_cmd(a: &Argument, b: &[Argument]) -> pb::command::SuiCommand {
   pb::command::SuiCommand::SplitCoins(pb::SplitCoinsPair {
     one: Some(convert_sui_argument(a)),
     two: b.iter().map(convert_sui_argument).collect::<Vec<_>>(),
   })
 }
 
-fn convert_merge_coins(a: &Argument, b: &[Argument]) -> pb::command::SuiCommand {
+fn convert_merge_coins_cmd(a: &Argument, b: &[Argument]) -> pb::command::SuiCommand {
   pb::command::SuiCommand::MergeCoins(pb::MergeCoinsPair {
     one: Some(convert_sui_argument(a)),
     two: b.iter().map(convert_sui_argument).collect::<Vec<_>>(),
@@ -139,14 +148,14 @@ fn convert_merge_coins(a: &Argument, b: &[Argument]) -> pb::command::SuiCommand 
 }
 
 
-fn convert_transfer_objects(a: &[Argument], b: &Argument) -> pb::command::SuiCommand {
+fn convert_transfer_objects_cmd(a: &[Argument], b: &Argument) -> pb::command::SuiCommand {
   pb::command::SuiCommand::TransferObjects(pb::TransferObjectsPair {
     one: a.iter().map(convert_sui_argument).collect::<Vec<_>>(),
     two: Some(convert_sui_argument(b)),
   })
 }
 
-fn convert_move_call(mc: &ProgrammableMoveCall) -> pb::command::SuiCommand {
+fn convert_move_call_cmd(mc: &ProgrammableMoveCall) -> pb::command::SuiCommand {
   pb::command::SuiCommand::MoveCall(pb::SuiProgrammableMoveCall {
     package: Some(convert_sui_object(&mc.package)),
     module: mc.module.into_string(),

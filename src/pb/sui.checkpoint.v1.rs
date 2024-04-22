@@ -1267,12 +1267,14 @@ pub struct MakeMoveVecPair {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpgradeComand {
-    #[prost(message, optional, tag = "1")]
-    pub one: ::core::option::Option<ListOfObjects>,
-    #[prost(message, optional, tag = "2")]
-    pub two: ::core::option::Option<ObjectId>,
+    #[prost(bytes = "vec", repeated, tag = "1")]
+    pub one: ::prost::alloc::vec::Vec<::prost::alloc::vec::Vec<u8>>,
+    #[prost(message, repeated, tag = "2")]
+    pub two: ::prost::alloc::vec::Vec<ObjectId>,
     #[prost(message, optional, tag = "3")]
-    pub three: ::core::option::Option<SuiArgument>,
+    pub three: ::core::option::Option<ObjectId>,
+    #[prost(message, optional, tag = "4")]
+    pub four: ::core::option::Option<SuiArgument>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

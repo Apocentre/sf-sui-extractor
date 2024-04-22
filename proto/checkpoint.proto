@@ -757,9 +757,10 @@ message MakeMoveVecPair {
 }
 
 message UpgradeComand {
-  ListOfObjects one = 1;
-  ObjectID two = 2;
-  SuiArgument three = 3;
+  repeated bytes one = 1;
+  repeated ObjectID two = 2;
+  ObjectID three = 3;
+  SuiArgument four = 4;
 }
 
 message SuiProgrammableMoveCall {
