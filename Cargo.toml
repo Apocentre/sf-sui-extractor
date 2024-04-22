@@ -30,6 +30,7 @@ sui-json-rpc-types = { path = "../sui/crates/sui-json-rpc-types" }
 sui-indexer = { path = "../sui/crates/sui-indexer" }
 sui-types = { path = "../sui/crates/sui-types" }
 sui-json = { path = "../sui/crates/sui-json" }
+shared-crypto = { path = "../sui/crates/shared-crypto" }
 tokio = { version = "1.27.0", features = ["full"] }
 prometheus = "0.13"
 

@@ -8154,6 +8154,7 @@ dependencies = [
  "prost-types 0.11.9",
  "serde",
  "serde_json",
+ "shared-crypto",
  "sui-indexer",
  "sui-json",
  "sui-json-rpc",

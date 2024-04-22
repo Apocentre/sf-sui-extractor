@@ -18,7 +18,9 @@ use prometheus::Registry;
 use tokio::spawn;
 use crate::{
   pb::sui::checkpoint as pb,
-  convert::checkpoint::convert_checkpoint,
+  convert::{
+    checkpoint::convert_checkpoint, tx::convert_transaction,
+  },
 };
 
 const DOWNLOAD_QUEUE_SIZE: usize = 1000;
@@ -153,6 +155,12 @@ impl FirehoseStreamer {
       );
 
       Self::print_checkpoint_overview(&convert_checkpoint(&checkpoint_data.checkpoint));
+
+      for tx in &checkpoint_data.transactions {
+        let txn_proto = convert_transaction(&tx);
+        Self::print_transaction(&txn_proto);
+      }
+
 
       println!("\nFIRE BLOCK_END {}", self.current_checkpoint_seq);
       self.current_checkpoint_seq += 1;

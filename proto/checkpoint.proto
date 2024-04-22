@@ -73,9 +73,6 @@ message Transaction {
   uint64 sequence_number = 1;
   string digest = 2;
   repeated SenderSignedTransaction sender_signed_data = 3;
-  // Transaction input data
-  // TransactionBlock transaction = 2;
-  // bytes raw_transaction = 3;
   TransactionBlockEffects effects = 4;
   uint64 checkpoint_sequence_number = 5;
   uint64 timestamp_ms = 6;
@@ -182,10 +179,26 @@ message IntentMessage {
 
 message Intent {
   IntentScope scope = 1;
+  IntentVersion version = 2;
+  AppId app_id = 3;
+}
+
+message IntentVersion {
+  oneof intent_version {
+    uint32 v0 = 1;
+  }
+}
+
+message AppId {
+  oneof app_id {
+    uint32 sui = 1;
+    uint32 narwhal = 2;
+    uint32 consensus = 3;
+  }
 }
 
 message IntentScope {
-  oneof scope {
+  oneof intent_scope {
     // Used for a user signature on a transaction data.
     uint32 transaction_data = 1;
     // Used for an authority signature on transaction effects.
@@ -614,20 +627,20 @@ message ConsensusCommitPrologue {
 
 message ProgrammableTransaction {
   // Input objects or primitive values
-  repeated SuiCallArg inputs = 1;
+  repeated CallArg inputs = 1;
 
   // The transactions to be executed sequentially. A failure in any transaction will
   // result in the failure of the entire programmable transaction block.
-  repeated SuiCommand commands = 2;
+  repeated Command commands = 2;
 }
 
-message SuiCallArg {
-  oneof sui_call_arg {
+message CallArg {
+  oneof call_arg {
     // Needs to become an Object Ref or Object ID, depending on object type
     SuiObjectArg object = 1;
 
     // pure value, bcs encoded
-    SuiPureValue pure = 2;
+    bytes pure = 2;
   }
 }
 
@@ -644,7 +657,7 @@ message SuiObjectArg {
 
 message ImmOrOwnedObject {
   ObjectID object_id = 1;
-  uint64 version = 2;
+  uint64 sequence_number = 2;
   string digest = 3;
 }
 
@@ -652,11 +665,6 @@ message SharedObject {
   ObjectID object_id = 1;
   uint64 initial_shared_version = 2;
   bool mutable = 3;
-}
-
-message SuiPureValue {
-  optional TypeTag value_type = 1;
-  Value value = 2;
 }
 
 message TypeTag {
@@ -686,7 +694,7 @@ message StructTag {
   ListOfTypeTags type_params = 4;
 }
 
-message SuiCommand {
+message Command {
   oneof sui_command {
     // A call to either an entry or a public Move function
     SuiProgrammableMoveCall move_call = 1;
@@ -710,7 +718,7 @@ message SuiCommand {
     ListOfObjects publish = 5;
 
     // Upgrades a Move package
-    SuiCommandUpgrade upgrade = 6;
+    CommandUpgrade upgrade = 6;
 
     // `forall T: Vec<T> -> vector<T>`
     // Given n-values of the same type, it constructs a vector. For non objects or an empty vector,
@@ -743,7 +751,7 @@ message MakeMoveVecPair {
   repeated SuiArgument two = 2;
 }
 
-message SuiCommandUpgrade {
+message CommandUpgrade {
   ListOfObjects one = 1;
   ObjectID two = 2;
   SuiArgument three = 3;
@@ -760,7 +768,7 @@ message SuiProgrammableMoveCall {
   string function = 3;
 
   // The type arguments to the function.
-  repeated string type_arguments = 4;
+  repeated TypeTag type_arguments = 4;
 
   repeated SuiArgument arguments = 5;
 }
@@ -984,7 +992,7 @@ message Shared {
 }
 
 message ExecutionStatus {
-  oneof sui_execution_status {
+  oneof execution_status {
     // Gas used in the success case.
     google.protobuf.Empty success = 1;
 

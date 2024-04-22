@@ -85,9 +85,6 @@ pub struct Transaction {
     pub digest: ::prost::alloc::string::String,
     #[prost(message, repeated, tag = "3")]
     pub sender_signed_data: ::prost::alloc::vec::Vec<SenderSignedTransaction>,
-    /// Transaction input data
-    /// TransactionBlock transaction = 2;
-    /// bytes raw_transaction = 3;
     #[prost(message, optional, tag = "4")]
     pub effects: ::core::option::Option<TransactionBlockEffects>,
     #[prost(uint64, tag = "5")]
@@ -280,18 +277,56 @@ pub struct IntentMessage {
 pub struct Intent {
     #[prost(message, optional, tag = "1")]
     pub scope: ::core::option::Option<IntentScope>,
+    #[prost(message, optional, tag = "2")]
+    pub version: ::core::option::Option<IntentVersion>,
+    #[prost(message, optional, tag = "3")]
+    pub app_id: ::core::option::Option<AppId>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct IntentVersion {
+    #[prost(oneof = "intent_version::IntentVersion", tags = "1")]
+    pub intent_version: ::core::option::Option<intent_version::IntentVersion>,
+}
+/// Nested message and enum types in `IntentVersion`.
+pub mod intent_version {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum IntentVersion {
+        #[prost(uint32, tag = "1")]
+        V0(u32),
+    }
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AppId {
+    #[prost(oneof = "app_id::AppId", tags = "1, 2, 3")]
+    pub app_id: ::core::option::Option<app_id::AppId>,
+}
+/// Nested message and enum types in `AppId`.
+pub mod app_id {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum AppId {
+        #[prost(uint32, tag = "1")]
+        Sui(u32),
+        #[prost(uint32, tag = "2")]
+        Narwhal(u32),
+        #[prost(uint32, tag = "3")]
+        Consensus(u32),
+    }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IntentScope {
-    #[prost(oneof = "intent_scope::Scope", tags = "1, 2, 3, 4, 5, 6, 7, 8, 9")]
-    pub scope: ::core::option::Option<intent_scope::Scope>,
+    #[prost(oneof = "intent_scope::IntentScope", tags = "1, 2, 3, 4, 5, 6, 7, 8, 9")]
+    pub intent_scope: ::core::option::Option<intent_scope::IntentScope>,
 }
 /// Nested message and enum types in `IntentScope`.
 pub mod intent_scope {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Scope {
+    pub enum IntentScope {
         /// Used for a user signature on a transaction data.
         #[prost(uint32, tag = "1")]
         TransactionData(u32),
@@ -1023,29 +1058,29 @@ pub struct ConsensusCommitPrologue {
 pub struct ProgrammableTransaction {
     /// Input objects or primitive values
     #[prost(message, repeated, tag = "1")]
-    pub inputs: ::prost::alloc::vec::Vec<SuiCallArg>,
+    pub inputs: ::prost::alloc::vec::Vec<CallArg>,
     /// The transactions to be executed sequentially. A failure in any transaction will
     /// result in the failure of the entire programmable transaction block.
     #[prost(message, repeated, tag = "2")]
-    pub commands: ::prost::alloc::vec::Vec<SuiCommand>,
+    pub commands: ::prost::alloc::vec::Vec<Command>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiCallArg {
-    #[prost(oneof = "sui_call_arg::SuiCallArg", tags = "1, 2")]
-    pub sui_call_arg: ::core::option::Option<sui_call_arg::SuiCallArg>,
+pub struct CallArg {
+    #[prost(oneof = "call_arg::CallArg", tags = "1, 2")]
+    pub call_arg: ::core::option::Option<call_arg::CallArg>,
 }
-/// Nested message and enum types in `SuiCallArg`.
-pub mod sui_call_arg {
+/// Nested message and enum types in `CallArg`.
+pub mod call_arg {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum SuiCallArg {
+    pub enum CallArg {
         /// Needs to become an Object Ref or Object ID, depending on object type
         #[prost(message, tag = "1")]
         Object(super::SuiObjectArg),
         /// pure value, bcs encoded
-        #[prost(message, tag = "2")]
-        Pure(super::SuiPureValue),
+        #[prost(bytes, tag = "2")]
+        Pure(::prost::alloc::vec::Vec<u8>),
     }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1074,7 +1109,7 @@ pub struct ImmOrOwnedObject {
     #[prost(message, optional, tag = "1")]
     pub object_id: ::core::option::Option<ObjectId>,
     #[prost(uint64, tag = "2")]
-    pub version: u64,
+    pub sequence_number: u64,
     #[prost(string, tag = "3")]
     pub digest: ::prost::alloc::string::String,
 }
@@ -1087,14 +1122,6 @@ pub struct SharedObject {
     pub initial_shared_version: u64,
     #[prost(bool, tag = "3")]
     pub mutable: bool,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiPureValue {
-    #[prost(message, optional, tag = "1")]
-    pub value_type: ::core::option::Option<TypeTag>,
-    #[prost(message, optional, tag = "2")]
-    pub value: ::core::option::Option<Value>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1151,12 +1178,12 @@ pub struct StructTag {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiCommand {
-    #[prost(oneof = "sui_command::SuiCommand", tags = "1, 2, 3, 4, 5, 6, 7")]
-    pub sui_command: ::core::option::Option<sui_command::SuiCommand>,
+pub struct Command {
+    #[prost(oneof = "command::SuiCommand", tags = "1, 2, 3, 4, 5, 6, 7")]
+    pub sui_command: ::core::option::Option<command::SuiCommand>,
 }
-/// Nested message and enum types in `SuiCommand`.
-pub mod sui_command {
+/// Nested message and enum types in `Command`.
+pub mod command {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum SuiCommand {
@@ -1183,7 +1210,7 @@ pub mod sui_command {
         Publish(super::ListOfObjects),
         /// Upgrades a Move package
         #[prost(message, tag = "6")]
-        Upgrade(super::SuiCommandUpgrade),
+        Upgrade(super::CommandUpgrade),
         /// `forall T: Vec<T> -> vector<T>`
         /// Given n-values of the same type, it constructs a vector. For non objects or an empty vector,
         /// the type tag must be specified.
@@ -1231,7 +1258,7 @@ pub struct MakeMoveVecPair {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SuiCommandUpgrade {
+pub struct CommandUpgrade {
     #[prost(message, optional, tag = "1")]
     pub one: ::core::option::Option<ListOfObjects>,
     #[prost(message, optional, tag = "2")]
@@ -1252,8 +1279,8 @@ pub struct SuiProgrammableMoveCall {
     #[prost(string, tag = "3")]
     pub function: ::prost::alloc::string::String,
     /// The type arguments to the function.
-    #[prost(string, repeated, tag = "4")]
-    pub type_arguments: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(message, repeated, tag = "4")]
+    pub type_arguments: ::prost::alloc::vec::Vec<TypeTag>,
     #[prost(message, repeated, tag = "5")]
     pub arguments: ::prost::alloc::vec::Vec<SuiArgument>,
 }
@@ -1598,16 +1625,14 @@ pub struct Shared {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExecutionStatus {
-    #[prost(oneof = "execution_status::SuiExecutionStatus", tags = "1, 2")]
-    pub sui_execution_status: ::core::option::Option<
-        execution_status::SuiExecutionStatus,
-    >,
+    #[prost(oneof = "execution_status::ExecutionStatus", tags = "1, 2")]
+    pub execution_status: ::core::option::Option<execution_status::ExecutionStatus>,
 }
 /// Nested message and enum types in `ExecutionStatus`.
 pub mod execution_status {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum SuiExecutionStatus {
+    pub enum ExecutionStatus {
         /// Gas used in the success case.
         #[prost(message, tag = "1")]
         Success(()),

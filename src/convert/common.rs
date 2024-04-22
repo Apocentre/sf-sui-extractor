@@ -2,14 +2,11 @@ use std::collections::HashMap;
 use base58::ToBase58;
 use serde_json::Value;
 use sui_json_rpc_types::{
-  SuiArgument, SuiObjectRef, SuiExecutionStatus, SuiTransactionBlockEffectsModifiedAtVersions, OwnedObjectRef,
-  SuiTransactionBlockEvents, SuiParsedData, SuiParsedMoveObject, SuiMoveStruct, SuiMoveValue, SuiMovePackage,
+  SuiArgument, SuiObjectRef, SuiExecutionStatus, SuiTransactionBlockEffectsModifiedAtVersions, OwnedObjectRef, SuiMovePackage,
   SuiRawData, SuiRawMoveObject, SuiRawMovePackage,
 };
 use sui_types::{
-  base_types::{ObjectID, ObjectType, MoveObjectType, AuthorityName},
-  TypeTag, gas::GasCostSummary, object::Owner, event::EventID, error::SuiObjectResponseError, id::UID,
-  move_package::{TypeOrigin, UpgradeInfo}, messages_checkpoint::CheckpointCommitment, committee::StakeUnit,
+  base_types::{AuthorityName, MoveObjectType, ObjectID, ObjectType}, committee::StakeUnit, gas::GasCostSummary, messages_checkpoint::CheckpointCommitment, move_package::{TypeOrigin, UpgradeInfo}, object::Owner, transaction::Argument, TypeTag
 };
 use crate::pb::sui::checkpoint::{self as pb};
 
@@ -46,29 +43,29 @@ pub fn convert_type_tag(source: &TypeTag) -> pb::TypeTag {
   }
 }
 
-pub fn convert_sui_json_value(source: &Value) -> pb::SuiJsonValue {
+pub fn convert_sui_json_value(source: &Value) -> pb::Value {
   let json_value = match source {
-    Value::Null => pb::sui_json_value::Value::Null(()),
-    Value::Bool(val) => pb::sui_json_value::Value::Bool(*val),
-    Value::Number(val) => pb::sui_json_value::Value::Number(val.to_string()),
-    Value::String(val) => pb::sui_json_value::Value::String(val.clone()),
-    Value::Array(val) => pb::sui_json_value::Value::Array(pb::ListOfJsonValues {
+    Value::Null => pb::value::Value::Null(()),
+    Value::Bool(val) => pb::value::Value::Bool(*val),
+    Value::Number(val) => pb::value::Value::Number(val.to_string()),
+    Value::String(val) => pb::value::Value::String(val.clone()),
+    Value::Array(val) => pb::value::Value::Array(pb::ListOfValues {
       list: val.iter().map(convert_sui_json_value).collect(),
     }),
-    Value::Object(_) => pb::sui_json_value::Value::Null(()),
+    Value::Object(_) => pb::value::Value::Null(()),
   };
 
-  pb::SuiJsonValue {
+  pb::Value {
     value: Some(json_value),
   }
 }
 
-pub fn convert_sui_argument(source: &SuiArgument) -> pb::SuiArgument {
+pub fn convert_sui_argument(source: &Argument) -> pb::SuiArgument {
   let sui_arguments = match source {
-    SuiArgument::GasCoin => pb::sui_argument::SuiArguments::GasCoin(()),
-    SuiArgument::Input(val) => pb::sui_argument::SuiArguments::Input(*val as u32),
-    SuiArgument::Result(val) => pb::sui_argument::SuiArguments::Result(*val as u32),
-    SuiArgument::NestedResult(one, two) => pb::sui_argument::SuiArguments::NestedResult(pb::PairOfU32 {
+    Argument::GasCoin => pb::sui_argument::SuiArguments::GasCoin(()),
+    Argument::Input(val) => pb::sui_argument::SuiArguments::Input(*val as u32),
+    Argument::Result(val) => pb::sui_argument::SuiArguments::Result(*val as u32),
+    Argument::NestedResult(one, two) => pb::sui_argument::SuiArguments::NestedResult(pb::PairOfU32 {
       one: *one as u32,
       two: *two as u32,
     }),
@@ -79,24 +76,24 @@ pub fn convert_sui_argument(source: &SuiArgument) -> pb::SuiArgument {
   }
 }
 
-pub fn convert_sui_object_ref(source: &SuiObjectRef) -> pb::SuiObjectRef {
-  pb::SuiObjectRef {
+pub fn convert_sui_object_ref(source: &SuiObjectRef) -> pb::ObjectRef {
+  pb::ObjectRef {
     object_id: Some(convert_sui_object(&source.object_id)),
     version: source.version.value(),
     digest: source.digest.base58_encode(),
   }
 }
 
-pub fn convert_sui_execution_status(source: &SuiExecutionStatus) -> pb::SuiExecutionStatus {
-  let sui_execution_status = match source {
-    SuiExecutionStatus::Success => pb::sui_execution_status::SuiExecutionStatus::Success(()),
-    SuiExecutionStatus::Failure {error} => pb::sui_execution_status::SuiExecutionStatus::Failure(pb::Failure {
+pub fn convert_sui_execution_status(source: &SuiExecutionStatus) -> pb::ExecutionStatus {
+  let execution_status = match source {
+    SuiExecutionStatus::Success => pb::execution_status::ExecutionStatus::Success(()),
+    SuiExecutionStatus::Failure {error} => pb::execution_status::ExecutionStatus::Failure(pb::Failure {
       error: error.clone(),
     })
   };
   
-  pb::SuiExecutionStatus {
-    sui_execution_status: Some(sui_execution_status),
+  pb::ExecutionStatus {
+    execution_status: Some(execution_status),
   }
 }
 
@@ -134,44 +131,44 @@ pub fn convert_owned_object_ref(source: &OwnedObjectRef) -> pb::OwnedObjectRef {
 
 pub fn convert_tx_block_effects_modified_at_versions(
   source: &SuiTransactionBlockEffectsModifiedAtVersions
-) -> pb::SuiTransactionBlockEffectsModifiedAtVersions {
-  pb::SuiTransactionBlockEffectsModifiedAtVersions {
+) -> pb::TransactionBlockEffectsModifiedAtVersions {
+  pb::TransactionBlockEffectsModifiedAtVersions {
     object_id: Some(convert_sui_object(&source.object_id)),
     sequence_number: source.sequence_number.value(),
   }
 }
 
-pub fn convert_event_id(source: &EventID) -> pb::EventId {
-  pb::EventId {
-    tx_digest: source.tx_digest.base58_encode(),
-    event_seq: source.event_seq,
-  }
-}
+// pub fn convert_event_id(source: &EventID) -> pb::EventId {
+//   pb::EventId {
+//     tx_digest: source.tx_digest.base58_encode(),
+//     event_seq: source.event_seq,
+//   }
+// }
 
-pub fn convert_tx_block_events(source: &SuiTransactionBlockEvents) -> pb::SuiTransactionBlockEvents {
-  let data = source.data.iter().map(|e| pb::SuiEvent {
-    id: Some(convert_event_id(&e.id)),
-    package_id: Some(convert_sui_object(&e.package_id)),
-    transaction_module: e.transaction_module.clone().into_string(),
-    sender: hex::encode(e.sender),
-    r#type: Some(pb::StructTag {
-      address: e.type_.address.to_canonical_string(false),
-      module: e.type_.module.to_string(),
-      name: e.type_.name.to_string(),
-      type_params: Some(pb::ListOfTypeTags {
-        list: e.type_.type_params.iter().map(convert_type_tag).collect(),
-      }),
-    }),
-    parsed_json: Some(convert_sui_json_value(&e.parsed_json)),
-    bcs: e.bcs.to_base58(),
-    timestamp_ms: e.timestamp_ms,
-  })
-  .collect();
+// pub fn convert_tx_block_events(source: &SuiTransactionBlockEvents) -> pb::TransactionBlockEvents {
+//   let data = source.data.iter().map(|e| pb::Event {
+//     id: Some(convert_event_id(&e.id)),
+//     package_id: Some(convert_sui_object(&e.package_id)),
+//     transaction_module: e.transaction_module.clone().into_string(),
+//     sender: hex::encode(e.sender),
+//     r#type: Some(pb::StructTag {
+//       address: e.type_.address.to_canonical_string(false),
+//       module: e.type_.module.to_string(),
+//       name: e.type_.name.to_string(),
+//       type_params: Some(pb::ListOfTypeTags {
+//         list: e.type_.type_params.iter().map(convert_type_tag).collect(),
+//       }),
+//     }),
+//     parsed_json: Some(convert_sui_json_value(&e.parsed_json)),
+//     bcs: e.bcs.to_base58(),
+//     timestamp_ms: e.timestamp_ms,
+//   })
+//   .collect();
 
-  pb::SuiTransactionBlockEvents {
-    data,
-  }
-}
+//   pb::SuiTransactionBlockEvents {
+//     data,
+//   }
+// }
 
 pub fn convert_object_type(source: &ObjectType) -> pb::ObjectType {
   let object_type = match source {
@@ -204,144 +201,51 @@ pub fn convert_move_object_type(source: &MoveObjectType) -> pb::MoveObjectType {
   }
 }
 
-pub fn convert_sui_object_response_error(source: &SuiObjectResponseError) -> pb::SuiObjectResponseError {
-  let sui_object_response_error = match source {
-    SuiObjectResponseError::NotExists {object_id} => pb::sui_object_response_error::SuiObjectResponseError::NotExists(
-      pb::sui_object_response_error::NotExists {
-        object_id: Some(convert_sui_object(&object_id)),
-      },
-    ),
-    SuiObjectResponseError::DynamicFieldNotFound {parent_object_id} => pb::sui_object_response_error::SuiObjectResponseError::DynamicFieldNotFound(
-      pb::sui_object_response_error::DynamicFieldNotFound {
-        parent_object_id: Some(convert_sui_object(&parent_object_id)),
-      },
-    ),
-    SuiObjectResponseError::Deleted {object_id, version, digest} => pb::sui_object_response_error::SuiObjectResponseError::Deleted(
-      pb::sui_object_response_error::Deleted {
-        object_id: Some(convert_sui_object(&object_id)),
-        version: version.value(),
-        digest: digest.base58_encode(),
-      },
-    ),
-    SuiObjectResponseError::Unknown => pb::sui_object_response_error::SuiObjectResponseError::Unknown(()),
-    SuiObjectResponseError::DisplayError {error} => pb::sui_object_response_error::SuiObjectResponseError::DisplayError(
-      pb::sui_object_response_error::DisplayError {
-        error: error.clone(),
-      },
-    ),
-  };
+// pub fn convert_sui_parsed_data(source: &SuiParsedData) -> pb::SuiParsedData {
+//   let sui_parsed_data = match source {
+//     SuiParsedData::MoveObject(source) => pb::sui_parsed_data::SuiParsedData::MoveObject(
+//       convert_sui_parsed_move_object(source)
+//     ),
+//     SuiParsedData::Package(source) => pb::sui_parsed_data::SuiParsedData::Package(
+//       convert_sui_move_package(source)
+//     ),
+//   };
 
-  pb::SuiObjectResponseError {
-    sui_object_response_error: Some(sui_object_response_error),
-  }
-}
+//   pb::SuiParsedData {
+//     sui_parsed_data: Some(sui_parsed_data),
+//   }
+// }
 
-pub fn convert_sui_parsed_data(source: &SuiParsedData) -> pb::SuiParsedData {
-  let sui_parsed_data = match source {
-    SuiParsedData::MoveObject(source) => pb::sui_parsed_data::SuiParsedData::MoveObject(
-      convert_sui_parsed_move_object(source)
-    ),
-    SuiParsedData::Package(source) => pb::sui_parsed_data::SuiParsedData::Package(
-      convert_sui_move_package(source)
-    ),
-  };
+// pub fn convert_sui_move_value(source: &SuiMoveValue) -> pb::MoveValue {
+//   let sui_move_value = match source {
+//     SuiMoveValue::Number(source) => pb::sui_move_value::SuiMoveValue::Number(*source),
+//     SuiMoveValue::Bool(source) => pb::sui_move_value::SuiMoveValue::Bool(*source),
+//     SuiMoveValue::Address(source) => pb::sui_move_value::SuiMoveValue::Address(hex::encode(source)),
+//     SuiMoveValue::Vector(source) => pb::sui_move_value::SuiMoveValue::Vector(pb::ListOfSuiMoveValues {
+//       list: source.iter().map(convert_sui_move_value).collect(),
+//     }),
+//     SuiMoveValue::String(source) => pb::sui_move_value::SuiMoveValue::String(source.clone()),
+//     SuiMoveValue::UID {id} => pb::sui_move_value::SuiMoveValue::Uid(pb::Uid {
+//       id: Some(convert_sui_object(id)),
+//     }),
+//     SuiMoveValue::Struct(source) => pb::sui_move_value::SuiMoveValue::Struct(convert_move_struct(source)),
+//     SuiMoveValue::Option(source) => pb::sui_move_value::SuiMoveValue::Option(
+//       Box::new(source.clone().map(|o| convert_sui_move_value(&o)).unwrap()),
+//     ),
+//   };
 
-  pb::SuiParsedData {
-    sui_parsed_data: Some(sui_parsed_data),
-  }
-}
+//   pb::SuiMoveValue {
+//     sui_move_value: Some(sui_move_value),
+//   }
+// }
 
-pub fn convert_sui_parsed_move_object(source: &SuiParsedMoveObject) -> pb::SuiParsedMoveObject {
-  pb::SuiParsedMoveObject {
-    r#type: Some(pb::StructTag {
-      address: source.type_.address.to_canonical_string(false),
-      module: source.type_.module.to_string(),
-      name: source.type_.name.to_string(),
-      type_params: Some(pb::ListOfTypeTags {
-        list: source.type_.type_params.iter().map(convert_type_tag).collect(),
-      }),
-    }),
-    has_public_transfer: source.has_public_transfer,
-    fields: Some(convert_sui_move_struct(&source.fields)),
-  }
-}
-
-pub fn convert_sui_move_struct(source: &SuiMoveStruct) -> pb::SuiMoveStruct {
-  let sui_move_struct = match source {
-    SuiMoveStruct::Runtime(source) => pb::sui_move_struct::SuiMoveStruct::Runtime(pb::ListOfSuiMoveValues {
-      list: source.iter().map(convert_sui_move_value).collect(),
-    }),
-    SuiMoveStruct::WithTypes {type_, fields} => {
-      let mut fields_ = HashMap::new();
-      for (k, v) in fields {
-        fields_.insert(k.clone(), convert_sui_move_value(&v));
-      }
-
-      pb::sui_move_struct::SuiMoveStruct::WithTypes(pb::WithTypes {
-        r#type: Some(pb::StructTag {
-          address: type_.address.to_canonical_string(false),
-          module: type_.module.to_string(),
-          name: type_.name.to_string(),
-          type_params: Some(pb::ListOfTypeTags {
-            list: type_.type_params.iter().map(convert_type_tag).collect(),
-          }),
-        }),
-        fields: fields_,
-      })
-    },
-    SuiMoveStruct::WithFields(source) => {
-      let mut fields = HashMap::new();
-      for (k, v) in source {
-        fields.insert(k.clone(), convert_sui_move_value(&v));
-      }
-
-      pb::sui_move_struct::SuiMoveStruct::WithFields(pb::WithFields {
-        fields,
-      })
-    },
-  };
-
-  pb::SuiMoveStruct {
-    sui_move_struct: Some(sui_move_struct),
-  }
-}
-
-pub fn convert_sui_move_value(source: &SuiMoveValue) -> pb::SuiMoveValue {
-  let sui_move_value = match source {
-    SuiMoveValue::Number(source) => pb::sui_move_value::SuiMoveValue::Number(*source),
-    SuiMoveValue::Bool(source) => pb::sui_move_value::SuiMoveValue::Bool(*source),
-    SuiMoveValue::Address(source) => pb::sui_move_value::SuiMoveValue::Address(hex::encode(source)),
-    SuiMoveValue::Vector(source) => pb::sui_move_value::SuiMoveValue::Vector(pb::ListOfSuiMoveValues {
-      list: source.iter().map(convert_sui_move_value).collect(),
-    }),
-    SuiMoveValue::String(source) => pb::sui_move_value::SuiMoveValue::String(source.clone()),
-    SuiMoveValue::UID {id} => pb::sui_move_value::SuiMoveValue::Uid(pb::Uid {
-      id: Some(convert_sui_object(id)),
-    }),
-    SuiMoveValue::Struct(source) => pb::sui_move_value::SuiMoveValue::Struct(convert_sui_move_struct(source)),
-    SuiMoveValue::Option(source) => pb::sui_move_value::SuiMoveValue::Option(
-      Box::new(source.clone().map(|o| convert_sui_move_value(&o)).unwrap()),
-    ),
-  };
-
-  pb::SuiMoveValue {
-    sui_move_value: Some(sui_move_value),
-  }
-}
-
-pub fn convert_uid(source: &UID) -> pb::Uid {
-  pb::Uid {
-    id: Some(convert_sui_object(source.object_id())),
-  }
-}
-
-pub fn convert_sui_move_package(source: &SuiMovePackage) -> pb::SuiMovePackage {
+pub fn convert_sui_move_package(source: &SuiMovePackage) -> pb::MovePackage {
   let mut disassembled = HashMap::new();
   for (k, v) in source.disassembled.clone() {
     disassembled.insert(k, convert_sui_json_value(&v));
   }
 
-  pb::SuiMovePackage {
+  pb::MovePackage {
     disassembled,
   }
 }
