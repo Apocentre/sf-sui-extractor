@@ -157,8 +157,8 @@ impl FirehoseStreamer {
       Self::print_checkpoint_overview(&convert_checkpoint(&checkpoint_data.checkpoint));
 
       for tx in &checkpoint_data.transactions {
-        let _txn_proto = convert_transaction(&tx);
-        // Self::print_transaction(&txn_proto);
+        let txn_proto = convert_transaction(&tx);
+        Self::print_transaction(&txn_proto);
       }
 
 
@@ -198,6 +198,17 @@ impl FirehoseStreamer {
     });
 
     println!("\nFIRE CHECKPOINT {}", base64::encode(buf));
+  }
+
+  fn print_transaction(transaction: &pb::Transaction) {
+    let mut buf = vec![];
+    transaction.encode(&mut buf).unwrap_or_else(|_| {
+      panic!(
+        "Could not convert protobuf transaction to bytes '{:?}'",
+        transaction
+      )
+    });
+    println!("\nFIRE TRX {}", base64::encode(buf));
   }
   
   // pub async fn convert_next_block(&mut self) -> Result<()> {
@@ -239,16 +250,6 @@ impl FirehoseStreamer {
   //   Ok(())
   // }
 
-  // fn print_transaction(transaction: &pb::CheckpointTransactionBlockResponse) {
-  //   let mut buf = vec![];
-  //   transaction.encode(&mut buf).unwrap_or_else(|_| {
-  //     panic!(
-  //       "Could not convert protobuf transaction to bytes '{:?}'",
-  //       transaction
-  //     )
-  //   });
-  //   println!("\nFIRE TRX {}", base64::encode(buf));
-  // }
 
   // fn print_changed_object(obj_change: &pb::ChangedObject) {
   //   let mut buf = vec![];
