@@ -929,23 +929,23 @@ message EffectsObjectChange {
 }
 
 message IDOperation {
-  oneof ido_operation {
+  oneof id_operation {
     uint32 none = 1;
     uint32 created = 2;
     uint32 deleted = 3;
   }
 }
 
-message ObjectOut {
-  oneof object_id {
+message ObjectIn {
+  oneof object_in {
     uint32 not_exist = 1;
     /// The old version, digest and owner.
     ObjectInExist exist = 2;
   }
 }
 
-message ObjectIn {
-  oneof object_id {
+message ObjectOut {
+  oneof object_out {
     uint32 not_exist = 1;
     /// Any written object, including all of mutated, created, unwrapped today.
     ObjectWrite object_write = 2;
@@ -970,7 +970,7 @@ message ObjectInExist {
 }
 
 message VersionDigest {
-  uint32 sequence_number = 1;
+  uint64 sequence_number = 1;
   string object_digest = 2;
 }
 

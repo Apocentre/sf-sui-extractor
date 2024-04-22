@@ -1514,14 +1514,14 @@ pub struct EffectsObjectChange {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IdOperation {
-    #[prost(oneof = "id_operation::IdoOperation", tags = "1, 2, 3")]
-    pub ido_operation: ::core::option::Option<id_operation::IdoOperation>,
+    #[prost(oneof = "id_operation::IdOperation", tags = "1, 2, 3")]
+    pub id_operation: ::core::option::Option<id_operation::IdOperation>,
 }
 /// Nested message and enum types in `IDOperation`.
 pub mod id_operation {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum IdoOperation {
+    pub enum IdOperation {
         #[prost(uint32, tag = "1")]
         None(u32),
         #[prost(uint32, tag = "2")]
@@ -1532,15 +1532,15 @@ pub mod id_operation {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ObjectOut {
-    #[prost(oneof = "object_out::ObjectId", tags = "1, 2")]
-    pub object_id: ::core::option::Option<object_out::ObjectId>,
+pub struct ObjectIn {
+    #[prost(oneof = "object_in::ObjectIn", tags = "1, 2")]
+    pub object_in: ::core::option::Option<object_in::ObjectIn>,
 }
-/// Nested message and enum types in `ObjectOut`.
-pub mod object_out {
+/// Nested message and enum types in `ObjectIn`.
+pub mod object_in {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum ObjectId {
+    pub enum ObjectIn {
         #[prost(uint32, tag = "1")]
         NotExist(u32),
         /// / The old version, digest and owner.
@@ -1550,15 +1550,15 @@ pub mod object_out {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ObjectIn {
-    #[prost(oneof = "object_in::ObjectId", tags = "1, 2, 3")]
-    pub object_id: ::core::option::Option<object_in::ObjectId>,
+pub struct ObjectOut {
+    #[prost(oneof = "object_out::ObjectOut", tags = "1, 2, 3")]
+    pub object_out: ::core::option::Option<object_out::ObjectOut>,
 }
-/// Nested message and enum types in `ObjectIn`.
-pub mod object_in {
+/// Nested message and enum types in `ObjectOut`.
+pub mod object_out {
     #[allow(clippy::derive_partial_eq_without_eq)]
     #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum ObjectId {
+    pub enum ObjectOut {
         #[prost(uint32, tag = "1")]
         NotExist(u32),
         /// / Any written object, including all of mutated, created, unwrapped today.
@@ -1595,8 +1595,8 @@ pub struct ObjectInExist {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct VersionDigest {
-    #[prost(uint32, tag = "1")]
-    pub sequence_number: u32,
+    #[prost(uint64, tag = "1")]
+    pub sequence_number: u64,
     #[prost(string, tag = "2")]
     pub object_digest: ::prost::alloc::string::String,
 }
