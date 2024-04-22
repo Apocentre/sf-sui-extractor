@@ -40,7 +40,7 @@ fn convert_intent_value(source: TransactionData) -> pb::TransactionData {
 fn convert_tx_kind(source: &TransactionKind) -> pb::TransactionKind {
   let kind = match source {
     TransactionKind::ProgrammableTransaction(pt) => convert_programmable_tx_kind(pt),
-    TransactionKind::ChangeEpoch(ce) => convert_change_epoch(ce),
+    TransactionKind::ChangeEpoch(ce) => convert_change_epoch_tx_kind(ce),
     TransactionKind::Genesis(g) => convert_genesis(g),
     TransactionKind::ConsensusCommitPrologue(ccp) => convert_commit_prologue(ccp),
     TransactionKind::AuthenticatorStateUpdate(asu) => convert_authenticator_state_update(asu),
@@ -62,8 +62,25 @@ fn convert_randomeness_state_update(rsu: &RandomnessStateUpdate) -> pb::transact
   todo!()
 }
 
-fn convert_end_of_epoch_transaction(eet: &[EndOfEpochTransactionKind]) -> pb::transaction_kind::TransactionKind {
-  todo!()
+fn convert_end_of_epoch_transaction(source: &[EndOfEpochTransactionKind]) -> pb::transaction_kind::TransactionKind {
+  let end_of_epoch_transaction_kind = source.iter().map(|tk| {
+    match tk {
+      EndOfEpochTransactionKind::ChangeEpoch(c) => pb::end_of_epoch_transaction_kind::Kind::ChangeEpoch(convert_change_epoch(c)),
+      EndOfEpochTransactionKind::AuthenticatorStateCreate => pb::end_of_epoch_transaction_kind::Kind::AuthenticatorStateCreate(1),
+      EndOfEpochTransactionKind::AuthenticatorStateExpire(source) =>  pb::end_of_epoch_transaction_kind::Kind::AuthenticatorStateExpire(
+        pb::AuthenticatorStateExpire {
+            min_epoch: source.min_epoch,
+            authenticator_obj_initial_shared_version: source.authenticator_obj_initial_shared_version.value(),
+        }
+      ),
+      EndOfEpochTransactionKind::RandomnessStateCreate => pb::end_of_epoch_transaction_kind::Kind::RandomnessStateCreate(3),
+      EndOfEpochTransactionKind::DenyListStateCreate => pb::end_of_epoch_transaction_kind::Kind::DenyListStateCreate(4),
+    }
+  }).collect::<Vec<_>>();
+
+  pb::transaction_kind::TransactionKind::EndOdEpochTransaction(pb::EndOfEpochTransaction {
+    end_of_epoch_transaction_kind,
+  })
 }
 
 fn convert_authenticator_state_update(source: &AuthenticatorStateUpdate) -> pb::transaction_kind::TransactionKind {
@@ -122,14 +139,18 @@ fn convert_genesis_obj(source: &GenesisObject) -> pb::GenesisObject {
   } 
 }
 
-fn convert_change_epoch(source: &ChangeEpoch) -> pb::transaction_kind::TransactionKind {
-  pb::transaction_kind::TransactionKind::ChangeEpoch(pb::ChangeEpoch {
+fn convert_change_epoch_tx_kind(source: &ChangeEpoch) -> pb::transaction_kind::TransactionKind {
+  pb::transaction_kind::TransactionKind::ChangeEpoch(convert_change_epoch(source))
+}
+
+fn convert_change_epoch(source: &ChangeEpoch) -> pb::ChangeEpoch {
+  pb::ChangeEpoch {
     epoch: source.epoch,
     storage_charge: source.storage_charge,
     computation_charge: source.computation_charge,
     storage_rebate: source.storage_rebate,
     epoch_start_timestamp_ms: source.epoch_start_timestamp_ms,
-  })
+  }
 }
 
 fn convert_programmable_tx_kind(source: &ProgrammableTransaction) -> pb::transaction_kind::TransactionKind {

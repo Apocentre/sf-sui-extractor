@@ -280,7 +280,7 @@ message RandomnessStateUpdate {
 }
 
 message EndOfEpochTransaction {
-  repeated EndOfEpochTransactionKind end_od_epoch_transaction_kind = 1;
+  repeated EndOfEpochTransactionKind end_of_epoch_transaction_kind = 1;
 }
 
 message EndOfEpochTransactionKind {

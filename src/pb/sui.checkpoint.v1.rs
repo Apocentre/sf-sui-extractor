@@ -472,7 +472,7 @@ pub struct RandomnessStateUpdate {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EndOfEpochTransaction {
     #[prost(message, repeated, tag = "1")]
-    pub end_od_epoch_transaction_kind: ::prost::alloc::vec::Vec<
+    pub end_of_epoch_transaction_kind: ::prost::alloc::vec::Vec<
         EndOfEpochTransactionKind,
     >,
 }
