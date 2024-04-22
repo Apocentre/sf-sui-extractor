@@ -18,7 +18,6 @@ fn convert_intent_message(source: IntentMessage<TransactionData>) -> pb::IntentM
 }
 
 fn convert_intent_value(source: TransactionData) -> pb::TransactionData {
-  let tx_kind = 
   let tx_data = match source {
     TransactionData::V1(tx_data_v1) => {
       pb::transaction_data::TxData::V1(pb::TransactionDataV1 {
@@ -36,7 +35,7 @@ fn convert_intent_value(source: TransactionData) -> pb::TransactionData {
 }
 
 fn convert_tx_kind(source: &TransactionKind) -> pb::TransactionKind {
-  match source {
+  let kind = match source {
     TransactionKind::ProgrammableTransaction(pt) => convert_programmable_tx_kind(pt),
     TransactionKind::ChangeEpoch(ce) => convert_change_epoch(ce),
     TransactionKind::Genesis(g) => convert_genesis(g),
@@ -45,35 +44,45 @@ fn convert_tx_kind(source: &TransactionKind) -> pb::TransactionKind {
     TransactionKind::EndOfEpochTransaction(eet) => convert_end_of_epoch_transaction(eet),
     TransactionKind::RandomnessStateUpdate(rsu) => convert_randomeness_state_update(rsu),
     TransactionKind::ConsensusCommitPrologueV2(ccp_v2) => convert_commit_prologue_v2(ccp_v2),
+  };
+
+  pb::TransactionKind {
+    transaction_kind: Some(kind),
   }
 }
 
-fn convert_commit_prologue_v2(ccp_v2: &ConsensusCommitPrologueV2) -> pb::TransactionKind {
+fn convert_commit_prologue_v2(ccp_v2: &ConsensusCommitPrologueV2) -> pb::transaction_kind::TransactionKind {
   todo!()
 }
 
-fn convert_randomeness_state_update(rsu: &RandomnessStateUpdate) -> pb::TransactionKind {
+fn convert_randomeness_state_update(rsu: &RandomnessStateUpdate) -> pb::transaction_kind::TransactionKind {
   todo!()
 }
 
-fn convert_end_of_epoch_transaction(eet: &[EndOfEpochTransactionKind]) -> pb::TransactionKind {
+fn convert_end_of_epoch_transaction(eet: &[EndOfEpochTransactionKind]) -> pb::transaction_kind::TransactionKind {
   todo!()
 }
 
-fn convert_authenticator_state_update(asu: &AuthenticatorStateUpdate) -> pb::TransactionKind {
+fn convert_authenticator_state_update(asu: &AuthenticatorStateUpdate) -> pb::transaction_kind::TransactionKind {
   todo!()
 }
 
-fn convert_commit_prologue(ccp: &ConsensusCommitPrologue) -> pb::TransactionKind {
+fn convert_commit_prologue(ccp: &ConsensusCommitPrologue) -> pb::transaction_kind::TransactionKind {
   todo!()
 }
 
-fn convert_genesis(g: &GenesisTransaction) -> pb::TransactionKind {
-    todo!()
+fn convert_genesis(g: &GenesisTransaction) -> pb::transaction_kind::TransactionKind {
+  todo!()
 }
 
-fn convert_change_epoch(ce: &ChangeEpoch) -> pb::TransactionKind {
-  todo!()
+fn convert_change_epoch(ce: &ChangeEpoch) -> pb::transaction_kind::TransactionKind {
+  pb::transaction_kind::TransactionKind::ChangeEpoch(pb::ChangeEpoch {
+    epoch: ce.epoch,
+    storage_charge: ce.storage_charge,
+    computation_charge: ce.computation_charge,
+    storage_rebate: ce.storage_rebate,
+    epoch_start_timestamp_ms: ce.epoch_start_timestamp_ms,
+  })
 }
 
 fn convert_programmable_tx_kind(pt: &ProgrammableTransaction) -> pb::transaction_kind::TransactionKind {
