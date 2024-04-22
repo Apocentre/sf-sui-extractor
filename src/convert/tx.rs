@@ -11,9 +11,12 @@ use sui_types::{
 };
 use crate::pb::sui::checkpoint::{self as pb};
 
-use super::{common::{
-  convert_data, convert_object_ref, convert_owner, convert_sui_address, convert_sui_argument, convert_sui_object, convert_type_tag
-}, sui_effects::convert_sui_effects};
+use super::{
+  common::{
+    convert_data, convert_object_ref, convert_owner, convert_sui_address, convert_sui_argument, convert_sui_object,
+    convert_type_tag,
+  }, object::convert_tx_object_change, sui_effects::convert_sui_effects
+};
 
 fn convert_intent_message(source: IntentMessage<TransactionData>) -> pb::IntentMessage {
   pb::IntentMessage {
@@ -326,15 +329,15 @@ fn convert_version(source: IntentVersion) -> pb::IntentVersion {
 
 fn convert_intent_scope(source: IntentScope) -> pb::IntentScope {
   let intent_scope = match source {
-    IntentScope::TransactionData => pb::intent_scope::IntentScope::TransactionData,
-    IntentScope::TransactionEffects => pb::intent_scope::IntentScope::TransactionEffects,
-    IntentScope::CheckpointSummary => pb::intent_scope::IntentScope::CheckpointSummary,
-    IntentScope::PersonalMessage => pb::intent_scope::IntentScope::PersonalMessage,
-    IntentScope::SenderSignedTransaction => pb::intent_scope::IntentScope::SenderSignedTransaction,
-    IntentScope::ProofOfPossession => pb::intent_scope::IntentScope::ProofOfPossession,
-    IntentScope::HeaderDigest => pb::intent_scope::IntentScope::HeaderDigest,
-    IntentScope::BridgeEventUnused => pb::intent_scope::IntentScope::BridgeEventUnused,
-    IntentScope::ConsensusBlock => pb::intent_scope::IntentScope::ConsensusBlock,
+    IntentScope::TransactionData => pb::intent_scope::IntentScope::TransactionData(0),
+    IntentScope::TransactionEffects => pb::intent_scope::IntentScope::TransactionEffects(1),
+    IntentScope::CheckpointSummary => pb::intent_scope::IntentScope::CheckpointSummary(2),
+    IntentScope::PersonalMessage => pb::intent_scope::IntentScope::PersonalMessage(3),
+    IntentScope::SenderSignedTransaction => pb::intent_scope::IntentScope::SenderSignedTransaction(4),
+    IntentScope::ProofOfPossession => pb::intent_scope::IntentScope::ProofOfPossession(5),
+    IntentScope::HeaderDigest => pb::intent_scope::IntentScope::HeaderDigest(6),
+    IntentScope::BridgeEventUnused => pb::intent_scope::IntentScope::BridgeEventUnused(7),
+    IntentScope::ConsensusBlock => pb::intent_scope::IntentScope::ConsensusBlock(8),
   };
 
   pb::IntentScope {
@@ -357,11 +360,23 @@ pub fn convert_transaction(source: &IndexedTransaction) -> pb::Transaction {
     // it should only have one item
     sender_signed_data: vec![convert_sender_signed_data(&source.sender_signed_data)],
     effects: Some(convert_sui_effects(&source.effects)),
-    // transaction: convert_sui_tx_block(&source.transaction),
-    // raw_transaction: source.raw_transaction.clone(),
-    // events: Some(convert_tx_block_events(&source.events)),
-    // timestamp_ms: source.timestamp_ms,
-    // confirmed_local_execution: source.confirmed_local_execution,
-    // checkpoint: source.checkpoint,
+    checkpoint_sequence_number: source.checkpoint_sequence_number,
+    timestamp_ms: source.timestamp_ms,
+    object_changes: source.object_changes.iter().map(convert_tx_object_change).collect::<Vec<_>>(),
+    balance_change: source.balance_change.iter().map(convert_tx_balance_change).collect::<Vec<_>>(),
+    // pub object_changes: Vec<IndexedObjectChange>,
+    // pub balance_change: Vec<sui_json_rpc_types::BalanceChange>,
+    // pub events: Vec<sui_types::event::Event>,
+    // pub transaction_kind: TransactionKind,
+
+    successful_tx_num: source.successful_tx_num,
+  }
+}
+
+pub fn convert_tx_balance_change(source: &sui_json_rpc_types::BalanceChange) -> pb::BalanceChange {
+  pb::BalanceChange {
+    owner: Some(convert_owner(&source.owner)),
+    coin_type: Some(convert_type_tag(&source.coin_type)),
+    amount: source.amount.to_string(),
   }
 }

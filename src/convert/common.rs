@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, HashMap};
 use base58::ToBase58;
+use move_core_types::language_storage::StructTag;
 use serde_json::Value;
 use sui_json_rpc_types::{
   SuiMovePackage, SuiRawData, SuiRawMoveObject, SuiRawMovePackage,
@@ -29,6 +30,17 @@ pub fn convert_object_ref(obj_ref: &ObjectRef) -> pb::ObjectRef {
   }
 }
 
+pub fn convert_stuct_tag(source: &StructTag) -> pb::StructTag {
+  pb::StructTag {
+    address: source.address.to_canonical_string(false),
+    module: source.module.to_string(),
+    name: source.name.to_string(),
+    type_params: Some(pb::ListOfTypeTags {
+      list: source.type_params.iter().map(convert_type_tag).collect(),
+    }),
+  }
+}
+
 pub fn convert_type_tag(source: &TypeTag) -> pb::TypeTag {
   let type_tag = match source {
     TypeTag::Bool => pb::type_tag::TypeTag::Bool(()),
@@ -38,14 +50,7 @@ pub fn convert_type_tag(source: &TypeTag) -> pb::TypeTag {
     TypeTag::Address => pb::type_tag::TypeTag::Address(()),
     TypeTag::Signer => pb::type_tag::TypeTag::Signer(()),
     TypeTag::Vector(type_tag) => pb::type_tag::TypeTag::Vector(Box::new(convert_type_tag(&*type_tag))),
-    TypeTag::Struct(source) => pb::type_tag::TypeTag::Struct(pb::StructTag {
-      address: source.address.to_canonical_string(false),
-      module: source.module.to_string(),
-      name: source.name.to_string(),
-      type_params: Some(pb::ListOfTypeTags {
-        list: source.type_params.iter().map(convert_type_tag).collect(),
-      }),
-    }),
+    TypeTag::Struct(source) => pb::type_tag::TypeTag::Struct(convert_stuct_tag(&source)),
     TypeTag::U16 => pb::type_tag::TypeTag::U16(()),
     TypeTag::U32 => pb::type_tag::TypeTag::U32(()),
     TypeTag::U256 => pb::type_tag::TypeTag::U256(()),

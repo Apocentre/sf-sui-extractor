@@ -1,26 +1,67 @@
-use sui_indexer::{models::objects::ObjectStatus};
-use sui_json_rpc_types::SuiObjectData;
-use crate::pb::sui::checkpoint as pb;
-use super::{sui_object_data::convert_sui_object_data};
+use sui_indexer::types::IndexedObjectChange;
+use crate::pb::sui::checkpoint::{self as pb};
+use super::common::{convert_owner, convert_stuct_tag, convert_sui_address, convert_sui_object};
 
-fn convert_object_status(source: ObjectStatus) -> pb::ObjectStatus {
-  let object_status = match source {
-    ObjectStatus::Created => pb::object_status::ObjectStatus::Created(()),
-    ObjectStatus::Mutated => pb::object_status::ObjectStatus::Mutated(()),
-    ObjectStatus::Deleted => pb::object_status::ObjectStatus::Deleted(()),
-    ObjectStatus::Wrapped => pb::object_status::ObjectStatus::Wrapped(()),
-    ObjectStatus::Unwrapped => pb::object_status::ObjectStatus::Unwrapped(()),
-    ObjectStatus::UnwrappedThenDeleted => pb::object_status::ObjectStatus::UnwrappedThenDeleted(()),
+pub fn convert_tx_object_change(source: &IndexedObjectChange) -> pb::ObjectChange {
+  let object_change = match source {
+    IndexedObjectChange::Published {package_id, version, digest, modules} => {
+      pb::object_change::ObjectChange::Published(pb::Published {
+        package_id: Some(convert_sui_object(&package_id)),
+        version: version.value(),
+        digest: digest.base58_encode(),
+        modules: modules.clone(),
+      })
+    }
+    IndexedObjectChange::Transferred {sender, recipient, object_type, object_id, version, digest} => {
+      pb::object_change::ObjectChange::Transferred(pb::Transferred {
+        sender: convert_sui_address(&sender),
+        recipient: Some(convert_owner(&recipient)),
+        object_type: Some(convert_stuct_tag(&object_type)),
+        object_id: Some(convert_sui_object(&object_id)),
+        version: version.value(),
+        digest: digest.base58_encode(),
+    })
+    },
+    IndexedObjectChange::Mutated {sender, owner, object_type, object_id, version, previous_version, digest} => {
+      pb::object_change::ObjectChange::Mutated(pb::Mutated {
+        sender: convert_sui_address(&sender),
+        owner: Some(convert_owner(&owner)),
+        object_type: Some(convert_stuct_tag(&object_type)),
+        object_id: Some(convert_sui_object(&object_id)),
+        version: version.value(),
+        previous_version: previous_version.value(),
+        digest: digest.base58_encode(),
+      })
+    },
+    IndexedObjectChange::Deleted {sender, object_type, object_id, version} => {
+      pb::object_change::ObjectChange::Deleted(pb::Deleted {
+        sender: convert_sui_address(&sender),
+        object_type: Some(convert_stuct_tag(&object_type)),
+        object_id: Some(convert_sui_object(&object_id)),
+        version: version.value(),
+      })
+    },
+    IndexedObjectChange::Wrapped {sender, object_type, object_id, version} => {
+      pb::object_change::ObjectChange::Wrapped(pb::Wrapped {
+        sender: convert_sui_address(&sender),
+        object_type: Some(convert_stuct_tag(&object_type)),
+        object_id: Some(convert_sui_object(&object_id)),
+        version: version.value(),
+      })
+    },
+    IndexedObjectChange::Created {sender, owner, object_type, object_id, version, digest} => {
+      pb::object_change::ObjectChange::Created(pb::Created {
+        sender: convert_sui_address(&sender),
+        owner: Some(convert_owner(&owner)),
+        object_type: Some(convert_stuct_tag(&object_type)),
+        object_id: Some(convert_sui_object(&object_id)),
+        version: version.value(),
+        digest: digest.base58_encode(),
+      })
+    },
   };
 
-  pb::ObjectStatus {
-    object_status: Some(object_status),
-  }
-}
-
-pub fn convert_object_change(source: &(ObjectStatus, SuiObjectData)) -> pb::ChangedObject {
-  pb::ChangedObject {
-    status: Some(convert_object_status(source.0)),
-    data: Some(convert_sui_object_data(&source.1)),
+  pb::ObjectChange {
+    object_change: Some(object_change),
   }
 }

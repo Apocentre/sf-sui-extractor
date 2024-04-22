@@ -187,7 +187,7 @@ pub struct Transferred {
     #[prost(string, tag = "1")]
     pub sender: ::prost::alloc::string::String,
     #[prost(message, optional, tag = "2")]
-    pub owner: ::core::option::Option<Owner>,
+    pub recipient: ::core::option::Option<Owner>,
     #[prost(message, optional, tag = "3")]
     pub object_type: ::core::option::Option<StructTag>,
     #[prost(message, optional, tag = "4")]
