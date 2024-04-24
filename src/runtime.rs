@@ -176,11 +176,6 @@ impl FirehoseStreamer {
 
       println!("\nFIRE BLOCK_END {}", self.current_checkpoint_seq);
       self.current_checkpoint_seq += 1;
-
-      println!(
-        "Block {} -----> Tx count {:?}",
-        checkpoint_data.checkpoint.sequence_number, checkpoint_data.transactions.len(),
-      )
     }
   }
 
