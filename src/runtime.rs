@@ -19,7 +19,7 @@ use tokio::spawn;
 use crate::{
   convert::{
     checkpoint::convert_checkpoint, display_update::convert_display_update, sui_event::convert_indexed_event,
-    tx::convert_transaction,
+    tx::convert_transaction, tx_object_change::convert_tx_object_changes,
   },
   pb::sui::checkpoint as pb,
 };
@@ -220,6 +220,18 @@ impl FirehoseStreamer {
     });
 
     println!("\nFIRE TRX {}", base64::encode(buf));
+  }
+
+  fn print_object_changes(tx_object_change: &pb::TransactionObjectChange) {
+    let mut buf = vec![];
+    tx_object_change.encode(&mut buf).unwrap_or_else(|_| {
+      panic!(
+        "Could not convert protobuf transaction object change to bytes '{:?}'",
+        tx_object_change
+      )
+    });
+
+    println!("\nFIRE OBJ_CHANGE {}", base64::encode(buf));
   }
 
   fn print_event(event: &pb::IndexedEvent) {
