@@ -7,8 +7,8 @@ pub struct CheckpointData {
     pub transactions: ::prost::alloc::vec::Vec<Transaction>,
     #[prost(message, repeated, tag = "3")]
     pub events: ::prost::alloc::vec::Vec<IndexedEvent>,
-    #[prost(message, repeated, tag = "4")]
-    pub object_change: ::prost::alloc::vec::Vec<TransactionObjectChange>,
+    #[prost(message, optional, tag = "4")]
+    pub object_change: ::core::option::Option<TransactionObjectChange>,
     #[prost(message, repeated, tag = "5")]
     pub tx_indices: ::prost::alloc::vec::Vec<TxIndex>,
     #[prost(message, repeated, tag = "6")]
