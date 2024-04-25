@@ -52,6 +52,8 @@ impl ProcessManager {
 
     // this hook will be called if any of the threads panics
     panic::set_hook(Box::new(move |panic_info| {
+      println!("Thread Panicked {:?}", panic_info);
+
       tx_2.send(()).expect("send msg");
       orig_hook(panic_info);
     }));
