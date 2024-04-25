@@ -97,7 +97,7 @@ impl FirehoseStreamer {
 
     let checkpoint_fetcher = CheckpointFetcher::new(
       http_client,
-      Some(self.current_checkpoint_seq),
+      Some(self.current_checkpoint_seq - 1),
       downloaded_checkpoint_data_sender,
       self.metrics.clone(),
     );
