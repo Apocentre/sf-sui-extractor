@@ -162,6 +162,9 @@ impl FirehoseStreamer {
         Self::print_transaction(&txn_proto);
       }
 
+      let obj_changes_proto = convert_tx_object_changes(&checkpoint_data.object_changes);
+      Self::print_object_changes(&obj_changes_proto);
+
       // Not that the transaction data does also include event data but here we explicitely log
       // events if one is interested in just that
       for event in &checkpoint_data.events {

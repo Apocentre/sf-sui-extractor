@@ -9,9 +9,10 @@ message CheckpointData {
   Checkpoint checkpoint = 1;
   repeated Transaction transactions = 2;
   repeated IndexedEvent events = 3;
-  repeated TxIndex tx_indices = 4;
-  repeated StoredDisplay display_updates = 5;
-  IndexedPackage packages = 6;
+  repeated TransactionObjectChange object_changes = 4;
+  repeated TxIndex tx_indices = 5;
+  repeated StoredDisplay display_updates = 6;
+  IndexedPackage packages = 7;
 }
 
 message Checkpoint {
@@ -390,8 +391,7 @@ message IndexedObject {
   optional string owner_id = 6;
   Object object = 7;
   optional string coin_type = 8;
-  uint64 coin_balance = 9;
-  DynamicFieldInfo df_info = 10;
+  optional uint64 coin_balance = 9;
 }
 
 message Object {

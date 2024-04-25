@@ -6,3 +6,4 @@ pub mod sui_object;
 pub mod sui_event;
 pub mod execution_status;
 pub mod display_update;
+pub mod tx_object_change;
