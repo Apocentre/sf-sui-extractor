@@ -10,6 +10,7 @@ pub fn convert_tx_object_changes(source: &TransactionObjectChangesToCommit) -> p
       object_version: changed_object.object_version,
       object_digest: changed_object.object_digest.base58_encode(),
       checkpoint_sequence_number: changed_object.checkpoint_sequence_number,
+      tx_digest: changed_object.tx_digest.base58_encode(),
       owner_type: Some(convert_owner_type(&changed_object.owner_type)),
       owner_id: changed_object.owner_id.map(|owner_id| convert_sui_address(&owner_id)),
       object: Some(convert_object(&changed_object.object)),
@@ -23,6 +24,7 @@ pub fn convert_tx_object_changes(source: &TransactionObjectChangesToCommit) -> p
       object_id: Some(convert_sui_object(&deleted_object.object_id)),
       object_version: deleted_object.object_version,
       checkpoint_sequence_number: deleted_object.checkpoint_sequence_number,
+      tx_digest: deleted_object.tx_digest.base58_encode(),
     }
   }).collect::<Vec<_>>();
   

@@ -648,15 +648,17 @@ pub struct IndexedObject {
     pub object_digest: ::prost::alloc::string::String,
     #[prost(uint64, tag = "4")]
     pub checkpoint_sequence_number: u64,
-    #[prost(message, optional, tag = "5")]
+    #[prost(string, tag = "5")]
+    pub tx_digest: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "6")]
     pub owner_type: ::core::option::Option<OwnerType>,
-    #[prost(string, optional, tag = "6")]
+    #[prost(string, optional, tag = "7")]
     pub owner_id: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(message, optional, tag = "7")]
+    #[prost(message, optional, tag = "8")]
     pub object: ::core::option::Option<Object>,
-    #[prost(string, optional, tag = "8")]
+    #[prost(string, optional, tag = "9")]
     pub coin_type: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(uint64, optional, tag = "9")]
+    #[prost(uint64, optional, tag = "10")]
     pub coin_balance: ::core::option::Option<u64>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -823,6 +825,8 @@ pub struct IndexedDeletedObject {
     pub object_version: u64,
     #[prost(uint64, tag = "3")]
     pub checkpoint_sequence_number: u64,
+    #[prost(string, tag = "4")]
+    pub tx_digest: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

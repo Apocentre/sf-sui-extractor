@@ -387,11 +387,12 @@ message IndexedObject {
   uint64 object_version = 2;
   string object_digest = 3;
   uint64 checkpoint_sequence_number = 4;
-  OwnerType owner_type = 5;
-  optional string owner_id = 6;
-  Object object = 7;
-  optional string coin_type = 8;
-  optional uint64 coin_balance = 9;
+  string tx_digest = 5;
+  OwnerType owner_type = 6;
+  optional string owner_id = 7;
+  Object object = 8;
+  optional string coin_type = 9;
+  optional uint64 coin_balance = 10;
 }
 
 message Object {
@@ -489,6 +490,7 @@ message IndexedDeletedObject {
   ObjectID object_id = 1;
   uint64 object_version = 2;
   uint64 checkpoint_sequence_number = 3;
+  string tx_digest = 4;
 }
 
 message IndexedPackage {
