@@ -261,3 +261,20 @@ fn convert_move_location_opt(source: &MoveLocationOpt) -> Option<execution_failu
   source.0.as_ref().map(convert_move_location)
 }
 
+#[cfg(test)]
+mod tests {
+  use sui_types::execution_status::ExecutionStatus;
+  use crate::pb::sui::checkpoint::{self as pb};
+  use super::convert_sui_execution_status;
+
+  #[test]
+  fn converts_sui_execution_status() {
+    let source = ExecutionStatus::Success;
+    let pb_execution_status = convert_sui_execution_status(&source);
+    let expected = pb::ExecutionStatus {
+      execution_status: Some(pb::execution_status::ExecutionStatus::Success(()))
+    };
+
+    assert_eq!(expected, pb_execution_status);
+  }
+}
