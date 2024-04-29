@@ -65,3 +65,55 @@ pub fn convert_tx_object_change(source: &IndexedObjectChange) -> pb::ObjectChang
     object_change: Some(object_change),
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use std::str::FromStr;
+  use move_core_types::{account_address::AccountAddress, language_storage::StructTag};
+use sui_indexer::types::IndexedObjectChange;
+  use sui_types::{base_types::{ObjectID, SequenceNumber, SuiAddress}, digests::ObjectDigest, object::Owner, Identifier};
+  use crate::{convert::sui_object::convert_tx_object_change, pb::sui::checkpoint::{self as pb, ListOfTypeTags}};
+
+  #[test]
+  fn converts_tx_object_change() {
+    let source = IndexedObjectChange::Mutated {
+      sender: SuiAddress::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+      owner: Owner::Shared {
+        initial_shared_version: SequenceNumber::from_u64(1),
+      },
+      object_type: StructTag {
+        address: AccountAddress::from_str("0000000000000000000000000000000000000000000000000000000000000002").unwrap(),
+        module: Identifier::new("clock").unwrap(),
+        name: Identifier::new("Clock").unwrap(),
+        type_params: vec![],
+      },
+      object_id: ObjectID::from_str("0x0000000000000000000000000000000000000000000000000000000000000006").unwrap(),
+      version: SequenceNumber::from_u64(1448001),
+      previous_version: SequenceNumber::from_u64(1448000),
+      digest: ObjectDigest::from_str("CDdzbah88YnaMJXjhpnqHy5BTo3YBAqckuD5uzfs2kyX").unwrap(),
+    };
+    let pb_object_change = convert_tx_object_change(&source);
+    let expected = pb::ObjectChange {
+        object_change: Some(pb::object_change::ObjectChange::Mutated(pb::Mutated {
+          sender: "0000000000000000000000000000000000000000000000000000000000000000".to_string(),
+          owner: Some(pb::Owner {owner: Some(pb::owner::Owner::Shared(pb::Shared {initial_shared_version: 1}))}),
+          object_type: Some(pb::StructTag {
+            address: "0000000000000000000000000000000000000000000000000000000000000002".to_string(),
+            module: "clock".to_string(),
+            name: "Clock".to_string(),
+            type_params: Some(ListOfTypeTags {
+              list: vec![],
+            }),
+          }),
+          object_id: Some(pb::ObjectId {
+            account_address: "0000000000000000000000000000000000000000000000000000000000000006".to_string(),
+          }),
+          version: 1448001,
+          previous_version: 1448000,
+          digest: "CDdzbah88YnaMJXjhpnqHy5BTo3YBAqckuD5uzfs2kyX".to_string(),
+        })),
+    };
+
+    assert_eq!(expected, pb_object_change);
+  }
+}
