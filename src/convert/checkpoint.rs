@@ -47,7 +47,7 @@ mod tests {
 
   #[test]
   fn coverts_to_checkpoint() {
-    let source_checkpoint = IndexedCheckpoint {
+    let source = IndexedCheckpoint {
       sequence_number: 1448000,
       checkpoint_digest: CheckpointDigest::from_str("8Y1Kx4BJxbAq2WvJcHmrbgq9VewnZ6um6biCDeb7XbCR").unwrap(),
       epoch: 19,
@@ -71,7 +71,7 @@ mod tests {
       end_of_epoch: false,
     };
 
-    let pb_checkpoint = convert_checkpoint(&source_checkpoint);
+    let pb_checkpoint = convert_checkpoint(&source);
     let expected = pb::Checkpoint {
       epoch: 19,
       sequence_number: 1448000,
@@ -92,6 +92,6 @@ mod tests {
       end_of_epoch: false,
     };
 
-    assert_eq!(expected, pb_checkpoint)
+    assert_eq!(expected, pb_checkpoint);
   }
 }
