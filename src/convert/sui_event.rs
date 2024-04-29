@@ -23,7 +23,49 @@ pub fn convert_indexed_event(source: &IndexedEvent) -> pb::IndexedEvent {
     package: Some(convert_sui_object(&source.package)),
     module: source.module.clone(),
     event_type: source.event_type.clone(),
-    bsc: source.bcs.clone(),
+    bcs: source.bcs.clone(),
     timestamp_ms: source.timestamp_ms,
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use std::str::FromStr;
+
+use sui_indexer::types::IndexedEvent;
+  use sui_types::{base_types::{ObjectID, SuiAddress}, digests::TransactionDigest};
+  use crate::{convert::sui_event::convert_indexed_event, pb::sui::checkpoint::{self as pb, ObjectId}};
+
+  #[test]
+  fn converts_indexed_event() {
+    let source = IndexedEvent {
+        tx_sequence_number: 1,
+        event_sequence_number: 10,
+        checkpoint_sequence_number: 1000,
+        transaction_digest: TransactionDigest::from_str("2GB5NVhagD4fQ9P85WqtgX3nwFwVdqDPbKYBtGcziQYM").unwrap(),
+        senders: vec![SuiAddress::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap()],
+        package: ObjectID::from_str("0x0000000000000000000000000000000000000000000000000000000000000006").unwrap(),
+        module: "module_id".to_string(),
+        event_type: "event_1".to_string(),
+        bcs: vec![1,2 ,3 , 4, 5],
+        timestamp_ms: 1682990756147,
+    };
+    let pb_indexed_event = convert_indexed_event(&source);
+    let expected = pb::IndexedEvent {
+      tx_sequence_number: 1,
+      event_sequence_number: 10,
+      checkpoint_sequence_number: 1000,
+      transaction_digest: "2GB5NVhagD4fQ9P85WqtgX3nwFwVdqDPbKYBtGcziQYM".to_string(),
+      senders: vec!["0000000000000000000000000000000000000000000000000000000000000000".to_string()],
+      package: Some(ObjectId {
+        account_address: "0000000000000000000000000000000000000000000000000000000000000006".to_string(),
+      }),
+      module: "module_id".to_string(),
+      event_type: "event_1".to_string(),
+      bcs: vec![1,2 ,3 , 4, 5],
+      timestamp_ms: 1682990756147,
+    };
+
+    assert_eq!(expected, pb_indexed_event);
   }
 }

@@ -343,7 +343,7 @@ message IndexedEvent {
   ObjectID package = 6;
   string module = 7;
   string event_type = 8;
-  bytes bsc = 9;
+  bytes bcs = 9;
   uint64 timestamp_ms = 10;
 }
 

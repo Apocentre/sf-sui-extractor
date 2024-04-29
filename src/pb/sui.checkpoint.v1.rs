@@ -578,7 +578,7 @@ pub struct IndexedEvent {
     #[prost(string, tag = "8")]
     pub event_type: ::prost::alloc::string::String,
     #[prost(bytes = "vec", tag = "9")]
-    pub bsc: ::prost::alloc::vec::Vec<u8>,
+    pub bcs: ::prost::alloc::vec::Vec<u8>,
     #[prost(uint64, tag = "10")]
     pub timestamp_ms: u64,
 }
