@@ -60,7 +60,7 @@ mod tests {
   use std::str::FromStr;
   use move_core_types::{account_address::AccountAddress, language_storage::StructTag};
 use sui_indexer::{handlers::TransactionObjectChangesToCommit, types::{IndexedObject, OwnerType}};
-  use sui_types::{base_types::{MoveObjectType, ObjectID, SequenceNumber}, digests::{ObjectDigest, TransactionDigest}, object::{MoveObject, Object, Owner}, Identifier};
+  use sui_types::{base_types::{ObjectID, SequenceNumber}, digests::{ObjectDigest, TransactionDigest}, object::{MoveObject, Object, Owner}, Identifier};
   use crate::pb::sui::checkpoint::{self as pb};
   use super::convert_tx_object_changes;
 

@@ -388,3 +388,249 @@ pub fn convert_transaction(source: &IndexedTransaction) -> pb::Transaction {
     successful_tx_num: source.successful_tx_num,
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use std::str::FromStr;
+  use move_core_types::{account_address::AccountAddress, language_storage::StructTag};
+  use shared_crypto::intent::{AppId, Intent, IntentScope};
+  use sui_indexer::types::{TransactionKind as IndexerTxKind, IndexedObjectChange, IndexedTransaction};
+  use sui_types::{
+    base_types::{ObjectID, SequenceNumber, SuiAddress}, crypto::{Ed25519SuiSignature, Signature},
+    digests::{ObjectDigest, TransactionDigest}, effects::TransactionEffects, execution_status::ExecutionStatus,
+    gas::GasCostSummary, messages_consensus::ConsensusCommitPrologue, object::Owner, signature::GenericSignature,
+    transaction::{GasData, SenderSignedData, TransactionData, TransactionDataV1, TransactionExpiration, TransactionKind},
+    Identifier
+  };
+
+use crate::{convert::tx::convert_transaction, pb::sui::checkpoint::{self as pb, TransactionBlockEffectsV1}};
+
+  #[test]
+  fn converts_transaction() {
+    let source = IndexedTransaction {
+        tx_sequence_number: 1449227,
+        tx_digest: TransactionDigest::from_str("D7CBWgtjcgMyn1YhRZ2q7okrmiCUYW4QA5gPZT6CRa2n").unwrap(),
+        sender_signed_data: SenderSignedData::new(
+          TransactionData::V1(TransactionDataV1 {
+            kind: TransactionKind::ConsensusCommitPrologue(ConsensusCommitPrologue {
+              epoch: 19,
+              round: 58682,
+              commit_timestamp_ms: 1682990756147,
+            }),
+            sender: SuiAddress::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+            gas_data: GasData {
+              payment: vec![(
+                ObjectID::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+                SequenceNumber::from_u64(0),
+                ObjectDigest::from_str("11111111111111111111111111111111").unwrap(),
+              )],
+              owner: SuiAddress::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+              price: 1,
+              budget: 0,
+            },
+            expiration: TransactionExpiration::None,
+          }),
+          Intent {
+            scope: IntentScope::TransactionData,
+            version: shared_crypto::intent::IntentVersion::V0,
+            app_id: AppId::Sui,
+          },
+          vec![GenericSignature::Signature(Signature::Ed25519SuiSignature(Ed25519SuiSignature::default()))]
+        ),
+        effects: TransactionEffects::new_from_execution_v1(
+          ExecutionStatus::Success,
+          19,
+          GasCostSummary {
+            computation_cost: 0,
+            storage_cost: 0,
+            storage_rebate: 0,
+            non_refundable_storage_fee: 0,
+          },
+          vec![(ObjectID::from_str("0x0000000000000000000000000000000000000000000000000000000000000006").unwrap(), SequenceNumber::from_u64(1448000))],
+          vec![(
+            ObjectID::from_str("0x0000000000000000000000000000000000000000000000000000000000000006").unwrap(),
+            SequenceNumber::from_u64(1448000),
+            ObjectDigest::from_str("2GB5NVhagD4fQ9P85WqtgX3nwFwVdqDPbKYBtGcziQYM").unwrap(),
+          )],
+          TransactionDigest::from_str("D7CBWgtjcgMyn1YhRZ2q7okrmiCUYW4QA5gPZT6CRa2n").unwrap(),
+          vec![],
+          vec![(
+            (
+              ObjectID::from_str("0x0000000000000000000000000000000000000000000000000000000000000006").unwrap(),
+              SequenceNumber::from_u64(1448001),
+              ObjectDigest::from_str("CDdzbah88YnaMJXjhpnqHy5BTo3YBAqckuD5uzfs2kyX").unwrap(),
+            ),
+            Owner::Shared {
+              initial_shared_version: SequenceNumber::from_u64(1),
+            },
+          )],
+          vec![],
+          vec![],
+          vec![],
+          vec![],
+          (
+            (
+              ObjectID::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+              SequenceNumber::from_u64(0),
+              ObjectDigest::from_str("11111111111111111111111111111111").unwrap(),
+            ),
+            Owner::AddressOwner(SuiAddress::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap()),
+          ),
+          None,
+          vec![TransactionDigest::from_str("A5PHzo8quSTJGpay1S5Q6AKTjtYpSJPMUi3wchQkzBSX").unwrap()],
+        ),
+        checkpoint_sequence_number: 1448000,
+        timestamp_ms: 1682990756147,
+        object_changes: vec![
+          IndexedObjectChange::Mutated {
+            sender: SuiAddress::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+            owner: Owner::Shared {
+              initial_shared_version: SequenceNumber::from_u64(1),
+            },
+            object_type: StructTag {
+              address: AccountAddress::from_str("0000000000000000000000000000000000000000000000000000000000000002").unwrap(),
+              module: Identifier::new("clock").unwrap(),
+              name: Identifier::new("Clock").unwrap(),
+              type_params: vec![],
+            },
+            object_id: ObjectID::from_str("0x0000000000000000000000000000000000000000000000000000000000000006").unwrap(),
+            version: SequenceNumber::from_u64(1448001),
+            previous_version: SequenceNumber::from_u64(1448000),
+            digest: ObjectDigest::from_str("CDdzbah88YnaMJXjhpnqHy5BTo3YBAqckuD5uzfs2kyX").unwrap(),
+          }
+        ],
+        balance_change: vec![],
+        events: vec![],
+        transaction_kind: IndexerTxKind::SystemTransaction,
+        successful_tx_num: 1,
+    };
+    let pb_tx = convert_transaction(&source);
+    let expected = pb::Transaction {
+        sequence_number: 1449227,
+        digest: "D7CBWgtjcgMyn1YhRZ2q7okrmiCUYW4QA5gPZT6CRa2n".to_string(),
+        sender_signed_data: vec![
+          pb::SenderSignedTransaction {
+            intent_message: Some(pb::IntentMessage {
+              intent: Some(pb::Intent {
+                scope: Some(pb::IntentScope {
+                  intent_scope: Some(pb::intent_scope::IntentScope::TransactionData(())),
+                }),
+                version: Some(pb::IntentVersion {
+                  intent_version: Some(pb::intent_version::IntentVersion::V0(()))
+                }),
+                app_id: Some(pb::AppId {
+                  app_id: Some(pb::app_id::AppId::Sui(())),
+                }),
+              }),
+              value: Some(pb::TransactionData {
+                tx_data: Some(pb::transaction_data::TxData::V1(pb::TransactionDataV1 {
+                  kind: Some(pb::TransactionKind {
+                    transaction_kind: Some(pb::transaction_kind::TransactionKind::ConsensusCommitPrologue(pb::ConsensusCommitPrologue {
+                      epoch: 19,
+                      round: 58682,
+                      commit_timestamp_ms: 1682990756147,
+                    })),
+                  }),
+                  sender: "0000000000000000000000000000000000000000000000000000000000000000".to_string(),
+                  gas_data: Some(pb::GasData {
+                    payment: vec![pb::ObjectRef {
+                      object_id: Some(pb::ObjectId {account_address: "0000000000000000000000000000000000000000000000000000000000000000".to_string() }),
+                      sequence_number: 0,
+                      digest: "11111111111111111111111111111111".to_string(),
+                    }],
+                    owner: "0000000000000000000000000000000000000000000000000000000000000000".to_string(),
+                    price: 1,
+                    budget: 0,
+                  }),
+                  expiration: Some(pb::TransactionExpiration {
+                    tx_expiration: Some(pb::transaction_expiration::TxExpiration::None(())),
+                  }),
+                })),
+              }),
+            })
+          } 
+        ],
+        effects: Some(pb::TransactionBlockEffects {
+          transaction_block_effects: Some(
+            pb::transaction_block_effects::TransactionBlockEffects::V1(TransactionBlockEffectsV1 {
+              status: Some(pb::ExecutionStatus {
+                execution_status: Some(pb::execution_status::ExecutionStatus::Success(())),
+              }),
+              executed_epoch: 19,
+              gas_used: Some(pb::GasCostSummary {
+                computation_cost: 0,
+                storage_cost: 0,
+                storage_rebate: 0,
+                non_refundable_storage_fee: 0,
+              }),
+              modified_at_versions: vec![
+                pb::TransactionBlockEffectsModifiedAtVersions {
+                  object_id: Some(pb::ObjectId {account_address: "0000000000000000000000000000000000000000000000000000000000000006".to_string() }),
+                  sequence_number: 1448000,
+                }
+              ],
+              shared_objects: vec![pb::ObjectRef {
+                object_id: Some(pb::ObjectId {account_address: "0000000000000000000000000000000000000000000000000000000000000006".to_string() }),
+                sequence_number: 1448000,
+                digest: "2GB5NVhagD4fQ9P85WqtgX3nwFwVdqDPbKYBtGcziQYM".to_string(),
+              }],
+              transaction_digest: "D7CBWgtjcgMyn1YhRZ2q7okrmiCUYW4QA5gPZT6CRa2n".to_string(),
+              created: vec![],
+              mutated: vec![pb::OwnedObjectRef {
+                owner: Some(pb::Owner {owner: Some(pb::owner::Owner::Shared(pb::Shared { initial_shared_version: 1 }))}),
+                reference: Some(pb::ObjectRef {
+                  object_id: Some(pb::ObjectId {account_address: "0000000000000000000000000000000000000000000000000000000000000006".to_string() }),
+                  sequence_number: 1448001,
+                  digest: "CDdzbah88YnaMJXjhpnqHy5BTo3YBAqckuD5uzfs2kyX".to_string(),
+                }),
+              }],
+              unwrapped: vec![],
+              deleted: vec![],
+              unwrapped_then_deleted: vec![],
+              wrapped: vec![],
+              gas_object: Some(pb::OwnedObjectRef {
+                owner: Some(pb::Owner {owner: Some(pb::owner::Owner::AddressOwner("0000000000000000000000000000000000000000000000000000000000000000".to_string()))}),
+                reference: Some(pb::ObjectRef {
+                  object_id: Some(pb::ObjectId {account_address: "0000000000000000000000000000000000000000000000000000000000000000".to_string() }),
+                  sequence_number: 0,
+                  digest: "11111111111111111111111111111111".to_string(),
+                }),
+              }),
+              events_digest: None,
+              dependencies: vec!["A5PHzo8quSTJGpay1S5Q6AKTjtYpSJPMUi3wchQkzBSX".to_string()],
+            })
+          ),
+        }),
+        checkpoint_sequence_number: 1448000,
+        timestamp_ms: 1682990756147,
+        object_changes: vec![pb::ObjectChange {
+          object_change: Some(pb::object_change::ObjectChange::Mutated(pb::Mutated {
+            sender: "0000000000000000000000000000000000000000000000000000000000000000".to_string(),
+            owner: Some(pb::Owner {owner: Some(pb::owner::Owner::Shared(pb::Shared {initial_shared_version: 1}))}),
+            object_type: Some(pb::StructTag {
+              address: "0000000000000000000000000000000000000000000000000000000000000002".to_string(),
+              module: "clock".to_string(),
+              name: "Clock".to_string(),
+              type_params: Some(pb::ListOfTypeTags {
+                list: vec![],
+              }),
+            }),
+            object_id: Some(pb::ObjectId {
+              account_address: "0000000000000000000000000000000000000000000000000000000000000006".to_string(),
+            }),
+            version: 1448001,
+            previous_version: 1448000,
+            digest: "CDdzbah88YnaMJXjhpnqHy5BTo3YBAqckuD5uzfs2kyX".to_string(),
+          })),
+        }],
+        balance_change: vec![],
+        events: vec![],
+        transaction_kind: Some(pb::GenericTransactionKind {
+          kind: Some(pb::generic_transaction_kind::Kind::SystemTransaction(())),
+        }),
+        successful_tx_num: 1,
+    };
+
+    assert_eq!(expected, pb_tx);
+  }
+}

@@ -94,24 +94,24 @@ use sui_indexer::types::IndexedObjectChange;
     };
     let pb_object_change = convert_tx_object_change(&source);
     let expected = pb::ObjectChange {
-        object_change: Some(pb::object_change::ObjectChange::Mutated(pb::Mutated {
-          sender: "0000000000000000000000000000000000000000000000000000000000000000".to_string(),
-          owner: Some(pb::Owner {owner: Some(pb::owner::Owner::Shared(pb::Shared {initial_shared_version: 1}))}),
-          object_type: Some(pb::StructTag {
-            address: "0000000000000000000000000000000000000000000000000000000000000002".to_string(),
-            module: "clock".to_string(),
-            name: "Clock".to_string(),
-            type_params: Some(ListOfTypeTags {
-              list: vec![],
-            }),
+      object_change: Some(pb::object_change::ObjectChange::Mutated(pb::Mutated {
+        sender: "0000000000000000000000000000000000000000000000000000000000000000".to_string(),
+        owner: Some(pb::Owner {owner: Some(pb::owner::Owner::Shared(pb::Shared {initial_shared_version: 1}))}),
+        object_type: Some(pb::StructTag {
+          address: "0000000000000000000000000000000000000000000000000000000000000002".to_string(),
+          module: "clock".to_string(),
+          name: "Clock".to_string(),
+          type_params: Some(ListOfTypeTags {
+            list: vec![],
           }),
-          object_id: Some(pb::ObjectId {
-            account_address: "0000000000000000000000000000000000000000000000000000000000000006".to_string(),
-          }),
-          version: 1448001,
-          previous_version: 1448000,
-          digest: "CDdzbah88YnaMJXjhpnqHy5BTo3YBAqckuD5uzfs2kyX".to_string(),
-        })),
+        }),
+        object_id: Some(pb::ObjectId {
+          account_address: "0000000000000000000000000000000000000000000000000000000000000006".to_string(),
+        }),
+        version: 1448001,
+        previous_version: 1448000,
+        digest: "CDdzbah88YnaMJXjhpnqHy5BTo3YBAqckuD5uzfs2kyX".to_string(),
+      })),
     };
 
     assert_eq!(expected, pb_object_change);
