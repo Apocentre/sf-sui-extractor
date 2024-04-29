@@ -138,3 +138,114 @@ fn convert_unchanged_shared_objects(source: &(ObjectID, UnchangedSharedKind)) ->
     }),
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use std::str::FromStr;
+  use sui_types::{
+    base_types::{ObjectID, SequenceNumber, SuiAddress}, digests::{ObjectDigest, TransactionDigest}, 
+    effects::TransactionEffects, execution_status::ExecutionStatus, gas::GasCostSummary, object::Owner,
+  };
+  use crate::{convert::sui_effects::convert_sui_effects, pb::sui::checkpoint::{self as pb, ObjectId, TransactionBlockEffectsV1}};
+
+  #[test]
+  fn converts_sui_effects() {
+    let source = TransactionEffects::new_from_execution_v1(
+      ExecutionStatus::Success,
+      19,
+      GasCostSummary {
+        computation_cost: 0,
+        storage_cost: 0,
+        storage_rebate: 0,
+        non_refundable_storage_fee: 0,
+      },
+      vec![(ObjectID::from_str("0x0000000000000000000000000000000000000000000000000000000000000006").unwrap(), SequenceNumber::from_u64(1448000))],
+      vec![(
+        ObjectID::from_str("0x0000000000000000000000000000000000000000000000000000000000000006").unwrap(),
+        SequenceNumber::from_u64(1448000),
+        ObjectDigest::from_str("2GB5NVhagD4fQ9P85WqtgX3nwFwVdqDPbKYBtGcziQYM").unwrap(),
+      )],
+      TransactionDigest::from_str("D7CBWgtjcgMyn1YhRZ2q7okrmiCUYW4QA5gPZT6CRa2n").unwrap(),
+      vec![],
+      vec![(
+        (
+          ObjectID::from_str("0x0000000000000000000000000000000000000000000000000000000000000006").unwrap(),
+          SequenceNumber::from_u64(1448001),
+          ObjectDigest::from_str("CDdzbah88YnaMJXjhpnqHy5BTo3YBAqckuD5uzfs2kyX").unwrap(),
+        ),
+        Owner::Shared {
+          initial_shared_version: SequenceNumber::from_u64(1),
+        },
+      )],
+      vec![],
+      vec![],
+      vec![],
+      vec![],
+      (
+        (
+          ObjectID::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+          SequenceNumber::from_u64(0),
+          ObjectDigest::from_str("11111111111111111111111111111111").unwrap(),
+        ),
+        Owner::AddressOwner(SuiAddress::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap()),
+      ),
+      None,
+      vec![TransactionDigest::from_str("A5PHzo8quSTJGpay1S5Q6AKTjtYpSJPMUi3wchQkzBSX").unwrap()],
+    );
+
+    let pb_transaction_effects = convert_sui_effects(&source);
+    let expected = pb::TransactionBlockEffects {
+      transaction_block_effects: Some(
+        pb::transaction_block_effects::TransactionBlockEffects::V1(TransactionBlockEffectsV1 {
+          status: Some(pb::ExecutionStatus {
+            execution_status: Some(pb::execution_status::ExecutionStatus::Success(())),
+          }),
+          executed_epoch: 19,
+          gas_used: Some(pb::GasCostSummary {
+            computation_cost: 0,
+            storage_cost: 0,
+            storage_rebate: 0,
+            non_refundable_storage_fee: 0,
+          }),
+          modified_at_versions: vec![
+            pb::TransactionBlockEffectsModifiedAtVersions {
+              object_id: Some(ObjectId {account_address: "0000000000000000000000000000000000000000000000000000000000000006".to_string() }),
+              sequence_number: 1448000,
+            }
+          ],
+          shared_objects: vec![pb::ObjectRef {
+            object_id: Some(ObjectId {account_address: "0000000000000000000000000000000000000000000000000000000000000006".to_string() }),
+            sequence_number: 1448000,
+            digest: "2GB5NVhagD4fQ9P85WqtgX3nwFwVdqDPbKYBtGcziQYM".to_string(),
+          }],
+          transaction_digest: "D7CBWgtjcgMyn1YhRZ2q7okrmiCUYW4QA5gPZT6CRa2n".to_string(),
+          created: vec![],
+          mutated: vec![pb::OwnedObjectRef {
+            owner: Some(pb::Owner {owner: Some(pb::owner::Owner::Shared(pb::Shared { initial_shared_version: 1 }))}),
+            reference: Some(pb::ObjectRef {
+              object_id: Some(ObjectId {account_address: "0000000000000000000000000000000000000000000000000000000000000006".to_string() }),
+              sequence_number: 1448001,
+              digest: "CDdzbah88YnaMJXjhpnqHy5BTo3YBAqckuD5uzfs2kyX".to_string(),
+            }),
+          }],
+          unwrapped: vec![],
+          deleted: vec![],
+          unwrapped_then_deleted: vec![],
+          wrapped: vec![],
+          gas_object: Some(pb::OwnedObjectRef {
+            owner: Some(pb::Owner {owner: Some(pb::owner::Owner::AddressOwner("0000000000000000000000000000000000000000000000000000000000000000".to_string()))}),
+            reference: Some(pb::ObjectRef {
+              object_id: Some(ObjectId {account_address: "0000000000000000000000000000000000000000000000000000000000000000".to_string() }),
+              sequence_number: 0,
+              digest: "11111111111111111111111111111111".to_string(),
+            }),
+          }),
+          events_digest: None,
+          dependencies: vec!["A5PHzo8quSTJGpay1S5Q6AKTjtYpSJPMUi3wchQkzBSX".to_string()],
+        })
+      ),
+    };
+
+    assert_eq!(expected, pb_transaction_effects);
+  }
+}

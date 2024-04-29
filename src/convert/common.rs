@@ -173,6 +173,7 @@ pub fn convert_tx_block_effects_modified_at_versions(source: &(ObjectID, Sequenc
     sequence_number: source.1.value(),
   }
 }
+
 pub fn convert_move_object_type(source: &MoveObjectType) -> pb::MoveObjectType {
   let move_object_type = match source.clone().into_inner() {
     sui_types::base_types::MoveObjectType_::Other(source) => pb::move_object_type::MoveObjectType::Other(pb::StructTag {
