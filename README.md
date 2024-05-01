@@ -26,9 +26,3 @@ cargo build --release --bin sui-node
 > If you run a local node and not a remote RPC node then you would need to turn the experimental rest api on. To do so, add this to the `full_node.yaml`
 >
 > `enable-experimental-rest-api: true`
-
-Create Root Directory
-===
-
-1. `mkdir ~/.sf_sui && mkdir ~/.sf_sui/sui_config`
-2. `cp sui_config/* ~/.sf_sui/sui_config`

@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use eyre::Result;
 use futures::StreamExt;
 use mysten_metrics::{
@@ -20,23 +22,33 @@ use crate::{
   convert::{
     checkpoint::convert_checkpoint, display_update::convert_display_update, sui_event::convert_indexed_event,
     tx::convert_transaction, tx_object_change::convert_tx_object_changes,
-  },
-  pb::sui::checkpoint as pb,
+  }, logger::Logger, pb::sui::checkpoint as pb
 };
 
 const DOWNLOAD_QUEUE_SIZE: usize = 1000;
 const CHECKPOINT_QUEUE_SIZE: usize = 1000;
 const CHECKPOINT_PROCESSING_BATCH_SIZE: usize = 25;
 
-pub struct FirehoseStreamer {
+pub  struct FirehoseStreamer<L>
+where
+  L: Logger
+{
   pub current_checkpoint_seq: u64,
   rpc_client_url: String,
   chain_id: String,
   metrics: IndexerMetrics,
+  phantom: PhantomData<L>,
 }
 
-impl FirehoseStreamer {
-  pub fn new(chain_id: String, rpc_client_url: String, starting_checkpoint_seq: u64) -> Self {
+impl <L> FirehoseStreamer<L>
+where
+  L: Logger
+{
+  pub fn new(
+    chain_id: String,
+    rpc_client_url: String,
+    starting_checkpoint_seq: u64,
+  ) -> Self {
     let registry = Registry::default();
     init_metrics(&registry);
     let metrics = IndexerMetrics::new(&registry);
@@ -46,14 +58,17 @@ impl FirehoseStreamer {
       rpc_client_url,
       chain_id,
       metrics,
+      phantom: PhantomData,
     }
   }
 
   pub async fn start(&mut self) -> Result<()> {
     // Format is FIRE INIT sui-node <PACKAGE_VERSION> <MAJOR_VERSION> <MINOR_VERSION> <CHAIN_ID>
-    println!(
-      "\nFIRE INIT sui-node {} sui 0 0 {}",
-      env!("CARGO_PKG_VERSION"), self.chain_id,
+    L::log(
+      &format!(
+        "\nFIRE INIT sui-node {} sui 0 0 {}",
+        env!("CARGO_PKG_VERSION"), self.chain_id,
+      ),
     );
 
     let (
@@ -143,7 +158,7 @@ impl FirehoseStreamer {
       // We will have to update the proto buf models and thus all convertsion logic that exist in the
       // convert module.
       assert!(self.current_checkpoint_seq == checkpoint_data.checkpoint.sequence_number, "sequence number mismatch");
-      println!("\nFIRE BLOCK_START {}", self.current_checkpoint_seq);
+      L::log(&format!("\nFIRE BLOCK_START {}", self.current_checkpoint_seq));
 
       if checkpoint_data.transactions.is_empty() {
         debug!("[fh-stream] no transactions to send");
@@ -155,7 +170,7 @@ impl FirehoseStreamer {
         self.current_checkpoint_seq,
       );
 
-      Self::print_checkpoint_overview(&convert_checkpoint(&checkpoint_data.checkpoint));
+      self.print_checkpoint_overview(&convert_checkpoint(&checkpoint_data.checkpoint));
 
       for tx in &checkpoint_data.transactions {
         let txn_proto = convert_transaction(&tx);
@@ -177,7 +192,7 @@ impl FirehoseStreamer {
         Self::print_display_update(&store_display_proto);
       }
 
-      println!("\nFIRE BLOCK_END {}", self.current_checkpoint_seq);
+      L::log(&format!("\nFIRE BLOCK_END {}", self.current_checkpoint_seq));
       self.current_checkpoint_seq += 1;
     }
   }
@@ -198,7 +213,7 @@ impl FirehoseStreamer {
     Ok(rest_client)
   }
 
-  fn print_checkpoint_overview(checkpoint: &pb::Checkpoint) {
+  fn print_checkpoint_overview(&self, checkpoint: &pb::Checkpoint) {
     let mut buf = vec![];
     checkpoint.encode(&mut buf).unwrap_or_else(|_| {
       panic!(
@@ -207,7 +222,7 @@ impl FirehoseStreamer {
       )
     });
 
-    println!("\nFIRE CHECKPOINT {}", base64::encode(buf));
+    L::log(&format!("\nFIRE CHECKPOINT {}", base64::encode(buf)));
   }
 
   fn print_transaction(transaction: &pb::Transaction) {
@@ -219,7 +234,7 @@ impl FirehoseStreamer {
       )
     });
 
-    println!("\nFIRE TRX {}", base64::encode(buf));
+    L::log(&format!("\nFIRE TRX {}", base64::encode(buf)));
   }
 
   fn print_object_changes(tx_object_change: &pb::TransactionObjectChange) {
@@ -231,7 +246,7 @@ impl FirehoseStreamer {
       )
     });
 
-    println!("\nFIRE OBJ_CHANGE {}", base64::encode(buf));
+    L::log(&format!("\nFIRE OBJ_CHANGE {}", base64::encode(buf)));
   }
 
   fn print_event(event: &pb::IndexedEvent) {
@@ -243,7 +258,7 @@ impl FirehoseStreamer {
       )
     });
 
-    println!("\nFIRE EVT {}", base64::encode(buf));
+    L::log(&format!("\nFIRE EVT {}", base64::encode(buf)));
   }
 
   fn print_display_update(display_update: &pb::StoredDisplay) {
@@ -255,6 +270,6 @@ impl FirehoseStreamer {
       )
     });
 
-    println!("\nFIRE DSP_UPDATE {}", base64::encode(buf));
+    L::log(&format!("\nFIRE DSP_UPDATE {}", base64::encode(buf)));
   }
 }

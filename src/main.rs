@@ -1,7 +1,7 @@
 use clap::Parser;
 use env_logger::Env;
 use eyre::Result;
-use sui_sf_indexer::{args::Args, process_manager::ProcessManager};
+use sui_sf_indexer::{args::Args, process_manager::ProcessManager, logger::StdoutLogger};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -9,7 +9,7 @@ async fn main() -> Result<()> {
 
   let args = Args::parse();
   let mut pm = ProcessManager::new(args);
-  pm.start().await;
+  pm.start::<StdoutLogger>().await;
 
   Ok(())
 }

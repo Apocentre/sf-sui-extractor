@@ -6,7 +6,7 @@ use log::info;
 use tokio::{
   spawn, sync::oneshot::{channel, Sender}, task::JoinHandle,
 };
-use crate::{args::Args, runtime::FirehoseStreamer, sui::sui_node::SuiNode};
+use crate::{args::Args, logger::Logger, runtime::FirehoseStreamer, sui::sui_node::SuiNode};
 
 
 #[derive(Default)]
@@ -19,7 +19,7 @@ pub struct ProcessManager(Arc<Mutex<ProcessManagerInner>>);
 
 impl ProcessManager {
   pub fn new(args: Args) -> Self {
-    let pm = ProcessManagerInner {args, tasks: Vec::new(),};
+    let pm = ProcessManagerInner {args, tasks: Vec::new()};
 
     ProcessManager(Arc::new(Mutex::new(pm)))
   }
@@ -46,7 +46,10 @@ impl ProcessManager {
     self.kill_all();
   }
 
-  pub async fn start(&mut self) {
+  pub async fn start<L>(&mut self)
+  where
+    L: Logger + Sync + Send + 'static
+  {
     let mut tasks = vec![];
 
     let pm = Arc::clone(&self.0);
@@ -60,7 +63,7 @@ impl ProcessManager {
       "http://127.0.0.1:9000".to_string()
     };
 
-    tasks.push(self.spawn_firehose_streamer(rpc_client_url));
+    tasks.push(self.spawn_firehose_streamer::<L>(rpc_client_url));
     self.register_hooks();
   }
 
@@ -78,14 +81,17 @@ impl ProcessManager {
     })
   }
 
-  fn spawn_firehose_streamer(&mut self, rpc_client_url: String) -> JoinHandle<()> {
+  fn spawn_firehose_streamer<L>(&mut self, rpc_client_url: String) -> JoinHandle<()>
+  where
+    L: Logger + Sync + Send + 'static
+  {
     let pm = Arc::clone(&self.0);
     let pm = pm.lock().unwrap();
     let chain_id = pm.args.chain_id.clone();
     let starting_checkpoint_seq = pm.args.starting_checkpoint_seq.clone();
 
     spawn(async move {
-      let mut fireshose_streamer = FirehoseStreamer::new(chain_id, rpc_client_url, starting_checkpoint_seq);
+      let mut fireshose_streamer = FirehoseStreamer::<L>::new(chain_id, rpc_client_url, starting_checkpoint_seq);
       if let Err(e) = fireshose_streamer.start().await {
         panic!("{}", e);
       }
