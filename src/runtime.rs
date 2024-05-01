@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use eyre::Result;
 use futures::StreamExt;
 use mysten_metrics::{
@@ -37,7 +35,7 @@ where
   rpc_client_url: String,
   chain_id: String,
   metrics: IndexerMetrics,
-  phantom: PhantomData<L>,
+  logger: L,
 }
 
 impl <L> FirehoseStreamer<L>
@@ -48,6 +46,7 @@ where
     chain_id: String,
     rpc_client_url: String,
     starting_checkpoint_seq: u64,
+    logger: L,
   ) -> Self {
     let registry = Registry::default();
     init_metrics(&registry);
@@ -58,13 +57,13 @@ where
       rpc_client_url,
       chain_id,
       metrics,
-      phantom: PhantomData,
+      logger,
     }
   }
 
   pub async fn start(&mut self) -> Result<()> {
     // Format is FIRE INIT sui-node <PACKAGE_VERSION> <MAJOR_VERSION> <MINOR_VERSION> <CHAIN_ID>
-    L::log(
+    self.logger.log(
       &format!(
         "\nFIRE INIT sui-node {} sui 0 0 {}",
         env!("CARGO_PKG_VERSION"), self.chain_id,
@@ -158,7 +157,7 @@ where
       // We will have to update the proto buf models and thus all convertsion logic that exist in the
       // convert module.
       assert!(self.current_checkpoint_seq == checkpoint_data.checkpoint.sequence_number, "sequence number mismatch");
-      L::log(&format!("\nFIRE BLOCK_START {}", self.current_checkpoint_seq));
+      self.logger.log(&format!("\nFIRE BLOCK_START {}", self.current_checkpoint_seq));
 
       if checkpoint_data.transactions.is_empty() {
         debug!("[fh-stream] no transactions to send");
@@ -174,25 +173,25 @@ where
 
       for tx in &checkpoint_data.transactions {
         let txn_proto = convert_transaction(&tx);
-        Self::print_transaction(&txn_proto);
+        self.print_transaction(&txn_proto);
       }
 
       let obj_changes_proto = convert_tx_object_changes(&checkpoint_data.object_changes);
-      Self::print_object_changes(&obj_changes_proto);
+      self.print_object_changes(&obj_changes_proto);
 
       // Not that the transaction data does also include event data but here we explicitely log
       // events if one is interested in just that
       for event in &checkpoint_data.events {
         let event_proto = convert_indexed_event(event);
-        Self::print_event(&event_proto);
+        self.print_event(&event_proto);
       }
 
       for (_, store_display) in &checkpoint_data.display_updates {
         let store_display_proto = convert_display_update(store_display);
-        Self::print_display_update(&store_display_proto);
+        self.print_display_update(&store_display_proto);
       }
 
-      L::log(&format!("\nFIRE BLOCK_END {}", self.current_checkpoint_seq));
+      self.logger.log(&format!("\nFIRE BLOCK_END {}", self.current_checkpoint_seq));
       self.current_checkpoint_seq += 1;
     }
   }
@@ -222,10 +221,10 @@ where
       )
     });
 
-    L::log(&format!("\nFIRE CHECKPOINT {}", base64::encode(buf)));
+    self.logger.log(&format!("\nFIRE CHECKPOINT {}", base64::encode(buf)));
   }
 
-  fn print_transaction(transaction: &pb::Transaction) {
+  fn print_transaction(&self, transaction: &pb::Transaction) {
     let mut buf = vec![];
     transaction.encode(&mut buf).unwrap_or_else(|_| {
       panic!(
@@ -234,10 +233,10 @@ where
       )
     });
 
-    L::log(&format!("\nFIRE TRX {}", base64::encode(buf)));
+    self.logger.log(&format!("\nFIRE TRX {}", base64::encode(buf)));
   }
 
-  fn print_object_changes(tx_object_change: &pb::TransactionObjectChange) {
+  fn print_object_changes(&self, tx_object_change: &pb::TransactionObjectChange) {
     let mut buf = vec![];
     tx_object_change.encode(&mut buf).unwrap_or_else(|_| {
       panic!(
@@ -246,10 +245,10 @@ where
       )
     });
 
-    L::log(&format!("\nFIRE OBJ_CHANGE {}", base64::encode(buf)));
+    self.logger.log(&format!("\nFIRE OBJ_CHANGE {}", base64::encode(buf)));
   }
 
-  fn print_event(event: &pb::IndexedEvent) {
+  fn print_event(&self, event: &pb::IndexedEvent) {
     let mut buf = vec![];
     event.encode(&mut buf).unwrap_or_else(|_| {
       panic!(
@@ -258,10 +257,10 @@ where
       )
     });
 
-    L::log(&format!("\nFIRE EVT {}", base64::encode(buf)));
+    self.logger.log(&format!("\nFIRE EVT {}", base64::encode(buf)));
   }
 
-  fn print_display_update(display_update: &pb::StoredDisplay) {
+  fn print_display_update(&self, display_update: &pb::StoredDisplay) {
     let mut buf = vec![];
     display_update.encode(&mut buf).unwrap_or_else(|_| {
       panic!(
@@ -270,6 +269,6 @@ where
       )
     });
 
-    L::log(&format!("\nFIRE DSP_UPDATE {}", base64::encode(buf)));
+    self.logger.log(&format!("\nFIRE DSP_UPDATE {}", base64::encode(buf)));
   }
 }

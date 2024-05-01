@@ -46,7 +46,7 @@ impl ProcessManager {
     self.kill_all();
   }
 
-  pub async fn start<L>(&mut self)
+  pub async fn start<L>(&mut self, logger: L)
   where
     L: Logger + Sync + Send + 'static
   {
@@ -63,7 +63,7 @@ impl ProcessManager {
       "http://127.0.0.1:9000".to_string()
     };
 
-    tasks.push(self.spawn_firehose_streamer::<L>(rpc_client_url));
+    tasks.push(self.spawn_firehose_streamer::<L>(rpc_client_url, logger));
     self.register_hooks();
   }
 
@@ -81,7 +81,7 @@ impl ProcessManager {
     })
   }
 
-  fn spawn_firehose_streamer<L>(&mut self, rpc_client_url: String) -> JoinHandle<()>
+  fn spawn_firehose_streamer<L>(&mut self, rpc_client_url: String, logger: L) -> JoinHandle<()>
   where
     L: Logger + Sync + Send + 'static
   {
@@ -91,7 +91,7 @@ impl ProcessManager {
     let starting_checkpoint_seq = pm.args.starting_checkpoint_seq.clone();
 
     spawn(async move {
-      let mut fireshose_streamer = FirehoseStreamer::<L>::new(chain_id, rpc_client_url, starting_checkpoint_seq);
+      let mut fireshose_streamer = FirehoseStreamer::<L>::new(chain_id, rpc_client_url, starting_checkpoint_seq, logger);
       if let Err(e) = fireshose_streamer.start().await {
         panic!("{}", e);
       }

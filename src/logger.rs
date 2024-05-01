@@ -1,11 +1,11 @@
 pub trait Logger {
-  fn log(msg: &str);
+  fn log(&self, msg: &str);
 }
 
 pub struct StdoutLogger;
 
 impl Logger for StdoutLogger {
-  fn log(msg: &str) {
+  fn log(&self, msg: &str) {
     println!("{}", msg);
   }
 }

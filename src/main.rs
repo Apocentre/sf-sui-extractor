@@ -9,7 +9,9 @@ async fn main() -> Result<()> {
 
   let args = Args::parse();
   let mut pm = ProcessManager::new(args);
-  pm.start::<StdoutLogger>().await;
+
+  let stdout_logger = StdoutLogger {};
+  pm.start(stdout_logger).await;
 
   Ok(())
 }
