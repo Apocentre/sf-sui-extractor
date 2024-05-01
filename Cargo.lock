@@ -7133,6 +7133,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fa42c91313f1d05da9b26f267f931cf178d4aba455b4c4622dd7355eb80c6640"
 
 [[package]]
+name = "simple-home-dir"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "605181fc0510515abff9d461829ec3999ec1649d6e777bf45196083cd086f54d"
+dependencies = [
+ "windows-sys 0.52.0",
+]
+
+[[package]]
 name = "simplelog"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8155,6 +8164,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shared-crypto",
+ "simple-home-dir",
  "sui-indexer",
  "sui-json",
  "sui-json-rpc",

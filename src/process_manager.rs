@@ -6,28 +6,8 @@ use log::info;
 use tokio::{
   spawn, sync::oneshot::{channel, Sender}, task::JoinHandle,
 };
-use clap::Parser;
-use crate::{sui::sui_node::SuiNode, runtime::FirehoseStreamer};
+use crate::{args::Args, runtime::FirehoseStreamer, sui::sui_node::SuiNode};
 
-#[derive(Default, Debug, Parser)]
-struct Args {
-  /// The fullnode config file
-  #[arg(short = 'c', long)]
-  sui_node_config: String,
-
-  /// Chain Identifier is the digest of the genesis checkpoint
-  #[arg(short = 'i', long, default_value = "4btiuiMPvEENsttpZC7CZ53DruC3MAgfznDbASZ7DR6S")]
-  chain_id: String,
-
-  /// Which checkpoint should we start streaming data from
-  #[arg(short = 's', long, default_value_t = 1)]
-  starting_checkpoint_seq: u64,
-
-  /// You can use https://fullnode.mainnet.sui.io:443 for mainnet
-  /// Note that if one is not provided, a local sui-node will be spinned up instead
-  #[arg(short = 'r', long)]
-  rpc_client_url: Option<String>,
-}
 
 #[derive(Default)]
 struct ProcessManagerInner {
@@ -38,8 +18,7 @@ struct ProcessManagerInner {
 pub struct ProcessManager(Arc<Mutex<ProcessManagerInner>>);
 
 impl ProcessManager {
-  pub fn new() -> Self {
-    let args = Args::parse();
+  pub fn new(args: Args) -> Self {
     let pm = ProcessManagerInner {args, tasks: Vec::new(),};
 
     ProcessManager(Arc::new(Mutex::new(pm)))
