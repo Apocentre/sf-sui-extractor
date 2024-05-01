@@ -34,7 +34,13 @@ async fn test_raw_data_printed_in_stdout() {
 
   spawn(async move {
     while let Ok(line) = rx.recv() {
-      println!(">>>>>>> {line}");
+      // Frist line must start with FIRE BLOCK_START
+      // Followed by FIRE CHECKPOINT
+      // Followed by 0 or more FIRE TRX
+      // Followed by 0 or more FIRE OBJ_CHANGE
+      // Followed by 0 or more FIRE EVT
+      // Followed by 0 or more FIRE DSP_UPDATE
+      // Followed by FIRE BLOCK_END
     }  
   });
 
