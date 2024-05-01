@@ -1,21 +1,18 @@
+use std::sync::mpsc::{sync_channel, SyncSender};
+
 use simple_home_dir::*;
-use tokio::{
-  spawn, sync::oneshot::channel
-};
+use tokio::spawn;
 use sui_sf_indexer::{args::Args, logger::Logger, process_manager::ProcessManager};
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn test_raw_data_printed_in_stdout() {
-  let (tx, rx) = channel::<&str>();
-  struct TestLogger;
+  struct TestLogger {
+    tx: SyncSender<String>,
+  }
   
   impl Logger for TestLogger {
-    fn log(msg: &str) {
-      let closure = move || {
-        tx.send(msg).unwrap();
-      };
-
-      closure();
+    fn log(&self, msg: &str) {
+      self.tx.send(msg.to_string()).unwrap();
     }
   }
 
@@ -32,11 +29,16 @@ async fn test_raw_data_printed_in_stdout() {
   
   let mut pm = ProcessManager::new(args);
 
-  spawn(async move {
+  let (tx, rx) = sync_channel::<String>(2);
+  let test_logger = TestLogger {tx};
 
+  spawn(async move {
+    while let Ok(line) = rx.recv() {
+      println!(">>>>>>> {line}");
+    }  
   });
 
-  pm.start::<TestLogger>().await;
+  pm.start(test_logger).await;
 
   pm.kill_all();
 }
