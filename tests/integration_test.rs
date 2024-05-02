@@ -1,7 +1,7 @@
-use std::{marker::PhantomData, sync::mpsc::{sync_channel, SyncSender}};
+use std::{marker::PhantomData, process::exit, sync::mpsc::{sync_channel, SyncSender}};
 use eyre::{eyre, ensure, Result};
 use simple_home_dir::*;
-use tokio::{spawn, sync::oneshot};
+use tokio::spawn;
 use sui_sf_indexer::{args::Args, logger::Logger, process_manager::ProcessManager};
 
 struct InitState;
@@ -139,7 +139,6 @@ async fn test_raw_data_printed_in_stdout() {
   let test_logger = TestLogger {tx};
   let mut cycles = 0;
 
-  let (tx1, rx1) = oneshot::channel();
   
   spawn(async move {
     let mut test: Box<dyn LineValidation> = Box::new(Test::<InitState>{state: PhantomData});
@@ -162,23 +161,11 @@ async fn test_raw_data_printed_in_stdout() {
         println!("Full cycle {cycles}");
 
         if cycles == 2 {
-          break;
+          exit(0);
         }
       }
     }
-
-    let _ = tx1.send(());
   });
 
-  let f = pm.start(test_logger);
-
-  tokio::select! {
-    _ = rx1 => {
-      println!(">>>>>>>>>>>>> Finished");
-      pm.kill_all();
-    }
-    _ = f => {
-      println!(">>>>>>>>>>>>> PM finished");
-    }
-  }
+  pm.start(test_logger).await;
 }

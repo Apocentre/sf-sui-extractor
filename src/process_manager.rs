@@ -24,7 +24,7 @@ impl ProcessManager {
     ProcessManager(Arc::new(Mutex::new(pm)))
   }
 
-  fn register_hooks(&mut self)  {
+  fn register_hooks(&self)  {
     let (tx, rx) = sync_channel(2);
     let tx_2 = tx.clone();
     let orig_hook = panic::take_hook();
@@ -46,7 +46,7 @@ impl ProcessManager {
     self.kill_all();
   }
 
-  pub async fn start<L>(&mut self, logger: L)
+  pub async fn start<L>(&self, logger: L)
   where
     L: Logger + Sync + Send + 'static
   {
@@ -67,7 +67,7 @@ impl ProcessManager {
     self.register_hooks();
   }
 
-  fn spawn_sui_node (&mut self) -> JoinHandle<()> {
+  fn spawn_sui_node (&self) -> JoinHandle<()> {
     let (tx, rx) = channel();
     let pm = Arc::clone(&self.0);
     let mut pm = pm.lock().unwrap();
@@ -81,7 +81,7 @@ impl ProcessManager {
     })
   }
 
-  fn spawn_firehose_streamer<L>(&mut self, rpc_client_url: String, logger: L) -> JoinHandle<()>
+  fn spawn_firehose_streamer<L>(&self, rpc_client_url: String, logger: L) -> JoinHandle<()>
   where
     L: Logger + Sync + Send + 'static
   {
@@ -98,7 +98,7 @@ impl ProcessManager {
     })
   }
 
-  pub fn kill_all(&mut self) {
+  pub fn kill_all(&self) {
     info!("Killing all processes and exiting");
 
     let pm = Arc::clone(&self.0);
