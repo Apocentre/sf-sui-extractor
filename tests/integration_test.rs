@@ -1,21 +1,127 @@
-use std::sync::mpsc::{sync_channel, SyncSender};
-
+use std::{marker::PhantomData, sync::mpsc::{sync_channel, SyncSender}};
+use eyre::{eyre, ensure, Result};
 use simple_home_dir::*;
-use tokio::spawn;
+use tokio::{spawn, sync::oneshot};
 use sui_sf_indexer::{args::Args, logger::Logger, process_manager::ProcessManager};
+
+struct InitState;
+struct BlockStartState;
+struct BlockEndState;
+struct CheckpointState;
+struct TransactionState;
+struct ObjectChangeState;
+struct EventState;
+struct DisplayUpdateState;
+
+trait LineValidation {
+  fn validate(&self, line: &str) -> Result<Box<dyn LineValidation>>;
+  fn full_cycle(&self) -> bool {false}
+}
+
+struct Test <State = InitState> {
+  state: PhantomData<State>,
+}
+
+struct TestLogger {
+  tx: SyncSender<String>,
+}
+
+impl Logger for TestLogger {
+  fn log(&self, msg: &str) {
+    let _ = self.tx.send(msg.to_string());
+  }
+}
+
+impl LineValidation for Test<InitState> {
+  fn validate(&self, line: &str) -> Result<Box<dyn LineValidation>> {
+    ensure!(line.eq("INIT"), "expected INIT");
+    Ok(Box::new(Test::<BlockStartState> {state: PhantomData}))
+  }
+}
+
+impl LineValidation for Test<BlockStartState> {
+  fn validate(&self, line: &str) -> Result<Box<dyn LineValidation>> {
+    ensure!(line.eq("BLOCK_START"), "expected BLOCK_START");
+    Ok(Box::new(Test::<CheckpointState> {state: PhantomData}))
+  }
+}
+
+impl LineValidation for Test<CheckpointState> {
+  fn validate(&self, line: &str) -> Result<Box<dyn LineValidation>> {
+    ensure!(line.eq("CHECKPOINT"), "expected CHECKPOINT");
+    Ok(Box::new(Test::<TransactionState> {state: PhantomData}))
+  }
+}
+
+impl LineValidation for Test<TransactionState> {
+  fn validate(&self, line: &str) -> Result<Box<dyn LineValidation>> {
+    if line.eq("TRX") {
+      Ok(Box::new(Test::<TransactionState> {state: PhantomData}))
+    } else if line.eq("OBJ_CHANGE") {
+      Ok(Box::new(Test::<ObjectChangeState> {state: PhantomData}))
+    } else if line.eq("EVT") {
+      Ok(Box::new(Test::<EventState> {state: PhantomData}))
+    } else if line.eq("DSP_UPDATE") {
+      Ok(Box::new(Test::<DisplayUpdateState> {state: PhantomData}))
+    } else if line.eq("BLOCK_END") {
+      Ok(Box::new(Test::<BlockEndState> {state: PhantomData}))
+    } else {
+      Err(eyre!("expected either TRX or BLOCK_END"))
+    }
+  }
+}
+
+impl LineValidation for Test<ObjectChangeState> {
+  fn validate(&self, line: &str) -> Result<Box<dyn LineValidation>> {
+    if line.eq("OBJ_CHANGE") {
+      Ok(Box::new(Test::<ObjectChangeState> {state: PhantomData}))
+    } else if line.eq("EVT") {
+      Ok(Box::new(Test::<EventState> {state: PhantomData}))
+    } else if line.eq("DSP_UPDATE") {
+      Ok(Box::new(Test::<DisplayUpdateState> {state: PhantomData}))
+    } else if line.eq("BLOCK_END") {
+      Ok(Box::new(Test::<BlockEndState> {state: PhantomData}))
+    } else {
+      Err(eyre!("expected either OBJ_CHANGE, EVT, DSP_UPDATE or BLOCK_END"))
+    }
+  }
+}
+
+impl LineValidation for Test<EventState> {
+  fn validate(&self, line: &str) -> Result<Box<dyn LineValidation>> {
+    if line.eq("EVT") {
+      Ok(Box::new(Test::<EventState> {state: PhantomData}))
+    } else if line.eq("DSP_UPDATE") {
+      Ok(Box::new(Test::<DisplayUpdateState> {state: PhantomData}))
+    } else if line.eq("BLOCK_END") {
+      Ok(Box::new(Test::<BlockEndState> {state: PhantomData}))
+    } else {
+      Err(eyre!("expected either EVT, DSP_UPDATE or BLOCK_END"))
+    }
+  }
+}
+
+impl LineValidation for Test<DisplayUpdateState> {
+  fn validate(&self, line: &str) -> Result<Box<dyn LineValidation>> {
+    if line.eq("BLOCK_START") {
+      Ok(Box::new(Test::<BlockStartState> {state: PhantomData}))
+    } else {
+      Err(eyre!("expected BLOCK_START"))
+    }
+  }
+}
+
+impl LineValidation for Test<BlockEndState> {
+  fn validate(&self, line: &str) -> Result<Box<dyn LineValidation>> {
+    ensure!(line.eq("BLOCK_START"), "expected BLOCK_START");
+    Ok(Box::new(Test::<CheckpointState> {state: PhantomData}))
+  }
+
+  fn full_cycle(&self) -> bool {true}
+}
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn test_raw_data_printed_in_stdout() {
-  struct TestLogger {
-    tx: SyncSender<String>,
-  }
-  
-  impl Logger for TestLogger {
-    fn log(&self, msg: &str) {
-      self.tx.send(msg.to_string()).unwrap();
-    }
-  }
-
   fn sui_config_path() -> String {
     format!("{}/.sf_sui/sui_config/full_node.yaml", home_dir().unwrap().display().to_string())
   }
@@ -29,22 +135,50 @@ async fn test_raw_data_printed_in_stdout() {
   
   let mut pm = ProcessManager::new(args);
 
-  let (tx, rx) = sync_channel::<String>(2);
+  let (tx, rx) = sync_channel::<String>(10);
   let test_logger = TestLogger {tx};
+  let mut cycles = 0;
 
+  let (tx1, rx1) = oneshot::channel();
+  
   spawn(async move {
+    let mut test: Box<dyn LineValidation> = Box::new(Test::<InitState>{state: PhantomData});
+
     while let Ok(line) = rx.recv() {
-      // Frist line must start with FIRE BLOCK_START
+      let parts = line.split(" ").collect::<Vec<_>>();
+      // First line must start with FIRE BLOCK_START
       // Followed by FIRE CHECKPOINT
       // Followed by 0 or more FIRE TRX
       // Followed by 0 or more FIRE OBJ_CHANGE
       // Followed by 0 or more FIRE EVT
       // Followed by 0 or more FIRE DSP_UPDATE
       // Followed by FIRE BLOCK_END
-    }  
+      let result = test.validate(&parts[1]);
+      assert!(result.is_ok());
+      test = result.unwrap();
+
+      if test.full_cycle() {
+        cycles += 1;
+        println!("Full cycle {cycles}");
+
+        if cycles == 2 {
+          break;
+        }
+      }
+    }
+
+    let _ = tx1.send(());
   });
 
-  pm.start(test_logger).await;
+  let f = pm.start(test_logger);
 
-  pm.kill_all();
+  tokio::select! {
+    _ = rx1 => {
+      println!(">>>>>>>>>>>>> Finished");
+      pm.kill_all();
+    }
+    _ = f => {
+      println!(">>>>>>>>>>>>> PM finished");
+    }
+  }
 }
