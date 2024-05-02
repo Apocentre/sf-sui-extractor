@@ -129,6 +129,8 @@ async fn test_raw_data_printed_in_stdout() {
   panic::set_hook(Box::new(move |_| {
     let lock = cycles_clone.lock().unwrap();
     assert_eq!(*lock, 2);
+
+    println!(">>>>>>>>>>>>>>> Test Passes <<<<<<<<<<<<<<<<");
     std::process::exit(0);
   }));
 
