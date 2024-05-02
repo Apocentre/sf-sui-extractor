@@ -1,8 +1,9 @@
-use std::{marker::PhantomData, process::exit, sync::mpsc::{sync_channel, SyncSender}};
+use std::{marker::PhantomData, panic, sync::{mpsc::{sync_channel, SyncSender}, Arc, Mutex}};
 use eyre::{eyre, ensure, Result};
 use simple_home_dir::*;
 use tokio::spawn;
 use sui_sf_indexer::{args::Args, logger::Logger, process_manager::ProcessManager};
+use sysinfo::System;
 
 struct InitState;
 struct BlockStartState;
@@ -122,6 +123,15 @@ impl LineValidation for Test<BlockEndState> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn test_raw_data_printed_in_stdout() {
+  let cycles = Arc::new(Mutex::new(0));
+  let cycles_clone = cycles.clone();
+
+  panic::set_hook(Box::new(move |_| {
+    let lock = cycles_clone.lock().unwrap();
+    assert_eq!(*lock, 2);
+    std::process::exit(0);
+  }));
+
   fn sui_config_path() -> String {
     format!("{}/.sf_sui/sui_config/full_node.yaml", home_dir().unwrap().display().to_string())
   }
@@ -133,13 +143,12 @@ async fn test_raw_data_printed_in_stdout() {
     rpc_client_url: None
   };
   
-  let mut pm = ProcessManager::new(args);
+  let pm = ProcessManager::new(args);
 
   let (tx, rx) = sync_channel::<String>(10);
   let test_logger = TestLogger {tx};
-  let mut cycles = 0;
 
-  
+  let cycles_clone = cycles.clone();
   spawn(async move {
     let mut test: Box<dyn LineValidation> = Box::new(Test::<InitState>{state: PhantomData});
 
@@ -157,11 +166,19 @@ async fn test_raw_data_printed_in_stdout() {
       test = result.unwrap();
 
       if test.full_cycle() {
-        cycles += 1;
-        println!("Full cycle {cycles}");
+        let mut lock = cycles_clone.lock().unwrap();
+        *lock += 1;
+        println!("Full cycle {lock:?}");
 
-        if cycles == 2 {
-          exit(0);
+        if *lock == 2 {
+          let sys = System::new_all();
+          for (_, process) in sys.processes() {
+            if process.name().eq("sui-node") {
+              process.kill();
+            }
+          }
+
+          break;     
         }
       }
     }
