@@ -1,8 +1,13 @@
 FROM ghcr.io/cross-rs/x86_64-unknown-linux-gnu
 
+ENV PATH="$PATH:/.local/bin"
+
 RUN apt-get update && \
-    apt-get install --assume-yes --no-install-recommends \
-    unzip llvm-dev libclang-dev clang && \
-    curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip && \
-    unzip protoc-25.1-linux-x86_64.zip -d $HOME/.local && \
-    export PATH="$PATH:$HOME/.local/bin"
+apt-get install --assume-yes --no-install-recommends \
+unzip libclang-5.0-dev clang
+
+RUN apt remove llvm
+
+RUN curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip && \
+mkdir /.local/ && \
+unzip protoc-25.1-linux-x86_64.zip -d /.local
