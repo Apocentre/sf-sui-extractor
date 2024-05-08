@@ -1391,6 +1391,7 @@ dependencies = [
 [[package]]
 name = "consensus-config"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "fastcrypto",
  "mysten-network",
@@ -1402,6 +1403,7 @@ dependencies = [
 [[package]]
 name = "consensus-core"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anemo",
  "anemo-build",
@@ -1433,7 +1435,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tonic 0.11.0",
- "tonic-build 0.11.0",
+ "tonic-build",
  "tower",
  "tracing",
  "typed-store",
@@ -2191,6 +2193,7 @@ dependencies = [
 [[package]]
 name = "enum-compat-util"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "serde_yaml",
 ]
@@ -3762,10 +3765,12 @@ dependencies = [
 [[package]]
 name = "move-abstract-stack"
 version = "0.0.1"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 
 [[package]]
 name = "move-binary-format"
 version = "0.0.3"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "enum-compat-util",
@@ -3779,10 +3784,12 @@ dependencies = [
 [[package]]
 name = "move-borrow-graph"
 version = "0.0.1"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 
 [[package]]
 name = "move-bytecode-source-map"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "bcs",
@@ -3797,6 +3804,7 @@ dependencies = [
 [[package]]
 name = "move-bytecode-utils"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -3808,6 +3816,7 @@ dependencies = [
 [[package]]
 name = "move-bytecode-verifier"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "move-abstract-stack",
  "move-binary-format",
@@ -3820,6 +3829,7 @@ dependencies = [
 [[package]]
 name = "move-bytecode-verifier-v0"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "move-abstract-stack",
  "move-binary-format",
@@ -3832,6 +3842,7 @@ dependencies = [
 [[package]]
 name = "move-bytecode-verifier-v1"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "move-abstract-stack",
  "move-binary-format",
@@ -3844,6 +3855,7 @@ dependencies = [
 [[package]]
 name = "move-bytecode-verifier-v2"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "move-abstract-stack",
  "move-binary-format",
@@ -3856,6 +3868,7 @@ dependencies = [
 [[package]]
 name = "move-command-line-common"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "difference",
@@ -3873,6 +3886,7 @@ dependencies = [
 [[package]]
 name = "move-compiler"
 version = "0.0.1"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "bcs",
@@ -3904,6 +3918,7 @@ dependencies = [
 [[package]]
 name = "move-core-types"
 version = "0.0.4"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "bcs",
@@ -3926,6 +3941,7 @@ dependencies = [
 [[package]]
 name = "move-coverage"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "bcs",
@@ -3944,6 +3960,7 @@ dependencies = [
 [[package]]
 name = "move-disassembler"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "bcs",
@@ -3962,6 +3979,7 @@ dependencies = [
 [[package]]
 name = "move-docgen"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "codespan",
@@ -3979,6 +3997,7 @@ dependencies = [
 [[package]]
 name = "move-errmapgen"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "move-command-line-common",
@@ -3990,6 +4009,7 @@ dependencies = [
 [[package]]
 name = "move-ir-to-bytecode"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "codespan-reporting",
@@ -4007,6 +4027,7 @@ dependencies = [
 [[package]]
 name = "move-ir-to-bytecode-syntax"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "hex",
@@ -4019,6 +4040,7 @@ dependencies = [
 [[package]]
 name = "move-ir-types"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "hex",
  "move-command-line-common",
@@ -4031,6 +4053,7 @@ dependencies = [
 [[package]]
 name = "move-model"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "codespan",
@@ -4055,6 +4078,7 @@ dependencies = [
 [[package]]
 name = "move-package"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "clap",
@@ -4087,6 +4111,7 @@ dependencies = [
 [[package]]
 name = "move-proc-macros"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "enum-compat-util",
  "quote 1.0.33",
@@ -4096,6 +4121,7 @@ dependencies = [
 [[package]]
 name = "move-prover"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "clap",
@@ -4117,6 +4143,7 @@ dependencies = [
 [[package]]
 name = "move-read-write-set-types"
 version = "0.0.3"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "move-binary-format",
  "move-core-types",
@@ -4126,6 +4153,7 @@ dependencies = [
 [[package]]
 name = "move-stackless-bytecode"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "codespan",
  "codespan-reporting",
@@ -4148,6 +4176,7 @@ dependencies = [
 [[package]]
 name = "move-stdlib"
 version = "0.1.1"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "hex",
@@ -4169,6 +4198,7 @@ dependencies = [
 [[package]]
 name = "move-stdlib-v0"
 version = "0.1.1"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "hex",
@@ -4190,6 +4220,7 @@ dependencies = [
 [[package]]
 name = "move-stdlib-v1"
 version = "0.1.1"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "hex",
@@ -4211,6 +4242,7 @@ dependencies = [
 [[package]]
 name = "move-stdlib-v2"
 version = "0.1.1"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "hex",
@@ -4232,6 +4264,7 @@ dependencies = [
 [[package]]
 name = "move-symbol-pool"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "once_cell",
  "phf",
@@ -4241,6 +4274,7 @@ dependencies = [
 [[package]]
 name = "move-vm-config"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "move-binary-format",
  "once_cell",
@@ -4249,6 +4283,7 @@ dependencies = [
 [[package]]
 name = "move-vm-profiler"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "move-vm-config",
  "once_cell",
@@ -4260,6 +4295,7 @@ dependencies = [
 [[package]]
 name = "move-vm-runtime"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "better_any",
  "fail",
@@ -4279,6 +4315,7 @@ dependencies = [
 [[package]]
 name = "move-vm-runtime-v0"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "better_any",
  "fail",
@@ -4298,6 +4335,7 @@ dependencies = [
 [[package]]
 name = "move-vm-runtime-v1"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "better_any",
  "fail",
@@ -4317,6 +4355,7 @@ dependencies = [
 [[package]]
 name = "move-vm-runtime-v2"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "better_any",
  "fail",
@@ -4336,6 +4375,7 @@ dependencies = [
 [[package]]
 name = "move-vm-test-utils"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -4349,6 +4389,7 @@ dependencies = [
 [[package]]
 name = "move-vm-types"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "bcs",
  "move-binary-format",
@@ -4462,6 +4503,7 @@ checksum = "e5ce46fe64a9d73be07dcbe690a38ce1b293be448fd8ce1e6c1b8062c9f72c6a"
 [[package]]
 name = "mysten-common"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "futures",
  "parking_lot 0.12.1",
@@ -4471,6 +4513,7 @@ dependencies = [
 [[package]]
 name = "mysten-metrics"
 version = "0.7.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "async-trait",
  "axum",
@@ -4490,6 +4533,7 @@ dependencies = [
 [[package]]
 name = "mysten-network"
 version = "0.2.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anemo",
  "bcs",
@@ -4513,6 +4557,7 @@ dependencies = [
 [[package]]
 name = "mysten-util-mem"
 version = "0.11.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "cfg-if",
  "ed25519-consensus",
@@ -4531,6 +4576,7 @@ dependencies = [
 [[package]]
 name = "mysten-util-mem-derive"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "proc-macro2 1.0.70",
  "syn 1.0.109",
@@ -4560,6 +4606,7 @@ dependencies = [
 [[package]]
 name = "narwhal-config"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "fastcrypto",
  "match_opt",
@@ -4576,6 +4623,7 @@ dependencies = [
 [[package]]
 name = "narwhal-crypto"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "bcs",
  "fastcrypto",
@@ -4586,6 +4634,7 @@ dependencies = [
 [[package]]
 name = "narwhal-executor"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "async-trait",
  "bcs",
@@ -4614,6 +4663,7 @@ dependencies = [
 [[package]]
 name = "narwhal-network"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anemo",
  "anemo-tower",
@@ -4642,6 +4692,7 @@ dependencies = [
 [[package]]
 name = "narwhal-node"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anemo",
  "arc-swap",
@@ -4681,6 +4732,7 @@ dependencies = [
 [[package]]
 name = "narwhal-primary"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anemo",
  "anemo-tower",
@@ -4720,6 +4772,7 @@ dependencies = [
 [[package]]
 name = "narwhal-storage"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "fastcrypto",
  "fastcrypto-tbls",
@@ -4741,6 +4794,7 @@ dependencies = [
 [[package]]
 name = "narwhal-test-utils"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anemo",
  "fastcrypto",
@@ -4773,6 +4827,7 @@ dependencies = [
 [[package]]
 name = "narwhal-types"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anemo",
  "anemo-build",
@@ -4797,7 +4852,7 @@ dependencies = [
  "proptest",
  "proptest-derive",
  "prost 0.12.3",
- "prost-build 0.12.3",
+ "prost-build",
  "protobuf-src",
  "rand 0.8.5",
  "roaring",
@@ -4808,7 +4863,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tonic 0.11.0",
- "tonic-build 0.11.0",
+ "tonic-build",
  "tracing",
  "typed-store",
 ]
@@ -4816,6 +4871,7 @@ dependencies = [
 [[package]]
 name = "narwhal-worker"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anemo",
  "anemo-tower",
@@ -5817,6 +5873,7 @@ dependencies = [
 [[package]]
 name = "prometheus-closure-metric"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "prometheus",
@@ -5873,28 +5930,6 @@ checksum = "146c289cda302b98a28d40c8b3b90498d6e526dd24ac2ecea73e4e491685b94a"
 dependencies = [
  "bytes",
  "prost-derive 0.12.3",
-]
-
-[[package]]
-name = "prost-build"
-version = "0.11.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "119533552c9a7ffacc21e099c24a0ac8bb19c2a2a3f363de84cd9b844feab270"
-dependencies = [
- "bytes",
- "heck",
- "itertools 0.10.5",
- "lazy_static",
- "log",
- "multimap",
- "petgraph 0.6.3",
- "prettyplease 0.1.25",
- "prost 0.11.9",
- "prost-types 0.11.9",
- "regex",
- "syn 1.0.109",
- "tempfile",
- "which",
 ]
 
 [[package]]
@@ -6991,6 +7026,7 @@ dependencies = [
 name = "sf-sui-extractor"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "async-trait",
  "backoff",
  "base58",
@@ -7002,13 +7038,16 @@ dependencies = [
  "futures",
  "hex",
  "log",
+ "move-binary-format",
  "move-bytecode-utils",
  "move-core-types",
  "mysten-metrics",
+ "petgraph 0.5.1",
  "prometheus",
  "prost 0.11.9",
  "prost-types 0.11.9",
  "serde",
+ "serde-reflection",
  "serde_json",
  "shared-crypto",
  "simple-home-dir",
@@ -7020,7 +7059,7 @@ dependencies = [
  "sui-types",
  "sysinfo",
  "tokio",
- "tonic-build 0.9.2",
+ "tonic-build",
 ]
 
 [[package]]
@@ -7105,6 +7144,7 @@ dependencies = [
 [[package]]
 name = "shared-crypto"
 version = "0.0.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "bcs",
  "eyre",
@@ -7393,6 +7433,7 @@ checksum = "734676eb262c623cec13c3155096e08d1f8f29adce39ba17948b18dad1e54142"
 [[package]]
 name = "sui-adapter-latest"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "bcs",
@@ -7418,6 +7459,7 @@ dependencies = [
 [[package]]
 name = "sui-adapter-v0"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "bcs",
@@ -7444,6 +7486,7 @@ dependencies = [
 [[package]]
 name = "sui-adapter-v1"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "bcs",
@@ -7469,6 +7512,7 @@ dependencies = [
 [[package]]
 name = "sui-adapter-v2"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "bcs",
@@ -7494,6 +7538,7 @@ dependencies = [
 [[package]]
 name = "sui-archival"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "byteorder",
@@ -7518,6 +7563,7 @@ dependencies = [
 [[package]]
 name = "sui-authority-aggregation"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "futures",
  "mysten-metrics",
@@ -7529,6 +7575,7 @@ dependencies = [
 [[package]]
 name = "sui-config"
 version = "0.0.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anemo",
  "anyhow",
@@ -7555,6 +7602,7 @@ dependencies = [
 [[package]]
 name = "sui-core"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anemo",
  "anyhow",
@@ -7644,6 +7692,7 @@ dependencies = [
 [[package]]
 name = "sui-enum-compat-util"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "serde_yaml",
 ]
@@ -7651,6 +7700,7 @@ dependencies = [
 [[package]]
 name = "sui-execution"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "move-binary-format",
  "move-bytecode-verifier",
@@ -7681,6 +7731,7 @@ dependencies = [
 [[package]]
 name = "sui-framework"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "bcs",
@@ -7699,6 +7750,7 @@ dependencies = [
 [[package]]
 name = "sui-framework-snapshot"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "bcs",
@@ -7713,6 +7765,7 @@ dependencies = [
 [[package]]
 name = "sui-genesis-builder"
 version = "0.0.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "bcs",
@@ -7740,6 +7793,7 @@ dependencies = [
 [[package]]
 name = "sui-indexer"
 version = "1.22.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -7788,6 +7842,7 @@ dependencies = [
 [[package]]
 name = "sui-json"
 version = "0.0.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "bcs",
@@ -7805,6 +7860,7 @@ dependencies = [
 [[package]]
 name = "sui-json-rpc"
 version = "0.0.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -7852,6 +7908,7 @@ dependencies = [
 [[package]]
 name = "sui-json-rpc-api"
 version = "0.0.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "fastcrypto",
@@ -7871,6 +7928,7 @@ dependencies = [
 [[package]]
 name = "sui-json-rpc-types"
 version = "0.0.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "bcs",
@@ -7899,6 +7957,7 @@ dependencies = [
 [[package]]
 name = "sui-keys"
 version = "0.0.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "bip32",
@@ -7917,6 +7976,7 @@ dependencies = [
 [[package]]
 name = "sui-macros"
 version = "0.7.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "futures",
  "once_cell",
@@ -7927,6 +7987,7 @@ dependencies = [
 [[package]]
 name = "sui-move-build"
 version = "1.22.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "fastcrypto",
@@ -7949,6 +8010,7 @@ dependencies = [
 [[package]]
 name = "sui-move-natives-latest"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "bcs",
  "better_any",
@@ -7969,6 +8031,7 @@ dependencies = [
 [[package]]
 name = "sui-move-natives-v0"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "bcs",
  "better_any",
@@ -7989,6 +8052,7 @@ dependencies = [
 [[package]]
 name = "sui-move-natives-v1"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "bcs",
  "better_any",
@@ -8009,6 +8073,7 @@ dependencies = [
 [[package]]
 name = "sui-move-natives-v2"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "bcs",
  "better_any",
@@ -8029,6 +8094,7 @@ dependencies = [
 [[package]]
 name = "sui-network"
 version = "0.0.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anemo",
  "anemo-build",
@@ -8055,7 +8121,7 @@ dependencies = [
  "tap",
  "tokio",
  "tonic 0.11.0",
- "tonic-build 0.11.0",
+ "tonic-build",
  "tower",
  "tracing",
 ]
@@ -8063,6 +8129,7 @@ dependencies = [
 [[package]]
 name = "sui-open-rpc"
 version = "1.22.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "bcs",
  "schemars",
@@ -8074,6 +8141,7 @@ dependencies = [
 [[package]]
 name = "sui-open-rpc-macros"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "derive-syn-parse",
  "itertools 0.10.5",
@@ -8086,6 +8154,7 @@ dependencies = [
 [[package]]
 name = "sui-package-resolver"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "async-trait",
  "bcs",
@@ -8103,6 +8172,7 @@ dependencies = [
 [[package]]
 name = "sui-proc-macros"
 version = "0.7.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "msim-macros",
  "proc-macro2 1.0.70",
@@ -8114,6 +8184,7 @@ dependencies = [
 [[package]]
 name = "sui-protocol-config"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "clap",
  "insta",
@@ -8127,6 +8198,7 @@ dependencies = [
 [[package]]
 name = "sui-protocol-config-macros"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "proc-macro2 1.0.70",
  "quote 1.0.33",
@@ -8136,6 +8208,7 @@ dependencies = [
 [[package]]
 name = "sui-rest-api"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "axum",
@@ -8155,6 +8228,7 @@ dependencies = [
 [[package]]
 name = "sui-sdk"
 version = "1.22.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -8186,6 +8260,7 @@ dependencies = [
 [[package]]
 name = "sui-simulator"
 version = "0.7.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anemo",
  "anemo-tower",
@@ -8209,6 +8284,7 @@ dependencies = [
 [[package]]
 name = "sui-storage"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -8259,6 +8335,7 @@ dependencies = [
 [[package]]
 name = "sui-swarm-config"
 version = "0.0.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anemo",
  "anyhow",
@@ -8284,6 +8361,7 @@ dependencies = [
 [[package]]
 name = "sui-transaction-builder"
 version = "0.0.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -8300,6 +8378,7 @@ dependencies = [
 [[package]]
 name = "sui-transaction-checks"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "fastcrypto-zkp",
  "once_cell",
@@ -8314,6 +8393,7 @@ dependencies = [
 [[package]]
 name = "sui-types"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "anemo",
  "anyhow",
@@ -8376,6 +8456,7 @@ dependencies = [
 [[package]]
 name = "sui-verifier-latest"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "move-abstract-stack",
  "move-binary-format",
@@ -8390,6 +8471,7 @@ dependencies = [
 [[package]]
 name = "sui-verifier-v0"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "move-abstract-stack",
  "move-binary-format",
@@ -8404,6 +8486,7 @@ dependencies = [
 [[package]]
 name = "sui-verifier-v1"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "move-abstract-stack",
  "move-binary-format",
@@ -8417,6 +8500,7 @@ dependencies = [
 [[package]]
 name = "sui-verifier-v2"
 version = "0.1.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "move-abstract-stack",
  "move-binary-format",
@@ -8554,6 +8638,7 @@ checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 [[package]]
 name = "telemetry-subscribers"
 version = "0.2.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "atomic_float",
  "bytes",
@@ -8979,26 +9064,13 @@ dependencies = [
 
 [[package]]
 name = "tonic-build"
-version = "0.9.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6fdaae4c2c638bb70fe42803a26fbd6fc6ac8c72f5c59f67ecc2a2dcabf4b07"
-dependencies = [
- "prettyplease 0.1.25",
- "proc-macro2 1.0.70",
- "prost-build 0.11.9",
- "quote 1.0.33",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "tonic-build"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be4ef6dd70a610078cb4e338a0f79d06bc759ff1b22d2120c2ff02ae264ba9c2"
 dependencies = [
  "prettyplease 0.2.15",
  "proc-macro2 1.0.70",
- "prost-build 0.12.3",
+ "prost-build",
  "quote 1.0.33",
  "syn 2.0.39",
 ]
@@ -9245,6 +9317,7 @@ dependencies = [
 [[package]]
 name = "typed-store"
 version = "0.4.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "async-trait",
  "bcs",
@@ -9272,6 +9345,7 @@ dependencies = [
 [[package]]
 name = "typed-store-derive"
 version = "0.3.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "itertools 0.10.5",
  "proc-macro2 1.0.70",
@@ -9282,6 +9356,7 @@ dependencies = [
 [[package]]
 name = "typed-store-error"
 version = "0.4.0"
+source = "git+https://github.com/apocentre/sui?branch=feat/sf_indexer#605585db8105f4f169a06a9c354399c35795fe56"
 dependencies = [
  "serde",
  "thiserror",

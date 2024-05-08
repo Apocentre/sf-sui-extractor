@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.71"
 async-trait = "0.1"
 backoff = { version = "0.4", features = ["futures", "futures-core", "pin-project-lite", "tokio", "tokio_1"] }
 base58 = "0.2"
@@ -21,23 +22,26 @@ prost = "0.11.9"
 prost-types = "0.11.9"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
-mysten-metrics = { path = "../sui/crates/mysten-metrics" }
-move-core-types = { path = "../sui/external-crates/move/crates/move-core-types" }
-move-bytecode-utils = { path = "../sui/external-crates/move/crates/move-bytecode-utils" }
-sui-json-rpc = { path = "../sui/crates/sui-json-rpc" }
-sui-rest-api = { path = "../sui/crates/sui-rest-api" }
-sui-json-rpc-types = { path = "../sui/crates/sui-json-rpc-types" }
-sui-indexer = { path = "../sui/crates/sui-indexer" }
-sui-types = { path = "../sui/crates/sui-types" }
-sui-json = { path = "../sui/crates/sui-json" }
-shared-crypto = { path = "../sui/crates/shared-crypto" }
+mysten-metrics = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
+move-core-types = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
+move-binary-format = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
+move-bytecode-utils = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
+sui-json-rpc = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
+sui-rest-api = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
+sui-json-rpc-types = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
+sui-indexer = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
+sui-types = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
+sui-json = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
+shared-crypto = { git = "https://github.com/apocentre/sui", branch = "feat/sf_indexer" }
+serde-reflection = "0.3.6"
 tokio = { version = "1.27.0", features = ["full"] }
 prometheus = "0.13"
+petgraph = "0.5.1"
 simple-home-dir = "0.3.3"
 sysinfo = "0.30"
 
 [build-dependencies]
-tonic-build = { version = "0.9.2", features = ["prost"] }
+tonic-build = { version = "0.11", features = ["prost"] }
 
 [profile.release]
 lto = true
