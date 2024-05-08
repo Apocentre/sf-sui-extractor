@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+async-trait = "0.1"
 backoff = { version = "0.4", features = ["futures", "futures-core", "pin-project-lite", "tokio", "tokio_1"] }
 base58 = "0.2"
 base64 = "0.20.0"
@@ -15,18 +16,25 @@ eyre = "0.6.8"
 env_logger = "0.10.0"
 futures = "0.3.23"
 hex = "0.4"
-jsonrpsee = { version = "0.16.2", features = ["full"] }
 log = "0.4.17"
 prost = "0.11.9"
 prost-types = "0.11.9"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
-sui-json-rpc = { git = "https://github.com/apocentre/sui", rev = "4008bac" }
-sui-json-rpc-types = { git = "https://github.com/apocentre/sui", rev = "4008bac" }
-sui-indexer = { git = "https://github.com/apocentre/sui", rev = "4008bac" }
-sui-types = { git = "https://github.com/apocentre/sui", rev = "4008bac" }
-sui-json = { git = "https://github.com/apocentre/sui", rev = "4008bac" }
+mysten-metrics = { path = "../sui/crates/mysten-metrics" }
+move-core-types = { path = "../sui/external-crates/move/crates/move-core-types" }
+move-bytecode-utils = { path = "../sui/external-crates/move/crates/move-bytecode-utils" }
+sui-json-rpc = { path = "../sui/crates/sui-json-rpc" }
+sui-rest-api = { path = "../sui/crates/sui-rest-api" }
+sui-json-rpc-types = { path = "../sui/crates/sui-json-rpc-types" }
+sui-indexer = { path = "../sui/crates/sui-indexer" }
+sui-types = { path = "../sui/crates/sui-types" }
+sui-json = { path = "../sui/crates/sui-json" }
+shared-crypto = { path = "../sui/crates/shared-crypto" }
 tokio = { version = "1.27.0", features = ["full"] }
+prometheus = "0.13"
+simple-home-dir = "0.3.3"
+sysinfo = "0.30"
 
 [build-dependencies]
 tonic-build = { version = "0.9.2", features = ["prost"] }

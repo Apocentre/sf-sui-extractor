@@ -1,0 +1,36 @@
+Arguments: 
+  /Users/ppoliani/.nvm/versions/node/v20.8.0/bin/node /Users/ppoliani/.yarn/bin/yarn.js add simple-home-dir
+
+PATH: 
+  /opt/homebrew/opt/llvm/bin:/Users/ppoliani/.mweteor:/Users/ppoliani/desktop/bin:/Users/ppoliani/.yarn/bin:/Users/ppoliani/.config/yarn/global/node_modules/.bin:/Users/ppoliani/.local/share/misc:/Users/ppoliani/.local/share/solana/bin:/Users/ppoliani/.nvm/versions/node/v20.8.0/bin:/Users/ppoliani/bin:/opt/homebrew/bin:/Users/ppoliani/.local/share/solana/install/active_release/bin:/Users/ppoliani/.local/share/solana/install/active_release/bin:/Library/Frameworks/Python.framework/Versions/2.7/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/go/bin:/opt/homebrew/opt/llvm/bin:/Users/ppoliani/.mweteor:/Users/ppoliani/desktop/bin:/Users/ppoliani/.yarn/bin:/Users/ppoliani/.config/yarn/global/node_modules/.bin:/Users/ppoliani/.local/share/misc:/Users/ppoliani/.local/share/solana/bin:/Users/ppoliani/.nvm/versions/node/v20.8.0/bin:/Users/ppoliani/bin:/opt/homebrew/bin:/Users/ppoliani/.local/share/solana/install/active_release/bin:/Library/Frameworks/Python.framework/Versions/2.7/bin:/Users/ppoliani/.cargo/bin:/Applications/Visual Studio Code.app/Contents/Resources/app/bin:/Users/ppoliani/.git-semantic-commits:/opt/homebrew/opt/go/libexec/bin:/Users/ppoliani/go/bin:/Users/ppoliani/.foundry/bin:/Users/ppoliani/.local/bin:/Users/ppoliani/.nargo/bin:/Applications/Visual Studio Code.app/Contents/Resources/app/bin:/Users/ppoliani/.git-semantic-commits:/Users/ppoliani/.nvm/versions/node/v20.8.0/bin:/Users/ppoliani/bin:/opt/homebrew/bin:/Users/ppoliani/.local/share/solana/install/active_release/bin:/Users/ppoliani/.local/share/solana/install/active_release/bin:/Library/Frameworks/Python.framework/Versions/2.7/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/Library/Apple/usr/bin:/Library/TeX/texbin:/usr/local/go/bin:/opt/homebrew/opt/llvm/bin:/Users/ppoliani/.mweteor:/Users/ppoliani/desktop/bin:/Users/ppoliani/.yarn/bin:/Users/ppoliani/.config/yarn/global/node_modules/.bin:/Users/ppoliani/.local/share/misc:/Users/ppoliani/.local/share/solana/bin:/Users/ppoliani/.nvm/versions/node/v20.8.0/bin:/Users/ppoliani/bin:/opt/homebrew/bin:/Users/ppoliani/.local/share/solana/install/active_release/bin:/Library/Frameworks/Python.framework/Versions/2.7/bin:/Users/ppoliani/.cargo/bin:/Applications/Visual Studio Code.app/Contents/Resources/app/bin:/Users/ppoliani/.git-semantic-commits:/opt/homebrew/opt/go/libexec/bin:/Users/ppoliani/go/bin:/Users/ppoliani/.foundry/bin:/Users/ppoliani/.local/bin:/Users/ppoliani/.nargo/bin:/Applications/Visual Studio Code.app/Contents/Resources/app/bin:/usr/local/go/bin:/opt/homebrew/opt/go/libexec/bin:/Users/ppoliani/go/bin:/Users/ppoliani/.foundry/bin:/Users/ppoliani/.local/bin:/Users/ppoliani/.nargo/bin
+
+Yarn version: 
+  1.22.19
+
+Node version: 
+  20.8.0
+
+Platform: 
+  darwin arm64
+
+Trace: 
+  Error: https://registry.yarnpkg.com/simple-home-dir: Not found
+      at params.callback [as _callback] (/Users/ppoliani/.yarn/lib/cli.js:66145:18)
+      at self.callback (/Users/ppoliani/.yarn/lib/cli.js:140890:22)
+      at Request.emit (node:events:514:28)
+      at Request.<anonymous> (/Users/ppoliani/.yarn/lib/cli.js:141862:10)
+      at Request.emit (node:events:514:28)
+      at IncomingMessage.<anonymous> (/Users/ppoliani/.yarn/lib/cli.js:141784:12)
+      at Object.onceWrapper (node:events:628:28)
+      at IncomingMessage.emit (node:events:526:35)
+      at endReadableNT (node:internal/streams/readable:1408:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+
+npm manifest: 
+  No manifest
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile

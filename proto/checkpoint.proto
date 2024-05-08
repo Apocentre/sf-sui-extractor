@@ -7,8 +7,12 @@ import "google/protobuf/empty.proto";
 
 message CheckpointData {
   Checkpoint checkpoint = 1;
-  repeated CheckpointTransactionBlockResponse transactions = 2;
-  repeated ChangedObject changed_objects = 3;
+  repeated Transaction transactions = 2;
+  repeated IndexedEvent events = 3;
+  TransactionObjectChange object_change = 4;
+  repeated TxIndex tx_indices = 5;
+  repeated StoredDisplay display_updates = 6;
+  IndexedPackage packages = 7;
 }
 
 message Checkpoint {
@@ -28,7 +32,7 @@ message Checkpoint {
   optional string previous_digest = 5;
   
   // The running total gas costs of all transactions included in the current epoch so far until this checkpoint.
-  GasCostSummary epoch_rolling_gas_cost_summary = 6;
+  GasCostSummary gas_cost_summary = 6;
   
   // Timestamp of the checkpoint - number of milliseconds from the Unix epoch
   // Checkpoint timestamps are monotonic, but not strongly monotonic - subsequent
@@ -37,27 +41,16 @@ message Checkpoint {
   
   // Present only on the final checkpoint of the epoch.
   optional EndOfEpochData end_of_epoch_data = 8;
-  
-  // Transaction digests (base58 encoded)
-  repeated string transactions = 9;
+
   
   // Commitments to checkpoint state
-  repeated CheckpointCommitment checkpoint_commitments = 10;
+  repeated CheckpointCommitment checkpoint_commitments = 9;
   
   // Validator Signature (base64  encoded). This is a BLS signature
-  bytes validator_signature = 11;
-}
+  bytes validator_signature = 10;
 
-message CheckpointTransactionBlockResponse {
-  string digest = 1;
-  // Transaction input data
-  SuiTransactionBlock transaction = 2;
-  bytes raw_transaction = 3;
-  SuiTransactionBlockEffects effects = 4;
-  SuiTransactionBlockEvents events = 5;
-  uint64 timestamp_ms = 6;
-  optional bool confirmed_local_execution = 7;
-  uint64 checkpoint = 8;
+  uint64 successful_tx_num = 11;
+  bool end_of_epoch = 12;
 }
 
 message GasCostSummary {
@@ -74,13 +67,464 @@ message GasCostSummary {
   uint64 non_refundable_storage_fee = 4;
 }
 
+message Transaction {
+  uint64 sequence_number = 1;
+  string digest = 2;
+  repeated SenderSignedTransaction sender_signed_data = 3;
+  TransactionBlockEffects effects = 4;
+  uint64 checkpoint_sequence_number = 5;
+  uint64 timestamp_ms = 6;
+  repeated ObjectChange object_changes = 7;
+  repeated BalanceChange balance_change = 8;
+  repeated Event events = 9;
+  GenericTransactionKind transaction_kind = 10;
+  uint64 successful_tx_num = 11;
+}
+
+message GenericTransactionKind {
+  oneof kind {
+    google.protobuf.Empty system_transaction = 1;
+    google.protobuf.Empty programmable_transaction = 2;
+  }
+}
+
+message Event {
+  ObjectID package_id = 1;
+  string transaction_module = 2;
+  string sender = 3;
+  StructTag type = 4;
+  bytes contents = 5;
+}
+
+message BalanceChange {
+  /// Owner of the balance change
+  Owner owner = 1;
+  TypeTag coin_type = 2;
+  /// The amount indicate the balance value changes,
+  /// negative amount means spending coin value and positive means receiving coin value.
+  /// covnert this to i128 later on
+  string amount = 3;
+}
+
+message ObjectChange {
+  oneof object_change {
+    Published published = 1;
+    Transferred transferred = 2;
+    Mutated mutated = 3;
+    Deleted deleted = 4;
+    Wrapped wrapped = 5;
+    Created created = 6;
+  }
+}
+
+message Published {
+  ObjectID package_id = 1;
+  uint64 version = 2;
+  string digest = 3;
+  repeated string modules = 4;
+}
+
+message Transferred {
+  string sender = 1;
+  Owner recipient = 2;
+  StructTag object_type = 3;
+  ObjectID object_id = 4;
+  uint64 version = 5;
+  string digest = 6;
+}
+
+message Mutated {
+  string sender = 1;
+  Owner owner = 2;
+  StructTag object_type = 3;
+  ObjectID object_id = 4;
+  uint64 version = 5;
+  uint64 previous_version = 6;
+  string digest = 7;
+}
+
+message Deleted {
+  string sender = 1;
+  StructTag object_type = 2;
+  ObjectID object_id = 3;
+  uint64 version = 4;
+}
+
+message Wrapped {
+  string sender = 1;
+  StructTag object_type = 2;
+  ObjectID object_id = 3;
+  uint64 version = 4;
+}
+
+message Created {
+  string sender = 1;
+  Owner owner = 2;
+  StructTag object_type = 3;
+  ObjectID object_id = 4;
+  uint64 version = 5;
+  string digest = 6;
+}
+
+message SenderSignedTransaction {
+  IntentMessage intent_message = 1;
+}
+
+message IntentMessage {
+  Intent intent = 1;
+  TransactionData value = 2;
+}
+
+message Intent {
+  IntentScope scope = 1;
+  IntentVersion version = 2;
+  AppId app_id = 3;
+}
+
+message IntentVersion {
+  oneof intent_version {
+    google.protobuf.Empty  v0 = 1;
+  }
+}
+
+message AppId {
+  oneof app_id {
+    google.protobuf.Empty sui = 1;
+    google.protobuf.Empty narwhal = 2;
+    google.protobuf.Empty consensus = 3;
+  }
+}
+
+message IntentScope {
+  oneof intent_scope {
+    // Used for a user signature on a transaction data.
+    google.protobuf.Empty transaction_data = 1;
+    // Used for an authority signature on transaction effects.
+    google.protobuf.Empty transaction_effects = 2;
+    // Used for an authority signature on a checkpoint summary.
+    google.protobuf.Empty checkpoint_summary = 3;
+    // Used for a user signature on a personal message.
+    google.protobuf.Empty personal_message = 4;
+    // Used for an authority signature on a user signed transaction.
+    google.protobuf.Empty sender_signed_transaction = 5;
+    // Used as a signature representing an authority's proof of possession of its authority protocol key.
+    google.protobuf.Empty proof_of_possession = 6;
+    // Used for narwhal authority signature on header digest.
+    google.protobuf.Empty header_digest = 7;
+    // for bridge purposes but it's currently not included in messages.
+    google.protobuf.Empty bridge_event_unused = 8;
+    // Used for consensus authority signature on block's digest
+    google.protobuf.Empty consensus_block = 9;
+  };
+}
+
+message TransactionData {
+  oneof tx_data {
+    TransactionDataV1 v1 = 1;
+  }
+}
+
+message TransactionDataV1 {
+  TransactionKind kind = 1;
+  string sender = 2;
+  GasData gas_data = 3;
+  TransactionExpiration expiration = 4;
+}
+
+message TransactionExpiration {
+  oneof tx_expiration {
+    google.protobuf.Empty none = 1;
+    uint64 epoch = 2;
+  }
+}
+
+message TransactionKind {
+  oneof transaction_kind {
+    /// A transaction that allows the interleaving of native commands and Move calls
+    ProgrammableTransaction programmable_tx = 1;
+    ChangeEpoch change_epoch = 2;
+    GenesisTransaction genesis = 3;
+    ConsensusCommitPrologue consensus_commit_prologue = 4;
+    AuthenticatorStateUpdate authenticator_state_update = 5;
+    /// EndOfEpochTransaction replaces ChangeEpoch with a list of transactions that are allowed to
+    /// run at the end of the epoch.
+    EndOfEpochTransaction end_od_epoch_transaction = 6;
+    RandomnessStateUpdate randomness_state_update = 7;
+    // V2 ConsensusCommitPrologue also includes the digest of the current consensus output.
+    ConsensusCommitPrologueV2 consensus_commit_prologue_v2 = 8;
+  }
+}
+
+message ConsensusCommitPrologueV2 {
+    /// Epoch of the commit prologue transaction
+    uint64 epoch = 1;
+    /// Consensus round of the commit
+    uint64 round = 2;
+    /// Unix timestamp from consensus
+    uint64 commit_timestamp_ms = 3;
+    /// Digest of consensus output
+    string consensus_commit_digest = 4;
+}
+
+message RandomnessStateUpdate {
+  /// Epoch of the randomness state update transaction
+  uint64 epoch = 1;
+  /// Randomness round of the update
+  uint64 randomness_round = 2;
+  /// Updated random bytes
+  bytes random_bytes = 3;
+  /// The initial version of the randomness object that it was shared at.
+  uint64 randomness_obj_initial_shared_version = 4;
+}
+
+message EndOfEpochTransaction {
+  repeated EndOfEpochTransactionKind end_of_epoch_transaction_kind = 1;
+}
+
+message EndOfEpochTransactionKind {
+  oneof kind {
+    ChangeEpoch change_epoch = 1;
+    google.protobuf.Empty authenticator_state_create = 2;
+    AuthenticatorStateExpire authenticator_state_expire = 3;
+    google.protobuf.Empty  randomness_state_create = 4;
+    google.protobuf.Empty  deny_list_state_create = 5;
+  }
+}
+
+message AuthenticatorStateUpdate {
+  /// Epoch of the authenticator state update transaction
+  uint64 epoch = 1;
+  /// Consensus round of the authenticator state update
+  uint64 round = 2;
+  /// newly active jwks
+  repeated ActiveJwk new_active_jwks = 3;
+  /// The initial version of the authenticator object that it was shared at.
+  uint64 authenticator_obj_initial_shared_version = 4;
+}
+
+message ActiveJwk {
+  JwkId jwk_id = 1;
+  JWK jwk = 2;
+  // the most recent epoch in which the jwk was validated
+  uint64 epoch = 3;
+}
+
+message JwkId {
+  /// iss string that identifies the OIDC provider.
+  string iss = 1;
+  /// kid string that identifies the JWK.
+  string kid = 2;
+}
+
+message JWK {
+  /// Key type parameter, https://datatracker.ietf.org/doc/html/rfc7517#section-4.1
+  string kty = 1;
+  /// RSA public exponent, https://datatracker.ietf.org/doc/html/rfc7517#section-9.3
+  string e = 2;
+  /// RSA modulus, https://datatracker.ietf.org/doc/html/rfc7517#section-9.3
+  string n = 3;
+  /// Algorithm parameter, https://datatracker.ietf.org/doc/html/rfc7517#section-4.4
+  string alg = 4;
+}
+
+message AuthenticatorStateExpire {
+  /// expire JWKs that have a lower epoch than this
+  uint64 min_epoch = 1;
+  /// The initial version of the authenticator object that it was shared at.
+  uint64 authenticator_obj_initial_shared_version = 2;
+}
+
+message IndexedEvent {
+  uint64 tx_sequence_number = 1;
+  uint64 event_sequence_number = 2;
+  uint64 checkpoint_sequence_number = 3;
+  string transaction_digest = 4;
+  repeated string senders = 5;
+  ObjectID package = 6;
+  string module = 7;
+  string event_type = 8;
+  bytes bcs = 9;
+  uint64 timestamp_ms = 10;
+}
+
+message TxIndex {
+  uint64 tx_sequence_number = 1;
+  string transaction_digest = 2;
+  uint64 checkpoint_sequence_number = 3;
+  repeated ObjectID input_objects = 4;
+  repeated ObjectID changed_objects = 5;
+  repeated string payers = 6;
+  repeated string senders = 7;
+  repeated string recipients = 8;
+  repeated MoveCallOverview move_calls = 9;
+}
+
+message MoveCallOverview {
+  // The package containing the module and function.
+  ObjectID package = 1;
+
+  // The specific module in the package containing the function.
+  string module = 2;
+
+  // The function to be called.
+  string function = 3;
+}
+
+message StoredDisplay {
+  string object_type = 1;
+  bytes id = 2;
+  int32 version = 3;
+  bytes bcs = 4;
+}
+
+message TransactionObjectChange {
+  repeated IndexedObject changed_objects = 1;
+  repeated IndexedDeletedObject deleted_objects = 2;
+}
+
+message IndexedObject {
+  ObjectID object_id = 1;
+  uint64 object_version = 2;
+  string object_digest = 3;
+  uint64 checkpoint_sequence_number = 4;
+  string tx_digest = 5;
+  OwnerType owner_type = 6;
+  optional string owner_id = 7;
+  Object object = 8;
+  optional string coin_type = 9;
+  optional uint64 coin_balance = 10;
+}
+
+message Object {
+  /// The meat of the object
+  Data data = 1;
+  /// The owner that unlocks this object
+  Owner owner = 2;
+  /// The digest of the transaction that created or last mutated this object
+  string previous_transaction = 3;
+  /// The amount of SUI we would rebate if this object gets deleted.
+  /// This number is re-calculated each time the object is mutated based on
+  /// the present storage gas price.
+  uint64 storage_rebate = 4;
+}
+message OwnerType {
+  oneof owner_type {
+    google.protobuf.Empty immutable = 1;
+    google.protobuf.Empty address = 2;
+    google.protobuf.Empty object = 3;
+    google.protobuf.Empty shared = 4;
+  }
+}
+
+message Data {
+  oneof data {
+    MoveObject move = 1;
+    MovePackage package = 2;
+  }
+}
+
+message MoveObject {
+  /// The type of this object. Immutable
+  MoveObjectType type = 1;
+  /// DEPRECATED this field is no longer used to determine whether a tx can transfer this
+  /// object. Instead, it is always calculated from the objects type when loaded in execution
+  bool has_public_transfer = 2;
+  /// Number that increases each time a tx takes this object as a mutable input
+  /// This is a lamport timestamp, not a sequentially increasing version
+  uint64 version = 3;
+  bytes contents = 4;
+}
+
+message MovePackage {
+  ObjectID id = 1;
+  /// Most move packages are uniquely identified by their ID (i.e. there is only one version per
+  /// ID), but the version is still stored because one package may be an upgrade of another (at a
+  /// different ID), in which case its version will be one greater than the version of the
+  /// upgraded package.
+  ///
+  /// Framework packages are an exception to this rule -- all versions of the framework packages
+  /// exist at the same ID, at increasing versions.
+  ///
+  /// In all cases, packages are referred to by move calls using just their ID, and they are
+  /// always loaded at their latest version.
+  uint64 version = 2;
+  map<string, bytes> module_map = 3;
+
+  /// Maps struct/module to a package version where it was first defined, stored as a vector for
+  /// simple serialization and deserialization.
+  repeated TypeOrigin type_origin_table = 4;
+
+  // For each dependency, maps original package ID to the info about the (upgraded) dependency
+  // version that this package is using
+  repeated LinkageTablePair linkage_table = 5;
+}
+
+message LinkageTablePair {
+  ObjectID key = 1;
+  UpgradeInfo value = 2;
+}
+
+message DynamicFieldInfo {
+  DynamicFieldName name = 1;
+  bytes bcs_name = 2;
+  DynamicFieldType type = 3;
+  string object_type = 4;
+  ObjectID object_id = 5;
+  uint64 version = 6;
+  string digest = 7;
+}
+
+message DynamicFieldName {
+  TypeTag type = 1;
+  Value value = 2;
+}
+
+message DynamicFieldType {
+  oneof dynamic_field_type {
+    google.protobuf.Empty dynamic_field = 1;
+    google.protobuf.Empty dynamic_object = 2;
+  }
+}
+
+message IndexedDeletedObject {
+  ObjectID object_id = 1;
+  uint64 object_version = 2;
+  uint64 checkpoint_sequence_number = 3;
+  string tx_digest = 4;
+}
+
+message IndexedPackage {
+  ObjectID package_id = 1;
+  MovePackage move_package = 2;
+  uint64 checkpoint_sequence_number = 3;
+}
+
+message Value {
+  oneof value {
+    google.protobuf.Empty null = 1;
+    bool bool = 2;
+    string number = 3;
+    string string = 4;
+    ListOfValues array = 5;
+    ValueMap object = 6;
+  }
+}
+
+message ValueMap {
+  map<string, Value> map = 6;
+}
+
+message ListOfValues {
+  repeated Value list = 1;
+}
+
 message EndOfEpochData {
   // next_epoch_committee is `Some` if and only if the current checkpoint is
   // the last checkpoint of an epoch.
   // Therefore next_epoch_committee can be used to pick the last checkpoint of an epoch,
   // which is often useful to get epoch level summary stats like total gas cost of an epoch,
   // or the total number of transactions from genesis to the end of an epoch.
-  // The committee is stored as a vector of validator pub key and stake pairs. The vector
+  // he committee is stored as a vector of validator pub key and stake pairs. The vector
   // should be sorted based on the Committee data structure.
   repeated NextEpochCommittee next_epoch_committee = 1;
   
@@ -92,6 +536,7 @@ message EndOfEpochData {
 }
 
 message NextEpochCommittee {
+  // base64 value
   string authority_name = 1;
   uint64 stake_unit = 2;
 }
@@ -107,57 +552,57 @@ message ECMHLiveObjectSetDigest {
   string digest = 1;
 }
 
-message SuiTransactionBlock {
-  SuiTransactionBlockData data = 1;
+message TransactionBlock {
+  TransactionBlockData data = 1;
 }
 
-message SuiTransactionBlockData {
+message TransactionBlockData {
   oneof sui_transaction_block_data {
-    SuiTransactionBlockDataV1 v1 = 1;
+    TransactionBlockDataV1 v1 = 1;
   }
 }
 
-message SuiTransactionBlockDataV1 {
-  SuiTransactionBlockKind transaction = 1;
+message TransactionBlockDataV1 {
+  TransactionBlockKind transaction = 1;
   string sender = 2;
-  SuiGasData gas_data = 3;
+  GasData gas_data = 3;
 }
 
-message SuiTransactionBlockKind {
+message TransactionBlockKind {
   oneof sui_transaction_block_kind {
     // A system transaction that will update epoch information on-chain.
-    SuiChangeEpoch change_epoch = 1;
+    ChangeEpoch change_epoch = 1;
 
     // A system transaction used for initializing the initial state of the chain.
-    SuiGenesisTransaction genesis = 2;
+    GenesisTransaction genesis = 2;
 
     // A system transaction marking the start of a series of transactions scheduled as part of a checkpoint
-    SuiConsensusCommitPrologue consensus_commit_prologue = 3;
+    ConsensusCommitPrologue consensus_commit_prologue = 3;
 
     // A series of transactions where the results of one transaction can be used in future transactions
-    SuiProgrammableTransactionBlock programmable_transaction = 4;
+    ProgrammableTransaction programmable_transaction = 4;
   }
 }
 
-message SuiGasData {
-  repeated SuiObjectRef payment = 1;
+message GasData {
+  repeated ObjectRef payment = 1;
   string owner = 2;
   uint64 price = 3;
   uint64 budget = 4;
 }
 
-message SuiObjectRef {
+message ObjectRef {
   // Hex code as string representing the object id
   ObjectID object_id = 1;
 
   // Object version.
-  uint64 version = 2;
+  uint64 sequence_number = 2;
 
   // Base58 string representing the object digest
   string digest = 3;
 }
 
-message SuiChangeEpoch {
+message ChangeEpoch {
   uint64 epoch = 1;
   uint64 storage_charge = 2;
   uint64 computation_charge = 3;
@@ -165,65 +610,67 @@ message SuiChangeEpoch {
   uint64 epoch_start_timestamp_ms = 5;
 }
 
-message SuiGenesisTransaction {
-  repeated ObjectID objects = 1;
+message GenesisTransaction {
+  repeated GenesisObject objects = 1;
+}
+
+message GenesisObject {
+  message RawObject {
+    Data data = 1;
+    Owner owner = 2;
+  }
+
+  oneof genesis_object {
+    RawObject raw_object = 1;
+  }
 }
 
 message ObjectID {
   string account_address = 1;
 }
 
-message SuiConsensusCommitPrologue {
+message ConsensusCommitPrologue {
   uint64 epoch = 1;
   uint64 round = 2;
   uint64 commit_timestamp_ms = 3;
 }
 
-message SuiProgrammableTransactionBlock {
+message ProgrammableTransaction {
   // Input objects or primitive values
-  repeated SuiCallArg inputs = 1;
+  repeated CallArg inputs = 1;
 
   // The transactions to be executed sequentially. A failure in any transaction will
   // result in the failure of the entire programmable transaction block.
-  repeated SuiCommand commands = 2;
+  repeated Command commands = 2;
 }
 
-message SuiCallArg {
-  oneof sui_call_arg {
+message CallArg {
+  oneof call_arg {
     // Needs to become an Object Ref or Object ID, depending on object type
     SuiObjectArg object = 1;
 
     // pure value, bcs encoded
-    SuiPureValue pure = 2;
+    bytes pure = 2;
   }
 }
 
 message SuiObjectArg {
   oneof sui_object_arg {
     // A Move object, either immutable, or owned mutable.
-    ImmOrOwnedObject imm_or_owned_object = 1;
+    ObjectRef imm_or_owned_object = 1;
 
     // A Move object that's shared.
     // SharedObject::mutable controls whether caller asks for a mutable reference to shared object.
     SharedObject shared_object = 2;
-  }
-}
 
-message ImmOrOwnedObject {
-  ObjectID object_id = 1;
-  uint64 version = 2;
-  string digest = 3;
+    ObjectRef receiving = 3;
+  }
 }
 
 message SharedObject {
   ObjectID object_id = 1;
   uint64 initial_shared_version = 2;
   bool mutable = 3;
-}
-
-message SuiPureValue {
-  optional TypeTag value_type = 1;
-  SuiJsonValue value = 2;
 }
 
 message TypeTag {
@@ -253,26 +700,7 @@ message StructTag {
   ListOfTypeTags type_params = 4;
 }
 
-message SuiJsonValue {
-  oneof value {
-    google.protobuf.Empty null = 1;
-    bool bool = 2;
-    string number = 3;
-    string string = 4;
-    ListOfJsonValues array = 5;
-    SuiJsonValueMap object = 6;
-  }
-}
-
-message SuiJsonValueMap {
-  map<string, SuiJsonValue> map = 6;
-}
-
-message ListOfJsonValues {
-  repeated SuiJsonValue list = 1;
-}
-
-message SuiCommand {
+message Command {
   oneof sui_command {
     // A call to either an entry or a public Move function
     SuiProgrammableMoveCall move_call = 1;
@@ -293,10 +721,10 @@ message SuiCommand {
 
     // Publishes a Move package. It takes the package bytes and a list of the package's transitive
     // dependencies to link against on-chain.
-    ListOfObjects publish = 5;
+    PublishCommand publish = 5;
 
     // Upgrades a Move package
-    SuiCommandUpgrade upgrade = 6;
+    UpgradeComand upgrade = 6;
 
     // `forall T: Vec<T> -> vector<T>`
     // Given n-values of the same type, it constructs a vector. For non objects or an empty vector,
@@ -320,19 +748,25 @@ message MergeCoinsPair {
   repeated SuiArgument two = 2;
 }
 
+message PublishCommand {
+  repeated bytes package_data = 1;
+  repeated ObjectID package = 2;
+}
+
 message ListOfObjects {
   repeated ObjectID list = 1;
 }
 
 message MakeMoveVecPair {
-  optional string one = 1;
+  optional TypeTag one = 1;
   repeated SuiArgument two = 2;
 }
 
-message SuiCommandUpgrade {
-  ListOfObjects one = 1;
-  ObjectID two = 2;
-  SuiArgument three = 3;
+message UpgradeComand {
+  repeated bytes one = 1;
+  repeated ObjectID two = 2;
+  ObjectID three = 3;
+  SuiArgument four = 4;
 }
 
 message SuiProgrammableMoveCall {
@@ -346,7 +780,7 @@ message SuiProgrammableMoveCall {
   string function = 3;
 
   // The type arguments to the function.
-  repeated string type_arguments = 4;
+  repeated TypeTag type_arguments = 4;
 
   repeated SuiArgument arguments = 5;
 }
@@ -375,15 +809,16 @@ message PairOfU32 {
   uint32 two = 2;
 }
 
-message SuiTransactionBlockEffects {
-  oneof sui_transaction_block_effects {
-    SuiTransactionBlockEffectsV1 v1 = 1;
+message TransactionBlockEffects {
+  oneof transaction_block_effects {
+    TransactionBlockEffectsV1 v1 = 1;
+    TransactionBlockEffectsV2 v2 = 2;
   }
 }
 
-message SuiTransactionBlockEffectsV1 {
+message TransactionBlockEffectsV1 {
   // The status of the execution
-  SuiExecutionStatus status = 1;
+  ExecutionStatus status = 1;
 
   // The epoch when this transaction was executed.
   uint64 executed_epoch = 2;
@@ -392,10 +827,10 @@ message SuiTransactionBlockEffectsV1 {
   GasCostSummary gas_used = 3;
 
   // The version that every modified (mutated or deleted) object had before it was modified by this transaction.
-  repeated SuiTransactionBlockEffectsModifiedAtVersions modified_at_versions = 4;
+  repeated TransactionBlockEffectsModifiedAtVersions modified_at_versions = 4;
 
   // The object references of the shared objects used in this transaction. Empty if no shared objects were used.
-  repeated SuiObjectRef shared_objects = 5;
+  repeated ObjectRef shared_objects = 5;
 
   // The transaction digest
   string transaction_digest = 6;
@@ -412,13 +847,13 @@ message SuiTransactionBlockEffectsV1 {
   repeated OwnedObjectRef unwrapped = 9;
 
   // Object Refs of objects now deleted (the old refs).
-  repeated SuiObjectRef deleted = 10;
+  repeated ObjectRef deleted = 10;
 
   // Object refs of objects previously wrapped in other objects but now deleted.
-  repeated SuiObjectRef unwrapped_then_deleted = 11;
+  repeated ObjectRef unwrapped_then_deleted = 11;
 
   // Object refs of objects now wrapped in other objects.
-  repeated SuiObjectRef wrapped = 12;
+  repeated ObjectRef wrapped = 12;
 
   // The updated gas object reference. Have a dedicated field for convenient access.
   // It's also included in mutated.
@@ -432,9 +867,123 @@ message SuiTransactionBlockEffectsV1 {
   repeated string dependencies = 15;
 }
 
+message TransactionBlockEffectsV2 {
+  // The status of the execution
+  ExecutionStatus status = 1;
+  // The epoch when this transaction was executed.
+  uint64 executed_epoch = 2;
+  // Gas cost summary of the transaction
+  GasCostSummary gas_used = 3;
+  // The transaction digest
+  string transaction_digest = 4;
+  /// The updated gas object reference, as an index into the `changed_objects` vector.
+  /// Having a dedicated field for convenient access.
+  /// System transaction that don't require gas will leave this as None.
+  optional uint32 gas_object_index = 5;
+  /// The digest of the events emitted during execution,
+  /// can be None if the transaction does not emit any event.
+  optional string events_digest = 6;
+  // The set of transaction digests this transaction depends on.
+  repeated string dependencies = 7;
+  /// The version number of all the written Move objects by this transaction.
+  uint64 lamport_version = 8;
+  /// Objects whose state are changed in the object store.
+  repeated ChangedObjectV2 changed_objects = 9;
+  /// Shared objects that are not mutated in this transaction. Unlike owned objects,
+  /// read-only shared objects' version are not committed in the transaction,
+  /// and in order for a node to catch up and execute it without consensus sequencing,
+  /// the version needs to be committed in the effects.
+  repeated UnchangedSharedObject unchanged_shared_objects = 10;
+  /// Auxiliary data that are not protocol-critical, generated as part of the effects but are stored separately.
+  /// Storing it separately allows us to avoid bloating the effects with data that are not critical.
+  /// It also provides more flexibility on the format and type of the data.
+  optional string aux_data_digest = 11;
+}
+
+message UnchangedSharedObject {
+  ObjectID object_id = 1;
+  UnchangedSharedKind kind = 2;
+}
+
+message UnchangedSharedKind {
+  oneof unchanged_shared_kind {
+    /// Read-only shared objects from the input. We don't really need ObjectDigest
+    /// for protocol correctness, but it will make it easier to verify untrusted read.
+    VersionDigest read_only_root = 1;
+    /// Deleted shared objects that appear mutably/owned in the input.
+    uint64 mutate_deleted = 2;
+    /// Deleted shared objects that appear as read-only in the input.
+    uint64 read_deleted = 3;
+  }
+}
+
+message ChangedObjectV2 {
+  ObjectID object_id = 1;
+  EffectsObjectChange effects = 2;
+}
+
+message EffectsObjectChange {
+  // input_state and output_state are the core fields that's required by
+  // the protocol as it tells how an object changes on-chain.
+  /// State of the object in the store prior to this transaction.
+  ObjectIn input_state = 1;
+  /// State of the object in the store after this transaction.
+  ObjectOut output_state = 2;
+  /// Whether this object ID is created or deleted in this transaction.
+  /// This information isn't required by the protocol but is useful for providing more detailed
+  /// semantics on object changes.
+  IDOperation id_operation = 3;
+}
+
+message IDOperation {
+  oneof id_operation {
+    google.protobuf.Empty none = 1;
+    google.protobuf.Empty created = 2;
+    google.protobuf.Empty deleted = 3;
+  }
+}
+
+message ObjectIn {
+  oneof object_in {
+    google.protobuf.Empty not_exist = 1;
+    /// The old version, digest and owner.
+    ObjectInExist exist = 2;
+  }
+}
+
+message ObjectOut {
+  oneof object_out {
+    google.protobuf.Empty not_exist = 1;
+    /// Any written object, including all of mutated, created, unwrapped today.
+    ObjectWrite object_write = 2;
+    /// Packages writes need to be tracked separately with version because
+    /// we don't use lamport version for package publish and upgrades.
+    PackageWrite package_write = 3;
+  }
+}
+
+message ObjectWrite {
+  string object_digest = 1;
+  Owner owner = 2;
+}
+
+message PackageWrite {
+  VersionDigest version_digest = 1;
+}
+
+message ObjectInExist {
+  VersionDigest version_digest = 1;
+  Owner owner = 2;
+}
+
+message VersionDigest {
+  uint64 sequence_number = 1;
+  string object_digest = 2;
+}
+
 message OwnedObjectRef {
   Owner owner = 1;
-  SuiObjectRef reference = 2;
+  ObjectRef reference = 2;
 }
 
 message Owner {
@@ -459,8 +1008,8 @@ message Shared {
   uint64 initial_shared_version = 1;
 }
 
-message SuiExecutionStatus {
-  oneof sui_execution_status {
+message ExecutionStatus {
+  oneof execution_status {
     // Gas used in the success case.
     google.protobuf.Empty success = 1;
 
@@ -470,105 +1019,189 @@ message SuiExecutionStatus {
 }
 
 message Failure {
-  string error = 1;
+  ExecutionFailureStatus error = 1;
+  /// Which command the error occurred
+  optional uint32 command_index = 2;
 }
 
-message SuiTransactionBlockEffectsModifiedAtVersions {
-  ObjectID object_id = 1;
-  uint64 sequence_number = 2;
-}
+message ExecutionFailureStatus {
+  oneof execution_failure_status {
+    google.protobuf.Empty insufficient_gas = 1;
+    google.protobuf.Empty invalid_gas_object = 2;
+    google.protobuf.Empty invariant_violation = 3;
+    google.protobuf.Empty feature_not_yet_supported = 4;
+    MoveObjectTooBig move_object_too_big = 5;
+    MovePackageTooBig move_package_too_big = 6;
+    CircularObjectOwnership circular_object_ownership = 7;
+    google.protobuf.Empty insufficient_coin_balance = 8;
+    google.protobuf.Empty coin_balance_overflow = 9;
+    google.protobuf.Empty publish_error_non_zero_address = 10;
+    google.protobuf.Empty sui_move_verification_error = 11;
+    MoveLocationOpt move_primitive_runtime_error = 12;
+    MoveAbort move_abort = 13;
+    google.protobuf.Empty vm_verification_or_deserialization_error = 14;
+    google.protobuf.Empty vm_invariant_violation = 15;
+    google.protobuf.Empty function_not_found = 16;
+    google.protobuf.Empty arity_mismatch = 17;
+    google.protobuf.Empty type_arity_mismatch = 18;
+    google.protobuf.Empty non_entry_function_invoked = 19;
+    CommandArgumentError_ command_arg_error = 20;
+    TypeArgumentError_ type_argument_error = 21;
+    UnusedValueWithoutDrop unused_value_without_drop = 22;
+    InvalidPublicFunctionReturnType invalid_public_function_return_type = 23;
+    google.protobuf.Empty invalid_transfer_object = 24;
+    EffectsTooLarge effects_too_large = 25;
+    google.protobuf.Empty publish_upgrade_missing_dependency = 26;
+    google.protobuf.Empty publish_upgrade_dependency_downgrade = 27;
+    PackageUpgradeError_ package_upgrade_error = 28;
+    WrittenObjectsTooLarge written_objects_too_large = 29;
+    google.protobuf.Empty certificate_denied = 30;
+    google.protobuf.Empty sui_move_verification_timedout = 31;
+    google.protobuf.Empty shared_object_operation_not_allowed = 32;
+    google.protobuf.Empty Input_object_deleted = 33;
+  }
 
-message SuiTransactionBlockEvents {
-  repeated SuiEvent data = 1;
-}
+  message MoveObjectTooBig {
+    uint64 object_size = 1;
+    uint64 max_object_size = 2;
+  }
 
-message SuiEvent {
-  // Sequential event ID, ie (transaction seq number, event seq number).
-  // 1) Serves as a unique event ID for each fullnode
-  // 2) Also serves to sequence events for the purposes of pagination and querying.
-  //    A higher id is an event seen later by that fullnode.
-  // This ID is the "cursor" for event querying.
-  EventID id = 1;
+  message MovePackageTooBig {
+    uint64 object_size = 1;
+    uint64 max_object_size = 2;
+  }
 
-  // Move package where this event was emitted.
-  ObjectID package_id = 2;
+  message CircularObjectOwnership {
+    ObjectID object = 1;
+  }
 
-  // Move module where this event was emitted.
-  string transaction_module = 3;
+  message MoveLocationOpt {
+    optional MoveLocation move_location = 1;
+  }
 
-  // Sender's Sui address.
-  string sender = 4;
+  message MoveAbort {
+    MoveLocation move_location = 1;
+    uint64 abort_code = 2;
+  }
 
-  // Move event type.
-  StructTag type = 5;
+  message MoveLocation {
+    ModuleId module = 1;
+    uint32 function = 2;
+    uint32 instruction = 3;
+    optional string function_name = 4;
+  }
 
-  // Parsed json value of the event
-  SuiJsonValue parsed_json = 6;
+  message CommandArgumentError_ {
+    uint32 arg_idx = 1;
+    CommandArgumentError kind = 2;
+  }
 
-  // Base 58 encoded bcs bytes of the move event
-  string bcs = 7;
+  message TypeArgumentError_ {
+    uint32 argument_idx = 1;
+    TypeArgumentError kind = 2;
+  }
 
-  // UTC timestamp in milliseconds since epoch (1/1/1970)
-  optional uint64 timestamp_ms = 8;
-}
+  message UnusedValueWithoutDrop {
+    uint32 result_idx = 1;
+    uint32 secondary_idx = 2;
+  }
 
-message EventID {
-  string tx_digest = 1;
-  uint64 event_seq = 2;
-}
+  message InvalidPublicFunctionReturnType {
+    uint32 idx = 1; 
+  }
 
-message ChangedObject {
-  ObjectStatus status = 1;
-  SuiObjectData data = 2;
-}
+  message EffectsTooLarge {
+    uint64 current_size = 1;
+    uint64 max_size = 2;
+  }
 
-message ObjectStatus {
-  oneof object_status {
-    google.protobuf.Empty created = 1;
-    google.protobuf.Empty mutated = 2;
-    google.protobuf.Empty deleted = 3;
-    google.protobuf.Empty wrapped = 4;
-    google.protobuf.Empty unwrapped = 5;
-    google.protobuf.Empty unwrapped_then_deleted = 6;
+  message PackageUpgradeError_ {
+    PackageUpgradeError upgrade_error = 1;
+  }
+
+  message WrittenObjectsTooLarge {
+    uint64 current_size = 1;
+    uint64 max_size = 2;
   }
 }
 
-message SuiObjectData {
-  // Object id
+message CommandArgumentError {
+  oneof command_argument_error {
+    google.protobuf.Empty type_mismatch = 1;
+    google.protobuf.Empty invalid_bcs_bytes = 2;
+    google.protobuf.Empty invalid_usage_of_pure_arg = 3;
+    google.protobuf.Empty invalid_argument_to_private_entry_function = 4;
+    IndexOutOfBounds index_out_of_bounds = 5;
+    SecondaryIndexOutOfBounds secondary_index_out_of_bounds = 6;
+    InvalidResultArity invalid_result_arity = 7;
+    google.protobuf.Empty invalid_gas_coin_usage = 8;
+    google.protobuf.Empty invalid_value_usage = 9;
+    google.protobuf.Empty invalid_object_by_value = 10;
+    google.protobuf.Empty invalid_object_by_mut_ref = 11;
+    google.protobuf.Empty shared_object_operation_not_allowed = 12;
+  }
+
+  message IndexOutOfBounds {
+    uint32 idx = 1;
+  }
+
+  message SecondaryIndexOutOfBounds {
+    uint32 result_idx = 1;
+    uint32 secondary_idx = 2;
+  }
+
+  message InvalidResultArity {
+    uint32 result_idx = 1;
+  }
+}
+
+message TypeArgumentError {
+  oneof type_argument_error {
+    google.protobuf.Empty type_not_found = 1;
+    google.protobuf.Empty constraint_not_satisfied = 2;
+  }
+}
+
+message PackageUpgradeError {
+  oneof package_upgrade_error {
+    UnableToFetchPackage unable_to_fetch_package = 1;
+    NotAPackage not_a_package = 2;
+    google.protobuf.Empty incompatible_upgrade = 3;
+    DigestDoesNotMatch digest_does_not_match = 4;
+    UnknownUpgradePolicy unknown_upgrade_policy = 5;
+    PackageIDDoesNotMatch package_id_does_not_match = 6;
+  }
+
+  message UnableToFetchPackage {
+    ObjectID package_id = 1;
+  }
+
+  message NotAPackage {
+    ObjectID object_id = 1;
+  }
+
+  message DigestDoesNotMatch {
+    bytes digest = 1;
+  }
+
+  message UnknownUpgradePolicy {
+    uint32 policy = 1;
+  }
+
+  message PackageIDDoesNotMatch {
+    ObjectID package_id = 1;
+    ObjectID ticket_id = 2;
+  }
+}
+
+message ModuleId {
+  string address = 1;
+  string name = 2;
+}
+
+message TransactionBlockEffectsModifiedAtVersions {
   ObjectID object_id = 1;
-
-  // Object version
-  uint64 version = 2;
-
-  // Base58 string representing the object digest
-  string digest = 3;
-
-  // The type of the object. Default to be None unless SuiObjectDataOptions.showType is set to true
-  optional ObjectType type = 4;
-
-  // Default to be None because otherwise it will be repeated for the getOwnedObjects endpoint
-  // The owner of this object. Default to be None unless SuiObjectDataOptions.showOwner is set to true
-  optional Owner owner = 5;
-
-  // The digest of the transaction that created or last mutated this object. Default to be None unless
-  // SuiObjectDataOptions.showPreviousTransaction is set to true
-  optional string previous_transaction = 6;
-
-  // The amount of SUI we would rebate if this object gets deleted.
-  // This number is re-calculated each time the object is mutated based on
-  // the present storage gas price.
-  optional uint64 storage_rebate = 7;
-
-  // The Display metadata for frontend UI rendering, default to be None unless SuiObjectDataOptions.showContent is set to true
-  // This can also be None if the struct type does not have Display defined
-  // See more details in <https://forums.sui.io/t/nft-object-display-proposal/4872>
-  optional DisplayFieldsResponse display = 8;
-
-  // Move object content or package content, default to be None unless SuiObjectDataOptions.showContent is set to true
-  optional SuiParsedData content = 9;
-
-  // Move object content or package content in BCS, default to be None unless SuiObjectDataOptions.showBcs is set to true
-  optional SuiRawData bcs = 10;
+  uint64 sequence_number = 2;
 }
 
 message ObjectType {
@@ -595,119 +1228,6 @@ message MoveObjectType {
     // A non-SUI coin type (i.e., `0x2::coin::Coin<T> where T != 0x2::sui::SUI`)
     TypeTag coin = 4;
   }
-}
-
-message DisplayFieldsResponse {
-  map<string, string> data = 1;
-  SuiObjectResponseError error = 2;
-}
-
-message SuiObjectResponseError {
-  oneof sui_object_response_error {
-    NotExists not_exists = 1;
-    DynamicFieldNotFound dynamic_field_not_found = 2;
-    Deleted deleted = 3;
-    google.protobuf.Empty Unknown = 4;
-    DisplayError display_error = 5;
-  }
-
-  message NotExists {
-    ObjectID object_id = 1;
-  }
-
-  message DynamicFieldNotFound {
-    ObjectID parent_object_id = 1;
-  }
-
-  message Deleted {
-    ObjectID object_id = 1;
-    uint64 version = 2;
-    string digest = 3;
-  }
-
-  message DisplayError {
-    string error = 1;
-  }
-}
-
-message SuiParsedData {
-  oneof sui_parsed_data {
-    SuiParsedMoveObject move_object = 1;
-    SuiMovePackage package = 2;
-  }
-}
-
-message SuiParsedMoveObject {
-  StructTag type = 1;
-  bool has_public_transfer = 2;
-  SuiMoveStruct fields = 3;
-}
-
-message SuiMoveStruct {
-  oneof sui_move_struct {
-    ListOfSuiMoveValues runtime = 1;
-    WithTypes with_types = 2;
-    WithFields with_fields = 3;
-  }
-}
-
-message ListOfSuiMoveValues {
-  repeated SuiMoveValue list = 1;
-}
-
-message WithTypes {
-  StructTag type = 1;
-  map<string, SuiMoveValue> fields = 2;
-}
-
-message WithFields {
-  map<string, SuiMoveValue> fields = 2;
-}
-
-message SuiMoveValue {
-  oneof sui_move_value {
-    uint32 number = 1;
-    bool bool = 2;
-    string address = 3;
-    ListOfSuiMoveValues vector = 4;
-    string string = 5;
-    UID UID = 6;
-    SuiMoveStruct struct = 7;
-    SuiMoveValue option = 8;
-  }
-}
-
-message UID {
-  ObjectID id = 1;
-}
-
-message SuiMovePackage {
-  map<string, SuiJsonValue> disassembled = 1;
-}
-
-message SuiRawData {
-  oneof sui_raw_data {
-    SuiRawMoveObject move_object = 1;
-    SuiRawMovePackage package = 2;
-  }
-}
-
-message SuiRawMoveObject {
-  StructTag type = 1;
-  bool has_public_transfer = 2;
-  uint64 version = 3;
-  bytes bcs_bytes = 4;
-}
-
-message SuiRawMovePackage {
-  ObjectID id = 1;
-  uint64 version = 2;
-  map<string, bytes> module_map = 3;
-  repeated TypeOrigin type_origin_table = 4;
-
-  // Note the key here is ObjectID, but we cannot use Message as keys in a map thus we covnert it into hex string
-  // that is key = hex(ObjectId)
-  map<string, UpgradeInfo> linkage_table = 5;
 }
 
 message TypeOrigin {

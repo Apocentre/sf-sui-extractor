@@ -2,34 +2,12 @@ use std::{
   sync::{mpsc::sync_channel, Arc, Mutex}, panic, process, mem
 };
 use ctrlc;
-use log::{info};
+use log::info;
 use tokio::{
-  spawn, sync::{
-    oneshot::{channel, Sender},
-  }, task::JoinHandle,
+  spawn, sync::oneshot::{channel, Sender}, task::JoinHandle,
 };
-use clap::{Parser};
-use crate::{sui_node::SuiNode, runtime::FirehoseStreamer};
+use crate::{args::Args, logger::Logger, runtime::FirehoseStreamer, sui::sui_node::SuiNode};
 
-#[derive(Default, Debug, Parser)]
-struct Args {
-  /// The fullnode config file
-  #[arg(short = 'c', long)]
-  sui_node_config: String,
-
-  /// Chain Identifier is the digest of the genesis checkpoint
-  #[arg(short = 'i', long, default_value = "4btiuiMPvEENsttpZC7CZ53DruC3MAgfznDbASZ7DR6S")]
-  chain_id: String,
-
-  /// Which checkount should we start streaming data from
-  #[arg(short = 's', long, default_value_t = 0)]
-  starting_checkpoint_seq: u64,
-
-  /// You can use https://fullnode.mainnet.sui.io:443 for mainnet
-  /// Note that if one is not provided, a local sui-node will be spinned up instead
-  #[arg(short = 'r', long)]
-  rpc_client_url: Option<String>,
-}
 
 #[derive(Default)]
 struct ProcessManagerInner {
@@ -40,20 +18,21 @@ struct ProcessManagerInner {
 pub struct ProcessManager(Arc<Mutex<ProcessManagerInner>>);
 
 impl ProcessManager {
-  pub fn new() -> Self {
-    let args = Args::parse();
-    let pm = ProcessManagerInner {args, tasks: Vec::new(),};
+  pub fn new(args: Args) -> Self {
+    let pm = ProcessManagerInner {args, tasks: Vec::new()};
 
     ProcessManager(Arc::new(Mutex::new(pm)))
   }
 
-  fn register_hooks(&mut self)  {
+  fn register_hooks(&self)  {
     let (tx, rx) = sync_channel(2);
     let tx_2 = tx.clone();
     let orig_hook = panic::take_hook();
 
     // this hook will be called if any of the threads panics
     panic::set_hook(Box::new(move |panic_info| {
+      println!("Thread Panicked {:?}", panic_info);
+
       tx_2.send(()).expect("send msg");
       orig_hook(panic_info);
     }));
@@ -67,7 +46,10 @@ impl ProcessManager {
     self.kill_all();
   }
 
-  pub async fn start(&mut self) {
+  pub async fn start<L>(&self, logger: L)
+  where
+    L: Logger + Sync + Send + 'static
+  {
     let mut tasks = vec![];
 
     let pm = Arc::clone(&self.0);
@@ -81,11 +63,11 @@ impl ProcessManager {
       "http://127.0.0.1:9000".to_string()
     };
 
-    tasks.push(self.spawn_firehose_streamer(rpc_client_url));
+    tasks.push(self.spawn_firehose_streamer::<L>(rpc_client_url, logger));
     self.register_hooks();
   }
 
-  fn spawn_sui_node (&mut self) -> JoinHandle<()> {
+  fn spawn_sui_node (&self) -> JoinHandle<()> {
     let (tx, rx) = channel();
     let pm = Arc::clone(&self.0);
     let mut pm = pm.lock().unwrap();
@@ -99,21 +81,24 @@ impl ProcessManager {
     })
   }
 
-  fn spawn_firehose_streamer(&mut self, rpc_client_url: String) -> JoinHandle<()> {
+  fn spawn_firehose_streamer<L>(&self, rpc_client_url: String, logger: L) -> JoinHandle<()>
+  where
+    L: Logger + Sync + Send + 'static
+  {
     let pm = Arc::clone(&self.0);
     let pm = pm.lock().unwrap();
     let chain_id = pm.args.chain_id.clone();
     let starting_checkpoint_seq = pm.args.starting_checkpoint_seq.clone();
 
     spawn(async move {
-      let mut fireshose_streamer = FirehoseStreamer::new(chain_id, rpc_client_url, starting_checkpoint_seq);
+      let mut fireshose_streamer = FirehoseStreamer::<L>::new(chain_id, rpc_client_url, starting_checkpoint_seq, logger);
       if let Err(e) = fireshose_streamer.start().await {
         panic!("{}", e);
       }
     })
   }
 
-  pub fn kill_all(&mut self) {
+  pub fn kill_all(&self) {
     info!("Killing all processes and exiting");
 
     let pm = Arc::clone(&self.0);

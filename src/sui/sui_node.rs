@@ -1,6 +1,6 @@
 use log::info;
 use tokio::{
-  process::Command, sync::oneshot::{Receiver},
+  process::Command, sync::oneshot::Receiver,
 };
 
 pub struct SuiNode {
