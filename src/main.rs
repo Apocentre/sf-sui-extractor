@@ -1,7 +1,7 @@
 use clap::Parser;
 use env_logger::Env;
 use eyre::Result;
-use sui_sf_indexer::{args::Args, process_manager::ProcessManager, logger::StdoutLogger};
+use sf_sui_extractor::{args::Args, process_manager::ProcessManager, logger::StdoutLogger};
 
 #[tokio::main]
 async fn main() -> Result<()> {

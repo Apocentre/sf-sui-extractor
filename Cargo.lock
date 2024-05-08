@@ -6988,6 +6988,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "sf-sui-extractor"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "backoff",
+ "base58",
+ "base64 0.20.0",
+ "clap",
+ "ctrlc",
+ "env_logger",
+ "eyre",
+ "futures",
+ "hex",
+ "log",
+ "move-bytecode-utils",
+ "move-core-types",
+ "mysten-metrics",
+ "prometheus",
+ "prost 0.11.9",
+ "prost-types 0.11.9",
+ "serde",
+ "serde_json",
+ "shared-crypto",
+ "simple-home-dir",
+ "sui-indexer",
+ "sui-json",
+ "sui-json-rpc",
+ "sui-json-rpc-types",
+ "sui-rest-api",
+ "sui-types",
+ "sysinfo",
+ "tokio",
+ "tonic-build 0.9.2",
+]
+
+[[package]]
 name = "sha-1"
 version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8145,42 +8181,6 @@ dependencies = [
  "thiserror",
  "tokio",
  "tracing",
-]
-
-[[package]]
-name = "sui-sf-indexer"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "backoff",
- "base58",
- "base64 0.20.0",
- "clap",
- "ctrlc",
- "env_logger",
- "eyre",
- "futures",
- "hex",
- "log",
- "move-bytecode-utils",
- "move-core-types",
- "mysten-metrics",
- "prometheus",
- "prost 0.11.9",
- "prost-types 0.11.9",
- "serde",
- "serde_json",
- "shared-crypto",
- "simple-home-dir",
- "sui-indexer",
- "sui-json",
- "sui-json-rpc",
- "sui-json-rpc-types",
- "sui-rest-api",
- "sui-types",
- "sysinfo",
- "tokio",
- "tonic-build 0.9.2",
 ]
 
 [[package]]

@@ -1,4 +1,4 @@
-Sui StreamingFast Indexer
+StreamingFast Sui Extractor
 ===
 
 This module provides a StreamingFast Firehose Streamer for pushing protobuf data from the Sui Blockchain
