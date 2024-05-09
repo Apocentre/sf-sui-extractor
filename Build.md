@@ -6,8 +6,19 @@ Install `cross`
 
 ## Linux
 
-- `CROSS_CONTAINER_OPTS="--platform linux/x86-64" cross build --release --target x86_64-unknown-linux-gnu`
-- `CROSS_CONTAINER_OPTS="--platform linux/amd64"  cross build --release --target aarch64-unknown-linux-gnu`
+Install the following tools
+
+https://github.com/messense/homebrew-macos-cross-toolchains
+
+then add new target
+
+`rustup target add x86_64-unknown-linux-gnu`
+ 
+ and then 
+
+`cargo build --release --target x86_64-unknown-linux-gnu`
+
+For more information read this article https://betterprogramming.pub/cross-compiling-rust-from-mac-to-linux-7fad5a454ab1
 
 ## MacOs
 
